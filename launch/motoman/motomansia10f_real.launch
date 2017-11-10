@@ -1,0 +1,14 @@
+<!--
+Setup real robot of Motoman SIA10f.
+This needs to be executed on the Motoman control PC.
+-->
+
+<launch>
+
+  <include file="$(find ay_util)/launch/motoman/motomansia10f_cmn.launch"/>
+
+  <include file="$(find motoman_driver)/launch/robot_interface_streaming_fs100.launch">
+    <arg name="robot_ip"  value="192.168.12.31" />
+  </include>
+
+</launch>
