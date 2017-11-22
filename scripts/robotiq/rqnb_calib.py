@@ -14,6 +14,6 @@ if __name__=='__main__':
   print 'Calibrating...'
   rq.Init()
   rospy.sleep(2.0)
-  rq.OpenGripper(blocking=True)
+  rq.Open(blocking=True)
   print 'Done.'
   rq.Cleanup()
