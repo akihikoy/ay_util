@@ -15,4 +15,7 @@ Common setup for Motoman SIA10f.
         name="tf_base_base_link" output="screen"
         args="0 0 0 0 0 0 1 base base_link" />-->
 
+  <!--State validity checker:-->
+  <include file="$(find ay_util)/launch/motoman/motomansia10f_state_validity_checker.launch"/>
+
 </launch>
