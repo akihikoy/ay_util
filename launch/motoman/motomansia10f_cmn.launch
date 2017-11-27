@@ -18,4 +18,10 @@ Common setup for Motoman SIA10f.
   <!--State validity checker:-->
   <include file="$(find ay_util)/launch/motoman/motomansia10f_state_validity_checker.launch"/>
 
+  <!--Joy stick-->
+  <arg name="jsdev" default="/dev/input/js1" />
+  <node pkg="joy" type="joy_node" name="joy_node" >
+    <param name="dev" type="string" value="$(arg jsdev)" />
+  </node>
+
 </launch>
