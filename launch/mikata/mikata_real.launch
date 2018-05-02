@@ -1,0 +1,15 @@
+<!--
+Setup real robot of Motoman SIA10f.
+This needs to be executed on the Motoman control PC.
+-->
+
+<launch>
+
+  <arg name="jsdev" default="/dev/input/js1" />
+  <include file="$(find ay_util)/launch/mikata/mikata_cmn.launch">
+    <arg name="jsdev"  value="$(arg jsdev)" />
+  </include>
+
+  <!--<node pkg="rviz" type="rviz" name="rviz"/>-->
+
+</launch>

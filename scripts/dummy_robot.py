@@ -1,35 +1,37 @@
 #!/usr/bin/python
-#\file    moto_dummy.py
-#\brief   Dummy motoman robot.
+#\file    dummy_robot.py
+#\brief   Dummy robot.
 #         This subscribes joint_path_command and send joint_states.
 #         The trajectory is interpolated with a spline.
+#         This is useful to simulate kinematic motion.
 #\author  Akihiko Yamaguchi, info@akihikoy.net
 #\version 0.1
 #\date    Nov.10, 2017
 import roslib;
-roslib.load_manifest('motoman_driver')
+#roslib.load_manifest('motoman_driver')
 roslib.load_manifest('sensor_msgs')
+roslib.load_manifest('ay_py')
 import rospy
 import sensor_msgs.msg
 import trajectory_msgs.msg
-import threading, copy
-roslib.load_manifest('ay_py')
+import threading, copy, sys
 from ay_py.core import TCubicHermiteSpline
 
-class TRobotDummyMoto(object):
-  def __init__(self):
-    self.rate= 100  #/joint_states is published at 100 Hz
+class TDummyRobot(object):
+  def __init__(self, rate=100):
+    self.rate= rate  #/joint_states is published at rate Hz
 
     self.pub_js= rospy.Publisher('/joint_states', sensor_msgs.msg.JointState, queue_size=1)
     self.sub_jpc= rospy.Subscriber('/joint_path_command', trajectory_msgs.msg.JointTrajectory, self.PathCmdCallback)
 
     self.js= sensor_msgs.msg.JointState()
     self.js.name= rospy.get_param('controller_joint_names')
+    self.dof= len(self.js.name)
     self.js.header.seq= 0
     self.js.header.frame_id= ''
-    self.js.position= [0.0]*7
-    self.js.velocity= [0.0]*7
-    self.js.effort= [0.0]*7
+    self.js.position= [0.0]*self.dof
+    self.js.velocity= [0.0]*self.dof
+    self.js.effort= [0.0]*self.dof
 
     self.js_locker= threading.RLock()
     self.th_sendst= threading.Thread(name='SendStates', target=self.SendStates)
@@ -70,7 +72,7 @@ class TRobotDummyMoto(object):
     print q_traj
 
     #Modeling the trajectory with spline.
-    splines= [TCubicHermiteSpline() for d in range(7)]
+    splines= [TCubicHermiteSpline() for d in range(self.dof)]
     for d in range(len(splines)):
       data_d= [[t.to_sec(),q[d]] for q,t in zip(q_traj,t_traj)]
       splines[d].Initialize(data_d, tan_method=splines[d].CARDINAL, c=0.0, m=0.0)
@@ -79,14 +81,15 @@ class TRobotDummyMoto(object):
     t0= rospy.Time.now()
     while all(((rospy.Time.now()-t0)<t_traj[-1], self.follow_traj_active, not rospy.is_shutdown())):
       t= (rospy.Time.now()-t0).to_sec()
-      q= [splines[d].Evaluate(t) for d in range(7)]
+      q= [splines[d].Evaluate(t) for d in range(self.dof)]
       #print t, q
       with self.js_locker:
         self.js.position= copy.deepcopy(q)
       rate.sleep()
 
 if __name__=='__main__':
-  rospy.init_node('dummy_motoman')
-  robot= TRobotDummyMoto()
+  rospy.init_node('dummy_robot')
+  rate= float(sys.argv[1]) if len(sys.argv)>1 else 100.0
+  robot= TDummyRobot(rate)
   rospy.spin()
 
