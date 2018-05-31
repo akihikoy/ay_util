@@ -34,10 +34,10 @@ if __name__=='__main__':
       (':pair', ('start',['roslaunch ay_3dvision rt_pose_estimator_m100.launch',E]),
                 ('kill',['C-c']) )  ]),
     ('aypi11',[
-      (':pair', ('stream',['ssh aypi11 "./stream.sh"',E]),
+      (':pair', ('stream',['ssh ayg@aypi11 "./stream.sh"',E]),
                 ('stop',[E]) ),
-      ('reboot',['ssh aypi11 "sudo reboot"',E]),
-      ('shutdown',['ssh aypi11 "sudo halt -p"',E])  ]),
+      ('reboot',['ssh ayg@aypi11 "sudo reboot"',E]),
+      ('shutdown',['ssh ayg@aypi11 "sudo halt -p"',E])  ]),
     ('fv11',[
       (':pair', ('start',['roslaunch ay_vision visual_skin_2fay11a2.launch',E]),
                 ('kill',['C-c']) )  ]),
