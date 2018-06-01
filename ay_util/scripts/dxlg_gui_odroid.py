@@ -46,7 +46,7 @@ if __name__=='__main__':
                           'roslaunch ay_vision visual_skin_2fay11a_local.launch',E]),
                 ('kill',['C-c']) )  ]),
     ('JoyStickDemo',[
-      (':pair', ('start',['roscd ay_trick',E,'rosrun ay_trick direct_run.py "robot \'dxlg\'" j',E]),
+      (':pair', ('start',['rosrun ay_util fix_usb_latency.sh',E,'rosrun ay_trick direct_run.py "robot \'dxlg\'" j',E]),
                 ('quit',['q',E]) )  ]),
     #('aypi3',[
       #(':pair', ('stream',['ssh hm@aypi3 "./stream2.sh"',E]),
