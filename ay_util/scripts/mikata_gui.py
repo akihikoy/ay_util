@@ -13,11 +13,13 @@ if __name__=='__main__':
     ('main',[
       ('Init',(':all','ros',E)),
       ('Exit',':close') ]),
-    ('Mikata',[
+    ('System',[
       (':pair', ('system(js0)',['roslaunch ay_util mikata_real.launch jsdev:=/dev/input/js0',E]),
                 ('kill',['C-c']) ),
       (':pair', ('system(js1)',['roslaunch ay_util mikata_real.launch jsdev:=/dev/input/js1',E]),
                 ('kill',['C-c']) )  ]),
+    ('Mikata',[
+      ('survo-off',['rosrun ay_py mikata_off.py',E])  ]),
     ('Monitor-joy',[
       (':pair', ('echo-joy',['rostopic echo /joy',E]),
                 ('kill',['C-c']) )  ]),
@@ -59,7 +61,7 @@ if __name__=='__main__':
       (':pair', ('start',['roslaunch ay_vision segm_obj2.launch',E]),
                 ('kill',['C-c']) )  ]),
     ('JoyStickDemo',[
-      (':pair', ('start',['roscd ay_trick',E,'rosrun ay_trick direct_run.py "robot \'mikata\'" "mikata.effort 80" j',E]),
+      (':pair', ('start',['rosrun ay_util fix_usb_latency.sh',E,'rosrun ay_trick direct_run.py "robot \'mikata\'" "mikata.effort 80" j',E]),
                 ('quit',['q',E]) )  ]),
     #('aypi3',[
       #(':pair', ('stream',['ssh hm@aypi3 "./stream2.sh"',E]),
