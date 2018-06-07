@@ -14,12 +14,13 @@ if __name__=='__main__':
       ('Init',(':all','ros',E)),
       ('Exit',':close') ]),
     ('System',[
-      (':pair', ('system(js0)',['roslaunch ay_util mikata_real.launch jsdev:=/dev/input/js0',E]),
+      (':pair', ('system(js0)',['roslaunch ay_util mikata_rot_real.launch jsdev:=/dev/input/js0',E]),
                 ('kill',['C-c']) ),
-      (':pair', ('system(js1)',['roslaunch ay_util mikata_real.launch jsdev:=/dev/input/js1',E]),
+      (':pair', ('system(js1)',['roslaunch ay_util mikata_rot_real.launch jsdev:=/dev/input/js1',E]),
                 ('kill',['C-c']) )  ]),
     ('Mikata',[
-      ('survo-off',['rosrun ay_py mikata_off.py',E])  ]),
+      ('survo-off',['rosrun ay_py mikata_off.py',E]),
+      ('reboot',['rosrun ay_py mikata_reboot.py',E])  ]),
     ('Monitor-joy',[
       (':pair', ('echo-joy',['rostopic echo /joy',E]),
                 ('kill',['C-c']) )  ]),

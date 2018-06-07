@@ -1,11 +1,11 @@
 <!--
-Setup kinematics simulation of Mikata Arm.
+Setup kinematics simulation of Mikata Arm (gripper is rotated).
 -->
 
 <launch>
 
   <arg name="jsdev" default="/dev/input/js1" />
-  <include file="$(find ay_util)/launch/mikata/mikata_cmn.launch">
+  <include file="$(find ay_util)/launch/mikata/mikata_rot_cmn.launch">
     <arg name="jsdev"  value="$(arg jsdev)" />
   </include>
 
