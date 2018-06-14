@@ -14,4 +14,8 @@ This needs to be executed on the Motoman control PC.
     <arg name="robot_ip"  value="192.168.12.31" />
   </include>
 
+  <node pkg="ay_util" type="robotiq_rtu_ctrl.py"
+        name="rq1" output="screen" respawn="true"
+        args="/dev/ttyUSB1 rq1 0.01" />
+
 </launch>
