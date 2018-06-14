@@ -6,7 +6,7 @@
 #\date    Sep.28, 2017
 import roslib; roslib.load_manifest('ay_py')
 import rospy
-from ay_py.ros import TRobotiq
+from ay_py.ros.rbt_rq import TRobotiq
 
 if __name__=='__main__':
   rospy.init_node('robotiq_calib')
