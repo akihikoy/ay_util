@@ -83,7 +83,8 @@ class TDummyRobot(object):
     dt= 1.0/self.rate
     q= [q0+v*dt for q0,v in zip(self.js.position,msg.points[0].velocities)]
     with self.js_locker:
-      self.js.position= copy.deepcopy(q)
+      self.js.position= q
+      self.js.velocity= msg.points[0].velocities
     rate.sleep()
     self.follow_traj_active= False
 
@@ -93,10 +94,13 @@ class TDummyRobot(object):
     t0= rospy.Time.now()
     while all(((rospy.Time.now()-t0)<T, self.follow_traj_active, not rospy.is_shutdown())):
       t= (rospy.Time.now()-t0).to_sec()
-      q= [splines[d].Evaluate(t) for d in range(self.dof)]
-      #print t, q
+      q_dq= [splines[d].Evaluate(t,with_tan=True) for d in range(self.dof)]
+      q= [q for q,_ in q_dq]
+      dq= [dq for _,dq in q_dq]
+      #print t, q, dq
       with self.js_locker:
-        self.js.position= copy.deepcopy(q)
+        self.js.position= q
+        self.js.velocity= dq
       rate.sleep()
     self.follow_traj_active= False
 
@@ -138,10 +142,13 @@ class TDummyRobot(object):
         break
 
       t= (rospy.Time.now()-t0).to_sec()
-      q= [splines[d].Evaluate(t) for d in range(self.dof)]
-      #print t, q
+      q_dq= [splines[d].Evaluate(t,with_tan=True) for d in range(self.dof)]
+      q= [q for q,_ in q_dq]
+      dq= [dq for _,dq in q_dq]
+      #print t, q, dq
       with self.js_locker:
-        self.js.position= copy.deepcopy(q)
+        self.js.position= q
+        self.js.velocity= dq
 
       self.ftaction_actsrv.publish_feedback(self.ftaction_feedback)
       rate.sleep()

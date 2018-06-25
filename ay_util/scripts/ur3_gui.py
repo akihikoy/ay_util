@@ -1,9 +1,9 @@
 #!/usr/bin/python
-#\file    mikata_gui.py
-#\brief   Mikata Arm GUI control panel.
+#\file    ur3_gui.py
+#\brief   UR3 GUI control panel.
 #\author  Akihiko Yamaguchi, info@akihikoy.net
 #\version 0.1
-#\date    Feb.06, 2018
+#\date    Jun.25, 2018
 import roslib; roslib.load_manifest('ay_py')
 from ay_py.tool.py_gui import RunTerminalTab
 
@@ -14,13 +14,17 @@ if __name__=='__main__':
       ('Init',(':all','ros',E)),
       ('Exit',':close') ]),
     ('System',[
-      (':pair', ('system(js0)',['roslaunch ay_util mikata_rot_real.launch jsdev:=/dev/input/js0',E]),
+      (':pair', ('real(js0)',['roslaunch ay_util ur3_real.launch jsdev:=/dev/input/js0',E]),
                 ('kill',['C-c']) ),
-      (':pair', ('system(js1)',['roslaunch ay_util mikata_rot_real.launch jsdev:=/dev/input/js1',E]),
+      (':pair', ('real(js1)',['roslaunch ay_util ur3_real.launch jsdev:=/dev/input/js1',E]),
+                ('kill',['C-c']) ),
+      (':pair', ('k-sim(js0)',['roslaunch ay_util ur3_ksim.launch jsdev:=/dev/input/js0',E]),
+                ('kill',['C-c']) ),
+      (':pair', ('k-sim(js1)',['roslaunch ay_util ur3_ksim.launch jsdev:=/dev/input/js1',E]),
                 ('kill',['C-c']) )  ]),
-    ('Mikata',[
-      ('survo-off',['rosrun ay_py mikata_off.py',E]),
-      ('reboot',['rosrun ay_py mikata_reboot.py',E])  ]),
+    #('Mikata',[
+      #('survo-off',['rosrun ay_py mikata_off.py',E]),
+      #('reboot',['rosrun ay_py mikata_reboot.py',E])  ]),
     ('Monitor-joy',[
       (':pair', ('echo-joy',['rostopic echo /joy',E]),
                 ('kill',['C-c']) )  ]),
@@ -36,19 +40,19 @@ if __name__=='__main__':
     ('pose_est',[
       (':pair', ('start',['roslaunch ay_3dvision rt_pose_estimator_m100.launch',E]),
                 ('kill',['C-c']) )  ]),
-    ('aypi11',[
-      (':pair', ('stream',['ssh ayg@aypi11 "./stream.sh"',E]),
+    ('aypi13',[
+      (':pair', ('stream',['ssh ayg@aypi13 "./stream.sh"',E]),
                 ('stop',[E]) ),
-      ('reboot',['ssh ayg@aypi11 "sudo reboot"',E]),
-      ('shutdown',['ssh ayg@aypi11 "sudo halt -p"',E])  ]),
-    ('fv11',[
-      (':pair', ('start',['roslaunch ay_vision visual_skin_2fay11a2.launch',E]),
+      ('reboot',['ssh ayg@aypi13 "sudo reboot"',E]),
+      ('shutdown',['ssh ayg@aypi13 "sudo halt -p"',E])  ]),
+    ('fv13',[
+      (':pair', ('start',['roslaunch ay_vision visual_skin_2fay13a2.launch',E]),
                 ('kill',['C-c']) )  ]),
-    #('aypi11-no3',[
-      #(':pair', ('stream',['ssh aypi11 "./stream_no3.sh"',E]),
+    #('aypi13-no3',[
+      #(':pair', ('stream',['ssh aypi13 "./stream_no3.sh"',E]),
                 #('stop',[E]) )  ]),
     #('monitor11-no3',[
-      #(':pair', ('run',['~/prg/testl/cv/capture.out "http://aypi11:8082/?action=stream&dummy=file.mjpg"',E]),
+      #(':pair', ('run',['~/prg/testl/cv/capture.out "http://aypi13:8082/?action=stream&dummy=file.mjpg"',E]),
                 #('kill',['C-c']) )  ]),
     ('aypi10',[
       (':pair', ('stream',['ssh ay@aypi10 "./stream1.sh"',E]),
@@ -63,7 +67,9 @@ if __name__=='__main__':
                 ('kill',['C-c']) )  ]),
     ('JoyStickDemo',[
       ('fix_usb',['rosrun ay_util fix_usb_latency.sh',E]),
-      (':pair', ('start',['rosrun ay_trick direct_run.py "robot \'mikata\'" "mikata.effort 80" j',E]),
+      (':pair', ('start(real)',['rosrun ay_trick direct_run.py "robot \'ur\'" j',E]),
+                ('quit',['q',E]) ),
+      (':pair', ('start(k-sim)',['rosrun ay_trick direct_run.py "robot \'urs\'" j',E]),
                 ('quit',['q',E]) )  ]),
     #('aypi3',[
       #(':pair', ('stream',['ssh hm@aypi3 "./stream2.sh"',E]),
@@ -77,4 +83,4 @@ if __name__=='__main__':
                 #('kill',['C-c']) )  ]),
     ]
   exit_command= [E,'C-c']
-  RunTerminalTab('Mikata Launcher',terminals,exit_command)
+  RunTerminalTab('UR3 Launcher',terminals,exit_command)
