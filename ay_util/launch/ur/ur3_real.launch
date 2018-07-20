@@ -7,6 +7,7 @@ UR3 should be powered on before running this.
 
   <arg name="robot_ip" default="ur3a" />
   <include file="$(find ur_modern_driver)/launch/ur3_bringup.launch">
+  <!--<include file="$(find ur_modern_driver)/launch/ur3_bringup_joint_limited.launch">-->  <!--Using the 'limited' joint range [-PI, PI] on all joints-->
     <arg name="robot_ip" value="$(arg robot_ip)" />
   </include>
 

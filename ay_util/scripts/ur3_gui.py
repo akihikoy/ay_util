@@ -13,6 +13,9 @@ if __name__=='__main__':
     ('main',[
       ('Init',(':all','ros',E)),
       ('Exit',':close') ]),
+    ('roscore',[
+      (':pair', ('roscore',['roscore',E]),
+                ('kill',['C-c']) )  ]),
     ('System',[
       (':pair', ('real(js0)',['roslaunch ay_util ur3_real.launch jsdev:=/dev/input/js0',E]),
                 ('kill',['C-c']) ),
