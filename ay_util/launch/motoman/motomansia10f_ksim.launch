@@ -8,7 +8,9 @@ Setup kinematics simulation of Motoman SIA10f.
 
   <node pkg="ay_util" type="dummy_robot.py"
         name="moto_dummy" output="screen"
-        args="100" />
+        args="100" >
+    <remap from="/follow_joint_trajectory" to="/joint_trajectory_action" />
+  </node>
 
   <node pkg="rviz" type="rviz" name="rviz"/>
 
