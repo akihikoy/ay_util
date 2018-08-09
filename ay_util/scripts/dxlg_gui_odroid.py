@@ -39,11 +39,11 @@ if __name__=='__main__':
       #('reboot',['ssh aypi11 "sudo reboot"',E]),
       #('shutdown',['ssh aypi11 "sudo halt -p"',E])  ]),
     #('fv11',[
-      #(':pair', ('start',['roslaunch ay_vision visual_skin_2fay11a2.launch',E]),
+      #(':pair', ('start',['roslaunch ay_fv_extra fv_pi11.launch',E]),
                 #('kill',['C-c']) )  ]),
     ('fv11',[
       (':pair', ('start',['rosrun ay_util fix_uvc_video.sh',E,
-                          'roslaunch ay_vision visual_skin_2fay11a_local.launch',E]),
+                          'roslaunch ay_fv_extra fv_odroid.launch',E]),
                 ('kill',['C-c']) )  ]),
     ('JoyStickDemo',[
       (':pair', ('start',['rosrun ay_util fix_usb_latency.sh',E,'rosrun ay_trick direct_run.py "robot \'dxlg\'" j',E]),

@@ -42,7 +42,7 @@ if __name__=='__main__':
       ('reboot',['ssh ayg@aypi11 "sudo reboot"',E]),
       ('shutdown',['ssh ayg@aypi11 "sudo halt -p"',E])  ]),
     ('fv11',[
-      (':pair', ('start',['roslaunch ay_vision visual_skin_2fay11a2.launch',E]),
+      (':pair', ('start',['roslaunch ay_fv_extra fv_pi11.launch',E]),
                 ('kill',['C-c']) )  ]),
     #('aypi11-no3',[
       #(':pair', ('stream',['ssh aypi11 "./stream_no3.sh"',E]),

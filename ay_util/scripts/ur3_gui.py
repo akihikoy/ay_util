@@ -49,7 +49,7 @@ if __name__=='__main__':
       ('reboot',['ssh ayg@aypi13 "sudo reboot"',E]),
       ('shutdown',['ssh ayg@aypi13 "sudo halt -p"',E])  ]),
     ('fv13',[
-      (':pair', ('start',['roslaunch ay_vision visual_skin_2fay13a2.launch',E]),
+      (':pair', ('start',['roslaunch ay_fv_extra fv_pi13.launch',E]),
                 ('kill',['C-c']) )  ]),
     #('aypi13-no3',[
       #(':pair', ('stream',['ssh aypi13 "./stream_no3.sh"',E]),

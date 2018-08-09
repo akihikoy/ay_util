@@ -38,7 +38,7 @@ if __name__=='__main__':
       ('reboot',['ssh aypi10 "sudo reboot"',E]),
       ('shutdown',['ssh aypi10 "sudo halt -p"',E])  ]),
     ('fv10',[
-      (':pair', ('start',['roslaunch ay_vision visual_skin_2fay10a2.launch',E]),
+      (':pair', ('start',['roslaunch ay_fv_extra fv_pi10.launch',E]),
                 ('kill',['C-c']) )  ]),
     ('JoyStickDemo',[
       (':pair', ('start',['roscd ay_trick',E,'rosrun ay_trick direct_run.py "robot \'rqnb\'" j',E]),

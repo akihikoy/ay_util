@@ -40,14 +40,14 @@ if __name__=='__main__':
                 ('stop',[E]) ),
       ('reboot',['ssh hm@aypi1 "sudo reboot"',E])  ]),
     ('vskin1-R',[
-      (':pair', ('start',['roslaunch ay_vision visual_skin_2fay12.launch',E]),
+      (':pair', ('start',['roslaunch ay_fv_extra fv_pi01.launch',E]),
                 ('kill',['C-c']) )  ]),
     ('aypi2-L',[
       (':pair', ('stream',['ssh hm@aypi2 "./stream.sh"',E]),
                 ('stop',[E]) ),
       ('reboot',['ssh hm@aypi2 "sudo reboot"',E])  ]),
     ('vskin2-L',[
-      (':pair', ('start',['roslaunch ay_vision visual_skin_2fay22.launch',E]),
+      (':pair', ('start',['roslaunch ay_fv_extra fv_pi02.launch',E]),
                 ('kill',['C-c']) )  ]),
     ('aypi3',[
       (':pair', ('stream',['ssh hm@aypi3 "./stream2.sh"',E]),
