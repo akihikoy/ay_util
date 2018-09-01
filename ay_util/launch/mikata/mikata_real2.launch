@@ -1,5 +1,6 @@
 <!--
-Setup real robot of Mikata Arm.
+Setup real robot of Mikata Arm type 2.
+Using mikata_driver = controller as ROS node.
 -->
 
 <launch>
@@ -8,6 +9,11 @@ Setup real robot of Mikata Arm.
   <include file="$(find ay_util)/launch/mikata/mikata_cmn.launch">
     <arg name="jsdev"  value="$(arg jsdev)" />
   </include>
+
+  <arg name="dev" default="/dev/ttyUSB0" />
+  <node pkg="ay_util" type="mikata_driver.py"
+        name="mikata_driver" output="screen"
+        args="$(arg dev)" />
 
   <!--<node pkg="rviz" type="rviz" name="rviz"/>-->
 

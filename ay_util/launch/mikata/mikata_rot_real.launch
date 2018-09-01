@@ -1,11 +1,10 @@
 <!--
-Setup real robot of Motoman SIA10f.
-This needs to be executed on the Motoman control PC.
+Setup real robot of Mikata Arm (gripper is rotated).
 -->
 
 <launch>
 
-  <arg name="jsdev" default="/dev/input/js1" />
+  <arg name="jsdev" default="/dev/input/js0" />
   <include file="$(find ay_util)/launch/mikata/mikata_rot_cmn.launch">
     <arg name="jsdev"  value="$(arg jsdev)" />
   </include>
