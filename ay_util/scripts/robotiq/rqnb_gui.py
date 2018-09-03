@@ -32,10 +32,11 @@ if __name__=='__main__':
       (':pair', ('time',['rosrun ay_vision disp_rostime',E]),
                 ('kill',['C-c']) )  ]),
     ('aypi10',[
-      (':pair', ('stream',['ssh aypi10 "./stream.sh"',E]),
+      (':pair', ('stream',['ssh ayg@aypi10 "./stream.sh"',E]),
                 ('stop',[E]) ),
-      ('reboot',['ssh aypi10 "sudo reboot"',E]),
-      ('shutdown',['ssh aypi10 "sudo halt -p"',E])  ]),
+      ('config',['ssh ayg@aypi10 "./conf_elp.sh"',E]),
+      ('reboot',['ssh ayg@aypi10 "sudo reboot"',E]),
+      ('shutdown',['ssh ayg@aypi10 "sudo halt -p"',E])  ]),
     ('fv10',[
       (':pair', ('start',['roslaunch ay_fv_extra fv_pi10.launch',E]),
                 ('kill',['C-c']) )  ]),

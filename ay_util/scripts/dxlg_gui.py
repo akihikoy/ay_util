@@ -34,10 +34,11 @@ if __name__=='__main__':
       (':pair', ('time',['rosrun ay_vision disp_rostime',E]),
                 ('kill',['C-c']) )  ]),
     ('aypi11',[
-      (':pair', ('stream',['ssh aypi11 "./stream.sh"',E]),
+      (':pair', ('stream',['ssh ayg@aypi11 "./stream.sh"',E]),
                 ('stop',[E]) ),
-      ('reboot',['ssh aypi11 "sudo reboot"',E]),
-      ('shutdown',['ssh aypi11 "sudo halt -p"',E])  ]),
+      ('config',['ssh ayg@aypi11 "./conf_elp.sh"',E]),
+      ('reboot',['ssh ayg@aypi11 "sudo reboot"',E]),
+      ('shutdown',['ssh ayg@aypi11 "sudo halt -p"',E])  ]),
     ('fv11',[
       (':pair', ('start',['roslaunch ay_fv_extra fv_pi11.launch',E]),
                 ('kill',['C-c']) )  ]),

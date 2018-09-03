@@ -38,21 +38,27 @@ if __name__=='__main__':
     ('aypi1-R',[
       (':pair', ('stream',['ssh hm@aypi1 "./stream.sh"',E]),
                 ('stop',[E]) ),
-      ('reboot',['ssh hm@aypi1 "sudo reboot"',E])  ]),
+      ('config',['ssh hm@aypi1 "./conf_elp.sh"',E]),
+      ('reboot',['ssh hm@aypi1 "sudo reboot"',E]),
+      ('shutdown',['ssh hm@aypi1 "sudo halt -p"',E])  ]),
     ('vskin1-R',[
       (':pair', ('start',['roslaunch ay_fv_extra fv_pi01.launch',E]),
                 ('kill',['C-c']) )  ]),
     ('aypi2-L',[
       (':pair', ('stream',['ssh hm@aypi2 "./stream.sh"',E]),
                 ('stop',[E]) ),
-      ('reboot',['ssh hm@aypi2 "sudo reboot"',E])  ]),
+      ('config',['ssh hm@aypi2 "./conf_elp.sh"',E]),
+      ('reboot',['ssh hm@aypi2 "sudo reboot"',E]),
+      ('shutdown',['ssh hm@aypi2 "sudo halt -p"',E])  ]),
     ('vskin2-L',[
       (':pair', ('start',['roslaunch ay_fv_extra fv_pi02.launch',E]),
                 ('kill',['C-c']) )  ]),
     ('aypi3',[
       (':pair', ('stream',['ssh hm@aypi3 "./stream2.sh"',E]),
                 ('stop',[E]) ),
-      ('reboot',['ssh hm@aypi3 "sudo reboot"',E])  ]),
+      ('config',['ssh hm@aypi3 "./conf_elp.sh"',E]),
+      ('reboot',['ssh hm@aypi3 "sudo reboot"',E]),
+      ('shutdown',['ssh hm@aypi3 "sudo halt -p"',E])  ]),
     ('monitor1',[
       (':pair', ('run',['~/prg/testl/cv/capture.out "http://aypi3:8080/?action=stream&dummy=file.mjpg"',E]),
                 ('kill',['C-c']) )  ]),

@@ -46,6 +46,7 @@ if __name__=='__main__':
     ('aypi11',[
       (':pair', ('stream',['ssh ayg@aypi11 "./stream.sh"',E]),
                 ('stop',[E]) ),
+      ('config',['ssh ayg@aypi11 "./conf_elp.sh"',E]),
       ('reboot',['ssh ayg@aypi11 "sudo reboot"',E]),
       ('shutdown',['ssh ayg@aypi11 "sudo halt -p"',E])  ]),
     ('fv11',[
