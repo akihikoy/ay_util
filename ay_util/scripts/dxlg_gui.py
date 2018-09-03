@@ -9,24 +9,24 @@ from ay_py.tool.py_gui import RunTerminalTab
 
 if __name__=='__main__':
   E= 'Enter'
-  terminals= [
+  widgets= [
     ('main',[
-      ('Init(USB0)',(':all','ros',E,'dxlgripper0',E)),
-      ('Init(USB1)',(':all','ros',E,'dxlgripper1',E)),
+      ('Init',(':all','ros',E)),
       ('Exit',':close') ]),
     ('roscore',[
       (':pair', ('roscore',['roscore',E]),
                 ('kill',['C-c']) )  ]),
+    ('JoyUSB',':radio',['js0','js1']),
     ('Joystick',[
-      (':pair', ('js0',['rosrun joy joy_node _dev:=/dev/input/js0',E]),
-                ('kill',['C-c']) ),
-      (':pair', ('js1',['rosrun joy joy_node _dev:=/dev/input/js1',E]),
+      (':pair', ('joy',['rosrun joy joy_node _dev:=/dev/input/{JoyUSB}',E]),
                 ('kill',['C-c']) )  ]),
     ('Monitor-joy',[
       (':pair', ('echo-joy',['rostopic echo /joy',E]),
                 ('kill',['C-c']) )  ]),
-    ('Test_DxlGripper',[
-      ('test',['rosrun ay_py dxlg1.py',E])  ]),
+    ('DxlUSB',':radio',['USB0','USB1']),
+    ('DxlGripper',[
+      ('test',['rosrun ay_py dxlg1.py /dev/tty{DxlUSB}',E]),
+      ('fix_usb',['rosrun ay_util fix_usb_latency.sh tty{DxlUSB}',E])  ]),
     ('rviz',[
       (':pair', ('rviz',['rviz',E]),
                 ('kill',['C-c']) )  ]),
@@ -42,7 +42,7 @@ if __name__=='__main__':
       (':pair', ('start',['roslaunch ay_fv_extra fv_pi11.launch',E]),
                 ('kill',['C-c']) )  ]),
     ('JoyStickDemo',[
-      (':pair', ('start',['rosrun ay_util fix_usb_latency.sh',E,'rosrun ay_trick direct_run.py "robot \'dxlg\'" j',E]),
+      (':pair', ('start',['rosrun ay_trick direct_run.py "robot \'dxlg\',\'/dev/tty{DxlUSB}\'" j',E]),
                 ('quit',['q',E]) )  ]),
     #('aypi3',[
       #(':pair', ('stream',['ssh hm@aypi3 "./stream2.sh"',E]),
@@ -56,4 +56,4 @@ if __name__=='__main__':
                 #('kill',['C-c']) )  ]),
     ]
   exit_command= [E,'C-c']
-  RunTerminalTab('DxlGripper Launcher',terminals,exit_command)
+  RunTerminalTab('DxlGripper Launcher',widgets,exit_command)

@@ -11,7 +11,7 @@ from ay_py.tool.py_gui import RunTerminalTab
 
 if __name__=='__main__':
   E= 'Enter'
-  terminals= [
+  widgets= [
     ('main',[
       ('Init',(':all','ros',E,'bxmaster',E)),
       ('Exit',':close') ]),
@@ -61,4 +61,4 @@ if __name__=='__main__':
                 ('kill',['C-c']) )  ]),
     ]
   exit_command= [E,'C-c']
-  RunTerminalTab('Baxter Launcher',terminals,exit_command)
+  RunTerminalTab('Baxter Launcher',widgets,exit_command)

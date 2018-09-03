@@ -9,17 +9,16 @@ from ay_py.tool.py_gui import RunTerminalTab
 
 if __name__=='__main__':
   E= 'Enter'
-  terminals= [
+  widgets= [
     ('main',[
       ('Init',(':all','ros',E,'robotiqnb',E)),
       ('Exit',':close') ]),
     ('roscore',[
       (':pair', ('roscore',['roscore',E]),
                 ('kill',['C-c']) )  ]),
+    ('JoyUSB',':radio',['js0','js1']),
     ('RobotiqNB',[
-      (':pair', ('system(js0)',['roslaunch ay_util robotiq.launch jsdev:=/dev/input/js0',E]),
-                ('kill',['C-c']) ),
-      (':pair', ('system(js1)',['roslaunch ay_util robotiq.launch jsdev:=/dev/input/js1',E]),
+      (':pair', ('system',['roslaunch ay_util robotiq.launch jsdev:=/dev/input/{JoyUSB}',E]),
                 ('kill',['C-c']) )  ]),
     ('Rq-Calib',[
       ('calib',['rosrun ay_util rqnb_calib.py',E])  ]),
@@ -55,4 +54,4 @@ if __name__=='__main__':
                 #('kill',['C-c']) )  ]),
     ]
   exit_command= [E,'C-c']
-  RunTerminalTab('RobotiqNB Launcher',terminals,exit_command)
+  RunTerminalTab('RobotiqNB Launcher',widgets,exit_command)

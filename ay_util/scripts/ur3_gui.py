@@ -9,22 +9,22 @@ from ay_py.tool.py_gui import RunTerminalTab
 
 if __name__=='__main__':
   E= 'Enter'
-  terminals= [
+  widgets= [
     ('main',[
       ('Init',(':all','ros',E)),
       ('Exit',':close') ]),
     ('roscore',[
       (':pair', ('roscore',['roscore',E]),
                 ('kill',['C-c']) )  ]),
+    ('JoyUSB',':radio',['js0','js1']),
     ('System',[
-      (':pair', ('real(js0)',['roslaunch ay_util ur3_real.launch jsdev:=/dev/input/js0',E]),
+      (':pair', ('real',['roslaunch ay_util ur3_real.launch jsdev:=/dev/input/{JoyUSB}',E]),
                 ('kill',['C-c']) ),
-      (':pair', ('real(js1)',['roslaunch ay_util ur3_real.launch jsdev:=/dev/input/js1',E]),
-                ('kill',['C-c']) ),
-      (':pair', ('k-sim(js0)',['roslaunch ay_util ur3_ksim.launch jsdev:=/dev/input/js0',E]),
-                ('kill',['C-c']) ),
-      (':pair', ('k-sim(js1)',['roslaunch ay_util ur3_ksim.launch jsdev:=/dev/input/js1',E]),
+      (':pair', ('k-sim',['roslaunch ay_util ur3_ksim.launch jsdev:=/dev/input/{JoyUSB}',E]),
                 ('kill',['C-c']) )  ]),
+    ('DxlUSB',':radio',['USB0','USB1']),
+    ('DxlGripper',[
+      ('fix_usb',['rosrun ay_util fix_usb_latency.sh tty{DxlUSB}',E])  ]),
     #('Mikata',[
       #('survo-off',['rosrun ay_py mikata_off.py',E]),
       #('reboot',['rosrun ay_py mikata_reboot.py',E])  ]),
@@ -69,8 +69,7 @@ if __name__=='__main__':
       (':pair', ('start',['roslaunch ay_vision segm_obj3.launch',E]),
                 ('kill',['C-c']) )  ]),
     ('JoyStickDemo',[
-      ('fix_usb',['rosrun ay_util fix_usb_latency.sh',E]),
-      (':pair', ('start(real)',['rosrun ay_trick direct_run.py "robot \'urdxlg\'" j',E]),
+      (':pair', ('start(real)',['rosrun ay_trick direct_run.py "robot \'urdxlg\',\'/dev/tty{DxlUSB}\'" j',E]),
                 ('quit',['q',E]) ),
       (':pair', ('start(k-sim)',['rosrun ay_trick direct_run.py "robot \'urs\'" j',E]),
                 ('quit',['q',E]) )  ]),
@@ -86,4 +85,4 @@ if __name__=='__main__':
                 #('kill',['C-c']) )  ]),
     ]
   exit_command= [E,'C-c']
-  RunTerminalTab('UR3 Launcher',terminals,exit_command)
+  RunTerminalTab('UR3 Launcher',widgets,exit_command)

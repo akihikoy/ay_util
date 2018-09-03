@@ -12,17 +12,20 @@ from ay_py.tool.py_gui import RunTerminalTab
 
 if __name__=='__main__':
   E= 'Enter'
-  terminals= [
+  widgets= [
     ('main',[
       ('Init',(':all','ros',E)),
       ('Exit',':close') ]),
+    ('roscore',[
+      (':pair', ('roscore',['roscore',E]),
+                ('kill',['C-c']) )  ]),
+    ('JoyUSB',':radio',['js0','js1']),
+    ('MikataUSB',':radio',['USB0','USB1']),
     ('System',[
-      (':pair', ('system(js0,usb0)',['roslaunch ay_util mikata_rot_real2.launch jsdev:=/dev/input/js0 dev:=/dev/ttyUSB0',E]),
-                ('kill',['C-c']) ),
-      (':pair', ('system(js1,usb0)',['roslaunch ay_util mikata_rot_real2.launch jsdev:=/dev/input/js1 dev:=/dev/ttyUSB0',E]),
+      (':pair', ('system',['roslaunch ay_util mikata_rot_real2.launch jsdev:=/dev/input/{JoyUSB} dev:=/dev/tty{MikataUSB}',E]),
                 ('kill',['C-c']) )  ]),
     ('Mikata',[
-      ('fix_usb',['rosrun ay_util fix_usb_latency.sh',E]),
+      ('fix_usb',['rosrun ay_util fix_usb_latency.sh tty{MikataUSB}',E]),
       ('survo-off',['rosrun ay_py mikata2_off.py',E]),
       ('reboot',['rosrun ay_py mikata2_reboot.py',E])  ]),
     ('Monitor-joy',[
@@ -80,4 +83,4 @@ if __name__=='__main__':
                 ##('kill',['C-c']) )  ]),
     ]
   exit_command= [E,'C-c']
-  RunTerminalTab('Mikata Launcher',terminals,exit_command)
+  RunTerminalTab('Mikata Launcher',widgets,exit_command)
