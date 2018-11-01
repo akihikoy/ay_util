@@ -13,7 +13,7 @@ Using mikata_driver = controller as ROS node.
   <arg name="dev" default="/dev/ttyUSB0" />
   <node pkg="ay_util" type="mikata_driver.py"
         name="mikata_driver" output="screen"
-        args="$(arg dev)" />
+        args="$(arg dev) Mikata" />
 
   <!--<node pkg="rviz" type="rviz" name="rviz"/>-->
 

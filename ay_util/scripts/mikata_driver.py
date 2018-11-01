@@ -4,6 +4,9 @@
 #\author  Akihiko Yamaguchi, info@akihikoy.net
 #\version 0.1
 #\date    Aug.29, 2018
+#\version 0.2
+#\date    Nov.01, 2018
+#         Added support of Crane-X7
 import roslib;
 roslib.load_manifest('sensor_msgs')
 roslib.load_manifest('ay_py')
@@ -16,12 +19,15 @@ import control_msgs.msg
 import sys
 import ay_util_msgs.srv
 from ay_py.misc.dxl_mikata import TMikata
+from ay_py.misc.dxl_cranex7 import TCraneX7
 from ay_py.misc.dxl_util import DxlPortHandler
 
 class TMikataDriver(object):
-  def __init__(self, dev='/dev/ttyUSB0'):
+  def __init__(self, dev='/dev/ttyUSB0', robot_type='Mikata'):
     self.dev= dev
-    self.mikata= TMikata(dev=self.dev)
+    self.robot_type= robot_type
+    if self.robot_type=='Mikata':  self.mikata= TMikata(dev=self.dev)
+    elif self.robot_type=='CraneX7':  self.mikata= TCraneX7(dev=self.dev)
 
     #Set callback to exit when Ctrl+C is pressed.
     DxlPortHandler.ReopenCallback= lambda: not rospy.is_shutdown()
@@ -31,9 +37,9 @@ class TMikataDriver(object):
     self.js= None
     self.joint_names= self.mikata.JointNames()
 
-    print 'Initializing and activating Mikata arm...'
+    print 'Initializing and activating {robot_type} arm...'.format(robot_type=self.robot_type)
     if not self.mikata.Setup():
-      raise Exception('Failed to setup Mikata Arm.')
+      raise Exception('Failed to setup {robot_type} Arm.'.format(robot_type=self.robot_type))
     #self.mikata.EnableTorque()
     self.mikata.StartStateObs(self.JointStatesCallback)
 
@@ -144,5 +150,7 @@ class TMikataDriver(object):
 if __name__=='__main__':
   rospy.init_node('mikata_driver')
   dev= sys.argv[1] if len(sys.argv)>1 else '/dev/ttyUSB0'
-  robot= TMikataDriver(dev)
+  robot_type= sys.argv[2] if len(sys.argv)>2 else 'Mikata'
+  print 'args=',sys.argv
+  robot= TMikataDriver(dev,robot_type)
   rospy.spin()

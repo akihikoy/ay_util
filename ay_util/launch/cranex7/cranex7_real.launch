@@ -1,19 +1,19 @@
 <!--
-Setup real robot of Mikata Arm type 2.
-Using mikata_driver = controller as ROS node.
+Setup real robot of Crane-X7 Arm.
+Using mikata_driver.py = controller as ROS node.
 -->
 
 <launch>
 
   <arg name="jsdev" default="/dev/input/js0" />
-  <include file="$(find ay_util)/launch/mikata/mikata_cmn.launch">
+  <include file="$(find ay_util)/launch/cranex7/cranex7_cmn.launch">
     <arg name="jsdev"  value="$(arg jsdev)" />
   </include>
 
   <arg name="dev" default="/dev/ttyUSB0" />
   <node pkg="ay_util" type="mikata_driver.py"
-        name="mikata_driver" output="screen"
-        args="$(arg dev) Mikata" />
+        name="cranex7_driver" output="screen"
+        args="$(arg dev) CraneX7" />
 
   <!--<node pkg="rviz" type="rviz" name="rviz"/>-->
 
