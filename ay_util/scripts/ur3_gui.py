@@ -23,7 +23,7 @@ if __name__=='__main__':
       (':pair', ('k-sim',['roslaunch ay_util ur3_ksim.launch jsdev:=/dev/input/{JoyUSB}',E]),
                 ('kill',['C-c']) )  ]),
     ('DxlUSB',':radio',['USB0','USB1']),
-    ('DxlGripper',[
+    ('Dynamixel',[
       ('fix_usb',['rosrun ay_util fix_usb_latency.sh tty{DxlUSB}',E])  ]),
     #('Mikata',[
       #('survo-off',['rosrun ay_py mikata_off.py',E]),
@@ -70,8 +70,9 @@ if __name__=='__main__':
     ('segm_obj',[
       (':pair', ('start',['roslaunch ay_vision segm_obj3.launch',E]),
                 ('kill',['C-c']) )  ]),
+    ('URType',':radio',['urthg','urdxlg']),
     ('JoyStickDemo',[
-      (':pair', ('start(real)',['rosrun ay_trick direct_run.py "robot \'urdxlg\',\'/dev/tty{DxlUSB}\'" j',E]),
+      (':pair', ('start(real)',['rosrun ay_trick direct_run.py "robot \'{URType}\',\'/dev/tty{DxlUSB}\'" "fv.fv \'on\'" j',E]),
                 ('quit',['q',E]) ),
       (':pair', ('start(k-sim)',['rosrun ay_trick direct_run.py "robot \'urs\'" j',E]),
                 ('quit',['q',E]) )  ]),
