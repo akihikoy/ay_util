@@ -46,9 +46,10 @@ if __name__=='__main__':
     ('aypi13',[
       (':pair', ('stream',['ssh ayg@aypi13 "./stream.sh"',E]),
                 ('stop',[E]) ),
-      ('config',['ssh ayg@aypi13 "./conf_elp.sh"',E]),
       ('reboot',['ssh ayg@aypi13 "sudo reboot"',E]),
       ('shutdown',['ssh ayg@aypi13 "sudo halt -p"',E])  ]),
+    ('aypi13-2',[
+      ('config',['ssh ayg@aypi13 "./conf_elp.sh"',E]),  ]),
     ('fv13',[
       (':pair', ('start',['roslaunch ay_fv_extra fv_pi13.launch',E]),
                 ('kill',['C-c']) )  ]),
@@ -59,20 +60,28 @@ if __name__=='__main__':
       #(':pair', ('run',['~/prg/testl/cv/capture.out "http://aypi13:8082/?action=stream&dummy=file.mjpg"',E]),
                 #('kill',['C-c']) )  ]),
     ('aypi10',[
-      (':pair', ('stream',['ssh ayg@aypi10 "./stream1.sh"',E]),
+      (':pair', ('stream1',['ssh ayg@aypi10 "./stream1.sh"',E]),
                 ('stop',[E]) ),
-      ('config',['ssh ayg@aypi10 "./conf_elp1.sh"',E]),
+      #(':pair', ('stream2',['ssh ayg@aypi10 "./stream.sh"',E]),
+                #('stop',[E]) ),
       ('reboot',['ssh ayg@aypi10 "sudo reboot"',E]),
       ('shutdown',['ssh ayg@aypi10 "sudo halt -p"',E])  ]),
+    ('aypi10-2',[
+      ('config1',['ssh ayg@aypi10 "./conf_elp1.sh"',E]),
+      #('config2',['ssh ayg@aypi10 "./conf_elp.sh"',E])
+      ]),
     ('monitor10',[
       (':pair', ('run',['~/prg/testl/cv/capture.out "http://aypi10:8080/?action=stream&dummy=file.mjpg"',E]),
                 ('kill',['C-c']) )  ]),
     ('segm_obj',[
       (':pair', ('start',['roslaunch ay_vision segm_obj3.launch',E]),
                 ('kill',['C-c']) )  ]),
+    #('fv10',[
+      #(':pair', ('start',['roslaunch ay_fv_extra fv_pi10.launch',E]),
+                #('kill',['C-c']) )  ]),
     ('URType',':radio',['urthg','urdxlg']),
     ('JoyStickDemo',[
-      (':pair', ('start(real)',['rosrun ay_trick direct_run.py "robot \'{URType}\',\'/dev/tty{DxlUSB}\'" "fv.fv \'on\'" j',E]),
+      (':pair', ('start(real)',['rosrun ay_trick direct_run.py "robot \'{URType}\',\'/dev/tty{DxlUSB}\'" "fv.fv \'on\'" "viz \'\'" j',E]),
                 ('quit',['q',E]) ),
       (':pair', ('start(k-sim)',['rosrun ay_trick direct_run.py "robot \'urs\'" j',E]),
                 ('quit',['q',E]) )  ]),
