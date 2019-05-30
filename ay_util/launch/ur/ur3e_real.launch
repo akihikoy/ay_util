@@ -1,0 +1,23 @@
+<!--
+Setup real robot of UR3.
+UR3e should be powered on before running this.
+-->
+
+<launch>
+
+  <arg name="robot_ip" default="ur3ea" />
+  <include file="$(find ur_modern_driver)/launch/ur3e_bringup.launch">
+  <!--<include file="$(find ur_modern_driver)/launch/ur3e_bringup_joint_limited.launch">-->  <!--Using the 'limited' joint range [-PI, PI] on all joints-->
+    <arg name="robot_ip" value="$(arg robot_ip)" />
+  </include>
+
+  <!--State validity checker:-->
+  <include file="$(find ay_util)/launch/ur/ur_state_validity_checker.launch"/>
+
+  <!--Joy stick-->
+  <arg name="jsdev" default="/dev/input/js1" />
+  <node pkg="joy" type="joy_node" name="joy_node" >
+    <param name="dev" type="string" value="$(arg jsdev)" />
+  </node>
+
+</launch>

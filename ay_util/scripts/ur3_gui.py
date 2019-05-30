@@ -16,11 +16,10 @@ if __name__=='__main__':
     ('roscore',[
       (':pair', ('roscore',['roscore',E]),
                 ('kill',['C-c']) )  ]),
+    ('URType',':cmb',['UR3','UR3DxlG','UR3ThG','UR3_SIM','UR3DxlG_SIM','UR3ThG_SIM', 'UR3e','UR3eThG','UR3e_SIM','UR3eThG_SIM']),
     ('JoyUSB',':radio',['js0','js1']),
     ('System',[
-      (':pair', ('real',['roslaunch ay_util ur3_real.launch jsdev:=/dev/input/{JoyUSB}',E]),
-                ('kill',['C-c']) ),
-      (':pair', ('k-sim',['roslaunch ay_util ur3_ksim.launch jsdev:=/dev/input/{JoyUSB}',E]),
+      (':pair', ('run',['roslaunch ay_util ur_selector.launch robot_code:={URType} jsdev:=/dev/input/{JoyUSB}',E]),
                 ('kill',['C-c']) )  ]),
     ('DxlUSB',':radio',['USB0','USB1']),
     ('Dynamixel',[
@@ -79,7 +78,6 @@ if __name__=='__main__':
     #('fv10',[
       #(':pair', ('start',['roslaunch ay_fv_extra fv_pi10.launch',E]),
                 #('kill',['C-c']) )  ]),
-    ('URType',':radio',['urthg','urdxlg']),
     ('JoyStickDemo',[
       (':pair', ('start(real)',['rosrun ay_trick direct_run.py "robot \'{URType}\',\'/dev/tty{DxlUSB}\'" "fv.fv \'on\'" "viz \'\'" j',E]),
                 ('quit',['q',E]) ),

@@ -1,0 +1,32 @@
+<!--
+Choose a proper launcher of UR from the robot code.
+Since this uses eval in if, it works with Kinetic+.
+-->
+<launch>
+
+  <arg name="robot_code" default="" />
+  <arg name="jsdev" default="/dev/input/js1" />
+
+  <group if="$(eval robot_code in ('UR3','UR3DxlG','UR3ThG') )">
+    <include file="$(find ay_util)/launch/ur/ur3_real.launch" >
+      <arg name="jsdev" value="$(arg jsdev)" />
+    </include>
+  </group>
+  <group if="$(eval robot_code in ('UR3_SIM','UR3DxlG_SIM','UR3ThG_SIM') )">
+    <include file="$(find ay_util)/launch/ur/ur3_ksim.launch">
+      <arg name="jsdev" value="$(arg jsdev)" />
+    </include>
+  </group>
+
+  <group if="$(eval robot_code in ('UR3e','UR3eThG') )">
+    <include file="$(find ay_util)/launch/ur/ur3e_real.launch">
+      <arg name="jsdev" value="$(arg jsdev)" />
+    </include>
+  </group>
+  <group if="$(eval robot_code in ('UR3e_SIM','UR3eThG_SIM') )">
+    <include file="$(find ay_util)/launch/ur/ur3e_ksim.launch">
+      <arg name="jsdev" value="$(arg jsdev)" />
+    </include>
+  </group>
+
+</launch>
