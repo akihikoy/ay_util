@@ -18,16 +18,23 @@ import actionlib
 import control_msgs.msg
 import sys
 import ay_util_msgs.srv
-from ay_py.misc.dxl_mikata import TMikata
-from ay_py.misc.dxl_cranex7 import TCraneX7
 from ay_py.misc.dxl_util import DxlPortHandler
 
 class TMikataDriver(object):
   def __init__(self, dev='/dev/ttyUSB0', robot_type='Mikata'):
     self.dev= dev
     self.robot_type= robot_type
-    if self.robot_type=='Mikata':  self.mikata= TMikata(dev=self.dev)
-    elif self.robot_type=='CraneX7':  self.mikata= TCraneX7(dev=self.dev)
+    if self.robot_type=='Mikata':
+      mod= __import__('ay_py.misc.dxl_mikata',globals(),None,('TMikata',))
+      self.mikata= mod.TMikata(dev=self.dev)
+    elif self.robot_type=='CraneX7':
+      mod= __import__('ay_py.misc.dxl_cranex7',globals(),None,('TCraneX7',))
+      self.mikata= mod.TCraneX7(dev=self.dev)
+    elif self.robot_type=='Mikata6':
+      mod= __import__('ay_py.misc.dxl_mikata6',globals(),None,('TMikata6',))
+      self.mikata= mod.TMikata6(dev=self.dev)
+    else:
+      raise Exception('Invalid robot type: {robot_type}'.format(robot_type=robot_type))
 
     #Set callback to exit when Ctrl+C is pressed.
     DxlPortHandler.ReopenCallback= lambda: not rospy.is_shutdown()
