@@ -39,18 +39,19 @@ if __name__=='__main__':
     #('m100',[
       #(':pair', ('start',['roslaunch ay_3dvision sentis_tof_m100_s.launch',E]),
                 #('kill',['C-c']) )  ]),
-    ('pose_est',[
-      (':pair', ('start',['roslaunch ay_3dvision rt_pose_estimator_m100.launch',E]),
-                ('kill',['C-c']) )  ]),
-    ('aypi13',[
-      (':pair', ('stream',['ssh ayg@aypi13 "./stream.sh"',E]),
+    #('pose_est',[
+      #(':pair', ('start',['roslaunch ay_3dvision rt_pose_estimator_m100.launch',E]),
+                #('kill',['C-c']) )  ]),
+    ('PiID',':radio',['pi13','pi14']),
+    ('aypiX',[
+      (':pair', ('stream',['ssh ayg@ay{PiID} "./stream.sh"',E]),
                 ('stop',[E]) ),
-      ('reboot',['ssh ayg@aypi13 "sudo reboot"',E]),
-      ('shutdown',['ssh ayg@aypi13 "sudo halt -p"',E])  ]),
-    ('aypi13-2',[
-      ('config',['ssh ayg@aypi13 "./conf_elp.sh"',E]),  ]),
-    ('fv13',[
-      (':pair', ('start',['roslaunch ay_fv_extra fv_pi13.launch',E]),
+      ('reboot',['ssh ayg@ay{PiID} "sudo reboot"',E]),
+      ('shutdown',['ssh ayg@ay{PiID} "sudo halt -p"',E])  ]),
+    ('aypiX-2',[
+      ('config',['ssh ayg@ay{PiID} "./conf_elp.sh"',E]),  ]),
+    ('fingervision',[
+      (':pair', ('start',['roslaunch ay_fv_extra fv_{PiID}.launch',E]),
                 ('kill',['C-c']) )  ]),
     #('aypi13-no3',[
       #(':pair', ('stream',['ssh aypi13 "./stream_no3.sh"',E]),
