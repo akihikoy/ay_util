@@ -29,4 +29,15 @@ Since this uses eval in if, it works with Kinetic+.
     </include>
   </group>
 
+  <group if="$(eval robot_code in ('UR5e','UR5eThG') )">
+    <include file="$(find ay_util)/launch/ur/ur5e_real.launch">
+      <arg name="jsdev" value="$(arg jsdev)" />
+    </include>
+  </group>
+  <group if="$(eval robot_code in ('UR5e_SIM','UR5eThG_SIM') )">
+    <include file="$(find ay_util)/launch/ur/ur5e_ksim.launch">
+      <arg name="jsdev" value="$(arg jsdev)" />
+    </include>
+  </group>
+
 </launch>

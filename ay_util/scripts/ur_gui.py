@@ -1,9 +1,12 @@
 #!/usr/bin/python
-#\file    ur3_gui.py
-#\brief   UR3 GUI control panel.
+#\file    ur_gui.py
+#\brief   UR GUI control panel.
 #\author  Akihiko Yamaguchi, info@akihikoy.net
 #\version 0.1
 #\date    Jun.25, 2018
+#\version 0.2
+#\date    Jun.24, 2019
+#         Updated for UR3e, UR5e
 import roslib; roslib.load_manifest('ay_py')
 from ay_py.tool.py_gui import RunTerminalTab
 
@@ -16,7 +19,8 @@ if __name__=='__main__':
     ('roscore',[
       (':pair', ('roscore',['roscore',E]),
                 ('kill',['C-c']) )  ]),
-    ('URType',':cmb',['UR3','UR3DxlG','UR3ThG','UR3_SIM','UR3DxlG_SIM','UR3ThG_SIM', 'UR3e','UR3eThG','UR3e_SIM','UR3eThG_SIM']),
+    ('URType',':cmb',['UR3','UR3DxlG','UR3ThG','UR3_SIM','UR3DxlG_SIM','UR3ThG_SIM', 'UR3e','UR3eThG','UR3e_SIM','UR3eThG_SIM',
+    'UR5e','UR5eThG','UR5e_SIM','UR5eThG_SIM']),
     ('JoyUSB',':radio',['js0','js1']),
     ('System',[
       (':pair', ('run',['roslaunch ay_util ur_selector.launch robot_code:={URType} jsdev:=/dev/input/{JoyUSB}',E]),
@@ -42,7 +46,7 @@ if __name__=='__main__':
     #('pose_est',[
       #(':pair', ('start',['roslaunch ay_3dvision rt_pose_estimator_m100.launch',E]),
                 #('kill',['C-c']) )  ]),
-    ('PiID',':radio',['pi13','pi14']),
+    ('PiID',':radio',['pi13','pi14','pi15']),
     ('aypiX',[
       (':pair', ('stream',['ssh ayg@ay{PiID} "./stream.sh"',E]),
                 ('stop',[E]) ),
@@ -96,4 +100,4 @@ if __name__=='__main__':
                 #('kill',['C-c']) )  ]),
     ]
   exit_command= [E,'C-c']
-  RunTerminalTab('UR3 Launcher',widgets,exit_command)
+  RunTerminalTab('UR Launcher',widgets,exit_command)

@@ -1,12 +1,12 @@
 <!--
-Setup real robot of UR3e.
+Setup real robot of UR5e.
 UR3e should be powered on before running this.
 -->
 
 <launch>
 
-  <arg name="robot_ip" default="ur3ea" />
-  <include file="$(find ur_modern_driver)/launch/ur3e_bringup.launch">
+  <arg name="robot_ip" default="ur5ea" />
+  <include file="$(find ur_modern_driver)/launch/ur5e_bringup.launch">
   <!--<include file="$(find ur_modern_driver)/launch/ur3e_bringup_joint_limited.launch">-->  <!--Using the 'limited' joint range [-PI, PI] on all joints-->
     <arg name="robot_ip" value="$(arg robot_ip)" />
   </include>

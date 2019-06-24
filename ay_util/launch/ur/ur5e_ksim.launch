@@ -1,10 +1,10 @@
 <!--
-Setup kinematics simulation of Universal Robots UR3e.
+Setup kinematics simulation of Universal Robots UR5e.
 -->
 
 <launch>
 
-  <include file="$(find ur_e_description)/launch/ur3e_upload.launch"/>
+  <include file="$(find ur_e_description)/launch/ur5e_upload.launch"/>
 
   <rosparam param="controller_joint_names">
   ["shoulder_pan_joint","shoulder_lift_joint","elbow_joint",
