@@ -89,36 +89,43 @@ class TDummyRobot(object):
     self.follow_traj_active= False
 
   def FollowTraj(self, traj):
+    dof,indexes= len(traj.joint_names), self.GetJointIndexes(traj.joint_names)
     splines,T= self.GetSplines(traj)
     rate= rospy.Rate(self.rate)
     t0= rospy.Time.now()
     while all(((rospy.Time.now()-t0)<T, self.follow_traj_active, not rospy.is_shutdown())):
       t= (rospy.Time.now()-t0).to_sec()
-      q_dq= [splines[d].Evaluate(t,with_tan=True) for d in range(self.dof)]
+      q_dq= [splines[d].Evaluate(t,with_tan=True) for d in range(dof)]
       q= [q for q,_ in q_dq]
       dq= [dq for _,dq in q_dq]
       #print t, q, dq
       with self.js_locker:
-        self.js.position= q
-        self.js.velocity= dq
+        for q_i,dq_i,i in zip(q,dq,indexes):
+          self.js.position[i]= q_i
+          self.js.velocity[i]= dq_i
       rate.sleep()
     self.follow_traj_active= False
 
+  def GetJointIndexes(self, joint_names):
+    return [self.js.name.index(name) for name in joint_names]
+
   def GetSplines(self, traj):
+    dof,indexes= len(traj.joint_names), self.GetJointIndexes(traj.joint_names)
     q_traj= [p.positions for p in traj.points]
     dq_traj= [p.velocities for p in traj.points]
     t_traj= [p.time_from_start for p in traj.points]
     #If no initial point:
     if t_traj[0].to_sec()>1.0e-3:
-      q_traj= [self.js.position]+q_traj
-      dq_traj= [self.js.velocity]+dq_traj
+      q_traj= [self.js.position[i] for i in indexes]+q_traj
+      dq_traj= [self.js.velocity[i] for i in indexes]+dq_traj
       t_traj= [rospy.Duration(0.0)]+t_traj
     print 'Received trajectory command:'
+    print traj.joint_names
     print [t.to_sec() for t in t_traj]
     print q_traj
 
     #Modeling the trajectory with spline.
-    splines= [TCubicHermiteSpline() for d in range(self.dof)]
+    splines= [TCubicHermiteSpline() for d in range(dof)]
     for d in range(len(splines)):
       data_d= [[t.to_sec(),q[d]] for q,t in zip(q_traj,t_traj)]
       splines[d].Initialize(data_d, tan_method=splines[d].CARDINAL, c=0.0, m=0.0)
@@ -130,6 +137,7 @@ class TDummyRobot(object):
       return
     self.follow_traj_active= True
 
+    dof,indexes= len(goal.trajectory.joint_names), self.GetJointIndexes(goal.trajectory.joint_names)
     splines,T= self.GetSplines(goal.trajectory)
     success= True
     rate= rospy.Rate(self.rate)
@@ -142,13 +150,14 @@ class TDummyRobot(object):
         break
 
       t= (rospy.Time.now()-t0).to_sec()
-      q_dq= [splines[d].Evaluate(t,with_tan=True) for d in range(self.dof)]
+      q_dq= [splines[d].Evaluate(t,with_tan=True) for d in range(dof)]
       q= [q for q,_ in q_dq]
       dq= [dq for _,dq in q_dq]
       #print t, q, dq
       with self.js_locker:
-        self.js.position= q
-        self.js.velocity= dq
+        for q_i,dq_i,i in zip(q,dq,indexes):
+          self.js.position[i]= q_i
+          self.js.velocity[i]= dq_i
 
       self.ftaction_actsrv.publish_feedback(self.ftaction_feedback)
       rate.sleep()
