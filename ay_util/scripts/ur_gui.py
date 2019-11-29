@@ -19,7 +19,7 @@ if __name__=='__main__':
     ('roscore',[
       (':pair', ('roscore',['roscore',E]),
                 ('kill',['C-c']) )  ]),
-    ('URType',':cmb',['UR3','UR3DxlG','UR3ThG','UR3_SIM','UR3DxlG_SIM','UR3ThG_SIM', 'UR3e','UR3eThG','UR3e_SIM','UR3eThG_SIM',
+    ('URType',':cmb',['UR3','UR3DxlG','UR3ThG','UR3_SIM','UR3DxlG_SIM','UR3ThG_SIM', 'UR3e','UR3eThG','UR3eDxlG','UR3e_SIM','UR3eThG_SIM','UR3eDxlG_SIM',
     'UR5e','UR5eThG','UR5e_SIM','UR5eThG_SIM']),
     ('JoyUSB',':radio',['js0','js1']),
     ('System',[

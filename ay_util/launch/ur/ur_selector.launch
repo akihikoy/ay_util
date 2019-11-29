@@ -18,12 +18,12 @@ Since this uses eval in if, it works with Kinetic+.
     </include>
   </group>
 
-  <group if="$(eval robot_code in ('UR3e','UR3eThG') )">
+  <group if="$(eval robot_code in ('UR3e','UR3eThG','UR3eDxlG') )">
     <include file="$(find ay_util)/launch/ur/ur3e_real.launch">
       <arg name="jsdev" value="$(arg jsdev)" />
     </include>
   </group>
-  <group if="$(eval robot_code in ('UR3e_SIM','UR3eThG_SIM') )">
+  <group if="$(eval robot_code in ('UR3e_SIM','UR3eThG_SIM','UR3eDxlG_SIM') )">
     <include file="$(find ay_util)/launch/ur/ur3e_ksim.launch">
       <arg name="jsdev" value="$(arg jsdev)" />
     </include>
