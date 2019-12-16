@@ -40,4 +40,10 @@ Since this uses eval in if, it works with Kinetic+.
     </include>
   </group>
 
+  <group if="$(eval robot_code in ('Gen3','Gen3ThG') )">
+    <include file="$(find ay_util)/launch/gen3/gen3_real.launch">
+      <arg name="jsdev" value="$(arg jsdev)" />
+    </include>
+  </group>
+
 </launch>

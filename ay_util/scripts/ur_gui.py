@@ -20,7 +20,8 @@ if __name__=='__main__':
       (':pair', ('roscore',['roscore',E]),
                 ('kill',['C-c']) )  ]),
     ('URType',':cmb',['UR3','UR3DxlG','UR3ThG','UR3_SIM','UR3DxlG_SIM','UR3ThG_SIM', 'UR3e','UR3eThG','UR3eDxlG','UR3e_SIM','UR3eThG_SIM','UR3eDxlG_SIM',
-    'UR5e','UR5eThG','UR5e_SIM','UR5eThG_SIM']),
+    'UR5e','UR5eThG','UR5e_SIM','UR5eThG_SIM',
+    'Gen3','Gen3ThG',]),
     ('JoyUSB',':radio',['js0','js1']),
     ('System',[
       (':pair', ('run',['roslaunch ay_util ur_selector.launch robot_code:={URType} jsdev:=/dev/input/{JoyUSB}',E]),
