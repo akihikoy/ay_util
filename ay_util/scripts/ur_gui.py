@@ -21,7 +21,7 @@ if __name__=='__main__':
                 ('kill',['C-c']) )  ]),
     ('URType',':cmb',['UR3','UR3DxlG','UR3ThG','UR3_SIM','UR3DxlG_SIM','UR3ThG_SIM', 'UR3e','UR3eThG','UR3eDxlG','UR3e_SIM','UR3eThG_SIM','UR3eDxlG_SIM',
     'UR5e','UR5eThG','UR5e_SIM','UR5eThG_SIM',
-    'Gen3','Gen3ThG',]),
+    'Gen3','Gen3ThG','Gen3DxlO3',]),
     ('JoyUSB',':radio',['js0','js1']),
     ('System',[
       (':pair', ('run',['roslaunch ay_util ur_selector.launch robot_code:={URType} jsdev:=/dev/input/{JoyUSB}',E]),
@@ -47,7 +47,7 @@ if __name__=='__main__':
     #('pose_est',[
       #(':pair', ('start',['roslaunch ay_3dvision rt_pose_estimator_m100.launch',E]),
                 #('kill',['C-c']) )  ]),
-    ('PiID',':radio',['pi13','pi14','pi15']),
+    ('PiID',':radio',['pi13','pi14','pi15','local01','local12']),
     ('aypiX',[
       (':pair', ('stream',['ssh ayg@ay{PiID} "./stream.sh"',E]),
                 ('stop',[E]) ),
@@ -55,6 +55,9 @@ if __name__=='__main__':
       ('shutdown',['ssh ayg@ay{PiID} "sudo halt -p"',E])  ]),
     ('aypiX-2',[
       ('config',['ssh ayg@ay{PiID} "./conf_elp.sh"',E]),  ]),
+    ('local',[
+      ('config(elp)',['cd ~/ros_ws/ay_tools/fingervision/tools',E,'./conf_elp.sh {PiID}',E]),
+      ('config(asahi)',['cd ~/ros_ws/ay_tools/fingervision/tools',E,'./conf_asahi.sh {PiID}',E]),  ]),
     ('fingervision',[
       (':pair', ('start',['roslaunch ay_fv_extra fv_{PiID}.launch',E]),
                 ('kill',['C-c']) )  ]),
