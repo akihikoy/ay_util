@@ -1,4 +1,4 @@
-# Mikata Arm low-level IO.
+# Dynamixel low-level IO.
 
 # Joint names.
 string[] joint_names

@@ -7,6 +7,9 @@ Since this uses eval in if, it works with Kinetic+.
   <arg name="robot_code" default="" />
   <arg name="jsdev" default="/dev/input/js1" />
 
+
+  <!--Launch a robot arm controller-->
+
   <group if="$(eval robot_code in ('UR3','UR3DxlG','UR3ThG','UR3DxlpO2') )">
     <include file="$(find ay_util)/launch/ur/ur3_real.launch" >
       <arg name="jsdev" value="$(arg jsdev)" />
@@ -44,6 +47,33 @@ Since this uses eval in if, it works with Kinetic+.
     <include file="$(find ay_util)/launch/gen3/gen3_real.launch">
       <arg name="jsdev" value="$(arg jsdev)" />
     </include>
+  </group>
+
+
+  <!--Launch a gripper controller-->
+
+  <group if="$(eval robot_code in ('UR3DxlG','UR3eDxlG') )">
+    <arg name="dxldev" default="/dev/ttyUSB0" />
+    <node pkg="ay_util" type="dxlg_driver.py" name="gripper_driver" output="screen"
+          args="$(arg dxldev) DxlGripper" />
+  </group>
+
+  <group if="$(eval robot_code in ('UR3ThG','UR3eThG','UR5eThG','Gen3ThG') )">
+    <arg name="dxldev" default="/dev/ttyUSB0" />
+    <node pkg="ay_util" type="dxlg_driver.py" name="gripper_driver" output="screen"
+          args="$(arg dxldev) RHP12RNGripper" />
+  </group>
+
+  <group if="$(eval robot_code in ('UR3DxlpO2','UR3eDxlpO2') )">
+    <arg name="dxldev" default="/dev/ttyUSB0" />
+    <node pkg="ay_util" type="dxlg_driver.py" name="gripper_driver" output="screen"
+          args="$(arg dxldev) DxlpO2Gripper" />
+  </group>
+
+  <group if="$(eval robot_code in ('Gen3DxlO3',) )">
+    <arg name="dxldev" default="/dev/ttyUSB0" />
+    <node pkg="ay_util" type="dxlg_driver.py" name="gripper_driver" output="screen"
+          args="$(arg dxldev) DxlO3Gripper" />
   </group>
 
 </launch>

@@ -23,12 +23,12 @@ if __name__=='__main__':
     'UR5e','UR5eThG','UR5e_SIM','UR5eThG_SIM',
     'Gen3','Gen3ThG','Gen3DxlO3',]),
     ('JoyUSB',':radio',['js0','js1']),
-    ('System',[
-      (':pair', ('run',['roslaunch ay_util ur_selector.launch robot_code:={URType} jsdev:=/dev/input/{JoyUSB}',E]),
-                ('kill',['C-c']) )  ]),
     ('DxlUSB',':radio',['USB0','USB1']),
     ('Dynamixel',[
       ('fix_usb',['rosrun ay_util fix_usb_latency.sh tty{DxlUSB}',E])  ]),
+    ('System',[
+      (':pair', ('run',['roslaunch ay_util ur_selector.launch robot_code:={URType} jsdev:=/dev/input/{JoyUSB} dxldev:=/dev/tty{DxlUSB}',E]),
+                ('kill',['C-c']) )  ]),
     #('Mikata',[
       #('survo-off',['rosrun ay_py mikata_off.py',E]),
       #('reboot',['rosrun ay_py mikata_reboot.py',E])  ]),
@@ -88,7 +88,7 @@ if __name__=='__main__':
       #(':pair', ('start',['roslaunch ay_fv_extra fv_pi10.launch',E]),
                 #('kill',['C-c']) )  ]),
     ('JoyStickDemo',[
-      (':pair', ('start(real)',['rosrun ay_trick direct_run.py "robot \'{URType}\',\'/dev/tty{DxlUSB}\'" "fv.fv \'on\'" "viz \'\'" j',E]),
+      (':pair', ('start(real)',['rosrun ay_trick direct_run.py "robot \'{URType}\'" "fv.fv \'on\'" "viz \'\'" j',E]),
                 ('quit',['q',E]) ),
       (':pair', ('start(k-sim)',['rosrun ay_trick direct_run.py "robot \'urs\'" j',E]),
                 ('quit',['q',E]) )  ]),

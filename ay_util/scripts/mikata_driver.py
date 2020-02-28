@@ -46,7 +46,7 @@ class TMikataDriver(object):
 
     print 'Initializing and activating {robot_type} arm...'.format(robot_type=self.robot_type)
     if not self.mikata.Setup():
-      raise Exception('Failed to setup {robot_type} Arm.'.format(robot_type=self.robot_type))
+      raise Exception('Failed to setup {robot_type} arm.'.format(robot_type=self.robot_type))
     #self.mikata.EnableTorque()
     self.mikata.StartStateObs(self.JointStatesCallback)
 
@@ -59,7 +59,7 @@ class TMikataDriver(object):
     self.ftaction_actsrv= actionlib.SimpleActionServer(self.ftaction_name, control_msgs.msg.FollowJointTrajectoryAction, execute_cb=self.FollowTrajActionCallback, auto_start=False)
     self.ftaction_actsrv.start()
 
-    self.srv_io= rospy.Service('~robot_io', ay_util_msgs.srv.MikataArmIO, self.MikataArmIOHandler)
+    self.srv_io= rospy.Service('~robot_io', ay_util_msgs.srv.DxlIO, self.DxlIOHandler)
 
   def __del__(self):
     self.Cleanup()
@@ -119,9 +119,9 @@ class TMikataDriver(object):
       print '%s: Succeeded' % self.ftaction_name
       self.ftaction_actsrv.set_succeeded(self.ftaction_result)
 
-  # Handler of robot_io service (ay_util_msgs/MikataArmIO).
-  def MikataArmIOHandler(self, req):
-    res= ay_util_msgs.srv.MikataArmIOResponse()
+  # Handler of robot_io service (ay_util_msgs/DxlIO).
+  def DxlIOHandler(self, req):
+    res= ay_util_msgs.srv.DxlIOResponse()
     if req.command=='Read':  #Read from Dynamixel. input: joint_names, data_s (address name).  return: res_ia.
       with self.mikata.port_locker:
         res.res_ia= [self.mikata.dxl[j].Read(req.data_s) for j in req.joint_names]
