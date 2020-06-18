@@ -70,8 +70,9 @@ Since this uses eval in if, it works with Kinetic+.
 
   <group if="$(eval robot_code in ('UR3DxlpO2_Straight1','UR3DxlpO2_SRound1','UR3DxlpO2_Fork1', 'UR3eDxlpO2_Straight1','UR3eDxlpO2_SRound1','UR3eDxlpO2_Fork1') )">
     <arg name="dxldev" default="/dev/ttyUSB0" />
+    <arg name="finger_type" value="$(eval robot_code.split('_')[1] )" />
     <node pkg="ay_util" type="dxlg_driver.py" name="gripper_driver" output="screen"
-          args="$(arg dxldev) DxlpO2Gripper $(eval robot_code.split('_')[1] )" />
+          args="$(arg dxldev) DxlpO2Gripper $(arg finger_type)" />
   </group>
 
   <group if="$(eval robot_code in ('Gen3DxlO3',) )">

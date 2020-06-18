@@ -53,9 +53,9 @@ class TDxlGripperDriver(object):
 
     self.js= None
 
-    print 'Initializing and activating {gripper_type} gripper...'.format(gripper_type=self.gripper_type)
+    print 'Initializing and activating {gripper_type}({finger_type}) gripper...'.format(gripper_type=self.gripper_type,finger_type=finger_type)
     if not self.gripper.Init():
-      raise Exception('Failed to setup {gripper_type} gripper.'.format(gripper_type=self.gripper_type))
+      raise Exception('Failed to setup {gripper_type}({finger_type}) gripper.'.format(gripper_type=self.gripper_type,finger_type=finger_type))
     self.gripper.StartStateObs(self.JointStatesCallback)
     self.gripper.StartMoveTh()
 
