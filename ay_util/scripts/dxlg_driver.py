@@ -15,7 +15,7 @@ import ay_util_msgs.srv
 from ay_py.misc.dxl_util import DxlPortHandler
 
 class TDxlGripperDriver(object):
-  def __init__(self, dev='/dev/ttyUSB0', gripper_type='DxlGripper'):
+  def __init__(self, dev='/dev/ttyUSB0', gripper_type='DxlGripper', finger_type=None):
     self.dev= dev
     self.gripper_type= gripper_type
     if self.gripper_type=='DxlGripper':
@@ -35,7 +35,7 @@ class TDxlGripperDriver(object):
       self.dxl= {'joint0':self.gripper.dxl}
     elif self.gripper_type=='DxlpO2Gripper':
       mod= __import__('ay_py.misc.dxl_dxlpo2',globals(),None,('TDxlpO2',))
-      self.gripper= mod.TDxlpO2(dev=self.dev)
+      self.gripper= mod.TDxlpO2(dev=self.dev, finger_type=finger_type)
       self.joint_names= ['joint0']
       self.dxl= {'joint0':self.gripper.dxl}
     elif self.gripper_type=='DxlO3Gripper':
@@ -156,6 +156,7 @@ if __name__=='__main__':
   rospy.init_node('gripper_driver')
   dev= sys.argv[1] if len(sys.argv)>1 else '/dev/ttyUSB0'
   gripper_type= sys.argv[2] if len(sys.argv)>2 else 'DxlGripper'
+  finger_type= sys.argv[3] if len(sys.argv)>3 else None
   print 'args=',sys.argv
-  robot= TDxlGripperDriver(dev,gripper_type)
+  robot= TDxlGripperDriver(dev, gripper_type, finger_type)
   #rospy.spin()
