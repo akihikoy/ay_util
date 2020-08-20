@@ -84,7 +84,7 @@ class TDummyRobot(object):
     q= [q0+v*dt for q0,v in zip(self.js.position,msg.points[0].velocities)]
     with self.js_locker:
       self.js.position= q
-      self.js.velocity= msg.points[0].velocities
+      self.js.velocity= list(msg.points[0].velocities)
     rate.sleep()
     self.follow_traj_active= False
 
