@@ -27,6 +27,7 @@ if __name__=='__main__':
     ('Dynamixel',[
       ('fix_usb',['rosrun ay_util fix_usb_latency.sh tty{DxlUSB}',E])  ]),
     ('System',[
+      ('calib',['roslaunch ay_util ur_calib.launch robot_code:={URType}',E]),
       (':pair', ('run',['roslaunch ay_util ur_selector.launch robot_code:={URType} jsdev:=/dev/input/{JoyUSB} dxldev:=/dev/tty{DxlUSB}',E]),
                 ('kill',['C-c']) )  ]),
     #('Mikata',[
@@ -104,4 +105,4 @@ if __name__=='__main__':
                 #('kill',['C-c']) )  ]),
     ]
   exit_command= [E,'C-c']
-  RunTerminalTab('UR Launcher',widgets,exit_command)
+  RunTerminalTab('UR Launcher',widgets,exit_command,size=(1000,400))
