@@ -5,14 +5,13 @@ UR3 should be powered on before running this.
 
 <launch>
 
-  <arg name="robot_ip" default="ur3a" />
-  <arg name="kinematics_config" default="$(env HOME)/data/calib/ur/ur3a_calibration.yaml" />
+  <arg name="kinematics_config" default="$(env HOME)/data/calib/ur/$(optenv UR3_IP ur3a)_calibration.yaml" />
 
   <!--<include file="$(find ur_modern_driver)/launch/ur3_bringup.launch">
-    <arg name="robot_ip" value="$(arg robot_ip)" />
+    <arg name="robot_ip" value="$(optenv UR3_IP ur3a)" />
   </include>-->
   <include file="$(find ur_robot_driver)/launch/ur3_bringup.launch">
-    <arg name="robot_ip" value="$(arg robot_ip)" />
+    <arg name="robot_ip" value="$(optenv UR3_IP ur3a)" />
     <arg name="kinematics_config" value="$(arg kinematics_config)" />
   </include>
 
