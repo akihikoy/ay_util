@@ -15,6 +15,13 @@ UR3e should be powered on before running this.
     <arg name="kinematics_config" value="$(arg kinematics_config)" />
   </include>
 
+  <!--Filter for the force/torque sensor on wrist-->
+  <node type="wrench_filter.py" pkg="ay_util" name="wrench_filter" output="screen">
+    <param name="topic_in" value="/wrench" />
+    <param name="topic_out" value="/wrench_filtered" />
+    <param name="N" value="10" />
+  </node>
+
   <!--State validity checker:-->
   <include file="$(find ay_util)/launch/ur/ur_state_validity_checker.launch"/>
 
