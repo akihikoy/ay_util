@@ -36,6 +36,7 @@ if __name__=='__main__':
   status= TContainer()
   status.filter_len= filter_len
   status.wrench_seq= []
-  status.pub_wrench
+  status.pub_wrench= pub_wrench
   sub_wrench_in= rospy.Subscriber(topic_in, geometry_msgs.msg.WrenchStamped, lambda msg,status=status:CallbackWrench(msg,status))
 
+  rospy.spin()
