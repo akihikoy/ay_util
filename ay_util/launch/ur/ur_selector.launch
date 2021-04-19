@@ -6,6 +6,8 @@ Since this uses eval in if, it works with Kinetic+.
 
   <arg name="robot_code" default="" />
   <arg name="jsdev" default="/dev/input/js1" />
+  <arg name="dxldev" default="/dev/ttyUSB0" />
+  <arg name="with_gripper" default="true" />
 
   <!--#################################################################################
   TODO:FIXME:Separate robot_code into robot_code, gripper_code/finger_code,
@@ -55,7 +57,14 @@ Since this uses eval in if, it works with Kinetic+.
 
 
   <!--Launch a gripper controller-->
+  <group if="$(arg with_gripper)">
+    <include file="$(find ay_util)/launch/ur/ur_gripper_selector.launch">
+      <arg name="robot_code" value="$(arg robot_code)" />
+      <arg name="dxldev" value="$(arg dxldev)" />
+    </include>
+  </group>
 
+  <!--
   <group if="$(eval robot_code in ('UR3DxlG','UR3eDxlG') )">
     <arg name="dxldev" default="/dev/ttyUSB0" />
     <node pkg="ay_util" type="dxlg_driver.py" name="gripper_driver" output="screen"
@@ -80,5 +89,6 @@ Since this uses eval in if, it works with Kinetic+.
     <node pkg="ay_util" type="dxlg_driver.py" name="gripper_driver" output="screen"
           args="$(arg dxldev) DxlO3Gripper" />
   </group>
+  -->
 
 </launch>
