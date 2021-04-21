@@ -32,6 +32,11 @@ Since this uses eval in if, it works with Kinetic+.
       <arg name="jsdev" value="$(arg jsdev)" />
     </include>
   </group>
+  <group if="$(eval robot_code in ('UR3e125hz','UR3e125hzThG','UR3e125hzDxlG','UR3e125hzDxlpO2_Straight1','UR3e125hzDxlpO2_SRound1','UR3e125hzDxlpO2_Fork1') )">
+    <include file="$(find ay_util)/launch/ur/ur3e_125hz_real.launch">
+      <arg name="jsdev" value="$(arg jsdev)" />
+    </include>
+  </group>
   <group if="$(eval robot_code in ('UR3e_SIM','UR3eThG_SIM','UR3eDxlG_SIM','UR3eDxlpO2_Straight1_SIM','UR3eDxlpO2_SRound1_SIM','UR3eDxlpO2_Fork1_SIM') )">
     <include file="$(find ay_util)/launch/ur/ur3e_ksim.launch">
       <arg name="jsdev" value="$(arg jsdev)" />
