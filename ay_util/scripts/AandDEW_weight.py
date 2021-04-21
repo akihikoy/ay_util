@@ -20,6 +20,7 @@ if __name__=='__main__':
   rospy.init_node('weight')
   dev= sys.argv[1] if len(sys.argv)>1 else '/dev/ttyUSB0'
   baudrate= int(sys.argv[2]) if len(sys.argv)>2 else 2400
+  #echo= int(sys.argv[3]) if len(sys.argv)>3 else False
 
   ser= serial.Serial(dev,baudrate,serial.SEVENBITS,serial.PARITY_EVEN)
 
@@ -29,11 +30,13 @@ if __name__=='__main__':
   header= std_msgs.msg.Header()
   header.frame_id= ''  #Shall we use node name? (rospy.get_name())
 
+  t_start= rospy.Time.now()
   try:
     while not rospy.is_shutdown():
       raw= ser.readline()
       header.stamp= rospy.Time.now()
-      print '"{raw}" ({l})'.format(raw=repr(raw), l=len(raw))
+      if (header.stamp-t_start).to_sec()<10.0:
+        print '(displayed only first 10sec) "{raw}" ({l})'.format(raw=repr(raw), l=len(raw))
       if len(raw)!=17:  continue
       value= float(raw[3:12])
 
