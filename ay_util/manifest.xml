@@ -10,6 +10,7 @@
   <url>http://akihikoy.net</url>
   <depend package="ay_util_msgs"/>
   <depend package="roscpp"/>
+  <depend package="eigen_conversions"/>
   <depend package="moveit_core"/>
   <depend package="moveit_ros_planning_interface"/>
 
