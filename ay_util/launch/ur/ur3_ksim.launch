@@ -4,7 +4,8 @@ Setup kinematics simulation of Universal Robots UR3.
 
 <launch>
 
-  <include file="$(find ur_description)/launch/ur3_upload.launch"/>
+  <!--<include file="$(find ur_description)/launch/ur3_upload.launch"/>-->
+  <include file="$(find ur_description)/launch/load_ur3.launch"/>
 
   <rosparam param="controller_joint_names">
   ["shoulder_pan_joint","shoulder_lift_joint","elbow_joint",
