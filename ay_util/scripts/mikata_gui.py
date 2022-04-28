@@ -7,6 +7,8 @@
 #\version 0.2
 #\date    Sep.02, 2018
 #         Modified to use mikata_driver (controller as ROS node).
+#\date    Apr.28, 2022
+#         Modified for a new demo.
 import roslib; roslib.load_manifest('ay_py')
 from ay_py.tool.py_gui import RunTerminalTab
 
@@ -25,7 +27,7 @@ if __name__=='__main__':
       (':pair', ('system',['roslaunch ay_util mikata_rot_real2.launch jsdev:=/dev/input/{JoyUSB} dev:=/dev/tty{MikataUSB}',E]),
                 ('kill',['C-c']) )  ]),
     ('Mikata',[
-      ('fix_usb',['rosrun ay_util fix_usb_latency.sh tty{MikataUSB}',E]),
+      ('fix_usb',['sudo /sbin/fix_usb_latency.sh tty{MikataUSB}',E]),
       ('survo-off',['rosrun ay_py mikata2_off.py',E]),
       ('reboot',['rosrun ay_py mikata2_reboot.py',E])  ]),
     ('Monitor-joy',[
@@ -34,24 +36,31 @@ if __name__=='__main__':
     ('rviz',[
       (':pair', ('rviz',['rviz',E]),
                 ('kill',['C-c']) )  ]),
-    ('time',[
-      (':pair', ('time',['rosrun ay_vision disp_rostime',E]),
-                ('kill',['C-c']) )  ]),
+    #('time',[
+      #(':pair', ('time',['rosrun ay_vision disp_rostime',E]),
+                #('kill',['C-c']) )  ]),
     ##('m100',[
       ##(':pair', ('start',['roslaunch ay_3dvision sentis_tof_m100_s.launch',E]),
                 ##('kill',['C-c']) )  ]),
     ##('pose_est',[
       ##(':pair', ('start',['roslaunch ay_3dvision rt_pose_estimator_m100.launch',E]),
                 ##('kill',['C-c']) )  ]),
-    ('aypi11',[
-      (':pair', ('stream',['ssh ayg@aypi11 "./stream.sh"',E]),
-                ('stop',[E]) ),
-      ('config',['ssh ayg@aypi11 "./conf_elp.sh"',E]),
-      ('reboot',['ssh ayg@aypi11 "sudo reboot"',E]),
-      ('shutdown',['ssh ayg@aypi11 "sudo halt -p"',E])  ]),
-    ('fv11',[
-      (':pair', ('start',['roslaunch ay_fv_extra fv_pi11.launch',E]),
-                ('kill',['C-c']) )  ]),
+    #('aypi11',[
+      #(':pair', ('stream',['ssh ayg@aypi11 "./stream.sh"',E]),
+                #('stop',[E]) ),
+      #('config',['ssh ayg@aypi11 "./conf_elp.sh"',E]),
+      #('reboot',['ssh ayg@aypi11 "sudo reboot"',E]),
+      #('shutdown',['ssh ayg@aypi11 "sudo halt -p"',E])  ]),
+    #('fv11',[
+      #(':pair', ('start',['roslaunch ay_fv_extra fv_pi11.launch',E]),
+                #('kill',['C-c']) )  ]),
+    ('fingervision',[
+      (':pair', ('fvp',['roslaunch ay_fv_extra fvp_mikata.launch',E]),
+                ('kill',['C-c']) ),
+      ]),
+    ('fv_util',[
+      ('config',['rosrun fingervision conf_cam2.py /media/video_fv1 "file:CameraParams:0:`rospack find ay_fv_extra`/config/fvp_mikata.yaml"',E]),
+      ]),
     ##('aypi11-no3',[
       ##(':pair', ('stream',['ssh aypi11 "./stream_no3.sh"',E]),
                 ##('stop',[E]) )  ]),
@@ -70,7 +79,7 @@ if __name__=='__main__':
       #(':pair', ('start',['roslaunch ay_vision segm_obj2.launch',E]),
                 #('kill',['C-c']) )  ]),
     ('JoyStickDemo',[
-      (':pair', ('start',['rosrun ay_trick direct_run.py "robot \'mikata2\'" "mikata.effort 80" j',E]),
+      (':pair', ('start',['rosrun ay_trick direct_run.py "mikata.setup \'mikata\',True" j',E]),
                 ('quit',['q',E]) )  ]),
     ##('aypi3',[
       ##(':pair', ('stream',['ssh hm@aypi3 "./stream2.sh"',E]),
