@@ -27,9 +27,9 @@ if __name__=='__main__':
     ('Dynamixel',[
       ('fix_usb',['rosrun ay_util fix_usb_latency.sh tty{DxlUSB}',E])  ]),
     ('System',[
-      ('calib',['roslaunch ay_util ur_calib.launch robot_code:={URType}',E]),
       (':pair', ('run',['roslaunch ay_util ur_selector.launch robot_code:={URType} jsdev:=/dev/input/{JoyUSB} dxldev:=/dev/tty{DxlUSB}',E]),
-                ('kill',['C-c']) )  ]),
+                ('kill',['C-c']) ),
+      ('calib',['roslaunch ay_util ur_calib.launch robot_code:={URType}',E]) ]),
     #('Mikata',[
       #('survo-off',['rosrun ay_py mikata_off.py',E]),
       #('reboot',['rosrun ay_py mikata_reboot.py',E])  ]),
