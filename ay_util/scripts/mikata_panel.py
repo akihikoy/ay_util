@@ -478,7 +478,7 @@ if __name__=='__main__':
         #'onclick': lambda w,obj: pm.SendFakeDigitalInDignal(config['STOP_BTN']['SIGNAL_IDX'], config['STOP_BTN']['SIGNAL_ON']), }),
     'label_pitch': (
       'label',{
-        'text': 'P',
+        'text': '  P  ',
         'size_policy': ('expanding', 'minimum')}),
     'joy_pitch': (
       'virtual_joystick',{
@@ -497,7 +497,7 @@ if __name__=='__main__':
         'onstickmoved': lambda w,obj:set_joy('xy',obj.position()), }),
     'label_z': (
       'label',{
-        'text': 'Z',
+        'text': '  Z  ',
         'size_policy': ('expanding', 'minimum')}),
     'joy_z': (
       'virtual_joystick',{
@@ -575,12 +575,12 @@ if __name__=='__main__':
       ))
 
   app= InitPanelApp()
-  win_size= (800,400)
+  win_size= (800,500)
   if fullscreen:  #NOTE: fullscreen mode will work only with Qt5.
     print 'Screen size:', app.screens()[0].size()
     screen_size= app.screens()[0].size()
     win_size= (screen_size.width(),screen_size.height())
-  panel= TSimplePanel('Mikata Operation Panel', size=win_size, font_height_scale=300.0)
+  panel= TSimplePanel('Mikata Operation Panel', size=win_size, font_height_scale=250.0)
   panel.AddWidgets(widgets_main)
   panel.Construct(layout_main)
   #for tab in panel.layouts['maintab'].tab:
