@@ -20,6 +20,7 @@ import threading
 import Queue
 from ay_py.core import CPrint, TContainer, TContainerCore, TransformLeftInv
 from ay_py.ros.pointcloud import DepthRGBImgsToPointCloud, DepthImgToPointCloud
+from ay_py.ros.rs import ReconstructRS
 
 def LoadLoop(files, queue_req, queue_res):
   i_file= 0
@@ -67,14 +68,7 @@ def LoadLoop(files, queue_req, queue_res):
       if 'frame' not in rs:  rs.frame= 'tool0' if 'arm' in rs else 'base_link'
 
       if not has_depth:  continue
-      if not has_rgb:
-        #If no RGB data is contained, we generate it from the depth image.
-        #.reshape(rs.img_depth.shape[:2]+(1,))
-        rs.img_rgb= np.ones(rs.img_depth.shape[:2]+(3,), np.uint8)*np.array((255,255,255), np.uint8)
-        rs.img_rgb[:,:,1]= ( rs.img_rgb[:,:,0]*(0.5+0.5*np.cos(rs.img_depth*0.01)) ).astype(np.uint8)
-        rs.img_rgb[:,:,2]= ( rs.img_rgb[:,:,0]*(0.5+0.5*np.sin(rs.img_depth*0.01)) ).astype(np.uint8)
-        rs.stamp_rgb= rs.stamp_depth
-        rs.msg_rgb_header= rs.msg_depth_header
+      ReconstructRS(rs, parent_filepath=filepath, generate_rgb_from_depth=True)
       step= min(rs.img_depth.shape[0]//240,rs.img_depth.shape[1]//320)
       pc_msg= DepthRGBImgsToPointCloud(rs.img_depth, rs.img_rgb, rs.proj_mat, copy.deepcopy(rs.msg_depth_header), xstep=step, ystep=step)
       #pc_msg= DepthImgToPointCloud(rs.img_depth, rs.proj_mat, copy.deepcopy(rs.msg_depth_header), xstep=step, ystep=step)
