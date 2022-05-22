@@ -38,6 +38,11 @@ class TDxlGripperDriver(object):
       self.gripper= mod.TDxlpO2(dev=self.dev, finger_type=finger_type)
       self.joint_names= ['joint0']
       self.dxl= {'joint0':self.gripper.dxl}
+    elif self.gripper_type=='DxlpY1Gripper':
+      mod= __import__('ay_py.misc.dxl_dxlpy1',globals(),None,('TDxlpY1',))
+      self.gripper= mod.TDxlpY1(dev=self.dev)
+      self.joint_names= ['joint0']
+      self.dxl= {'joint0':self.gripper.dxl}
     elif self.gripper_type=='DxlO3Gripper':
       mod= __import__('ay_py.misc.dxl_dxlo3',globals(),None,('TDxlO3',))
       self.gripper= mod.TDxlO3(dev=self.dev)

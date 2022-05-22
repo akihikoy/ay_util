@@ -16,39 +16,39 @@ Since this uses eval in if, it works with Kinetic+.
 
   <!--Launch a robot arm controller-->
 
-  <group if="$(eval robot_code in ('UR3','UR3DxlG','UR3ThG','UR3DxlpO2_Straight1','UR3DxlpO2_SRound1','UR3DxlpO2_Fork1') )">
+  <group if="$(eval robot_code in ('UR3','UR3DxlG','UR3ThG','UR3DxlpO2_Straight1','UR3DxlpO2_SRound1','UR3DxlpO2_Fork1','UR3DxlpY1') )">
     <include file="$(find ay_util)/launch/ur/ur3_real.launch" >
       <arg name="jsdev" value="$(arg jsdev)" />
     </include>
   </group>
-  <group if="$(eval robot_code in ('UR3_SIM','UR3DxlG_SIM','UR3ThG_SIM','UR3DxlpO2_Straight1_SIM','UR3DxlpO2_SRound1_SIM','UR3DxlpO2_Fork1_SIM') )">
+  <group if="$(eval robot_code in ('UR3_SIM','UR3DxlG_SIM','UR3ThG_SIM','UR3DxlpO2_Straight1_SIM','UR3DxlpO2_SRound1_SIM','UR3DxlpO2_Fork1_SIM','UR3DxlpY1_SIM') )">
     <include file="$(find ay_util)/launch/ur/ur3_ksim.launch">
       <arg name="jsdev" value="$(arg jsdev)" />
     </include>
   </group>
 
-  <group if="$(eval robot_code in ('UR3e','UR3eThG','UR3eDxlG','UR3eDxlpO2_Straight1','UR3eDxlpO2_SRound1','UR3eDxlpO2_Fork1') )">
+  <group if="$(eval robot_code in ('UR3e','UR3eThG','UR3eDxlG','UR3eDxlpO2_Straight1','UR3eDxlpO2_SRound1','UR3eDxlpO2_Fork1','UR3eDxlpY1') )">
     <include file="$(find ay_util)/launch/ur/ur3e_real.launch">
       <arg name="jsdev" value="$(arg jsdev)" />
     </include>
   </group>
-  <group if="$(eval robot_code in ('UR3e125hz','UR3e125hzThG','UR3e125hzDxlG','UR3e125hzDxlpO2_Straight1','UR3e125hzDxlpO2_SRound1','UR3e125hzDxlpO2_Fork1') )">
+  <group if="$(eval robot_code in ('UR3e125hz','UR3e125hzThG','UR3e125hzDxlG','UR3e125hzDxlpO2_Straight1','UR3e125hzDxlpO2_SRound1','UR3e125hzDxlpO2_Fork1','UR3e125hzDxlpY1') )">
     <include file="$(find ay_util)/launch/ur/ur3e_125hz_real.launch">
       <arg name="jsdev" value="$(arg jsdev)" />
     </include>
   </group>
-  <group if="$(eval robot_code in ('UR3e_SIM','UR3eThG_SIM','UR3eDxlG_SIM','UR3eDxlpO2_Straight1_SIM','UR3eDxlpO2_SRound1_SIM','UR3eDxlpO2_Fork1_SIM') )">
+  <group if="$(eval robot_code in ('UR3e_SIM','UR3eThG_SIM','UR3eDxlG_SIM','UR3eDxlpO2_Straight1_SIM','UR3eDxlpO2_SRound1_SIM','UR3eDxlpO2_Fork1_SIM','UR3eDxlpY1_SIM') )">
     <include file="$(find ay_util)/launch/ur/ur3e_ksim.launch">
       <arg name="jsdev" value="$(arg jsdev)" />
     </include>
   </group>
 
-  <group if="$(eval robot_code in ('UR5e','UR5eThG') )">
+  <group if="$(eval robot_code in ('UR5e','UR5eThG','UR5eDxlpY1') )">
     <include file="$(find ay_util)/launch/ur/ur5e_real.launch">
       <arg name="jsdev" value="$(arg jsdev)" />
     </include>
   </group>
-  <group if="$(eval robot_code in ('UR5e_SIM','UR5eThG_SIM') )">
+  <group if="$(eval robot_code in ('UR5e_SIM','UR5eThG_SIM','UR5eDxlpY1_SIM') )">
     <include file="$(find ay_util)/launch/ur/ur5e_ksim.launch">
       <arg name="jsdev" value="$(arg jsdev)" />
     </include>
