@@ -106,8 +106,8 @@ if __name__=='__main__':
   RVIZ_CONFIG= os.environ['HOME']+'/.rviz/default.rviz'
   #Parameters:
   config={
-    'URType': 'UR3e125hzThG',
-    'URType_SIM': 'UR3eThG_SIM',
+    'URType': 'UR3e125hzDxlpY1',
+    'URType_SIM': 'UR3eDxlpY1_SIM',
     'JoyUSB': 'js0',
     'DxlUSB': 'USB0',
     'WeightUSB_dst': 'USB1',
