@@ -6,167 +6,12 @@
 #\date    May.07, 2022
 
 import roslib
-roslib.load_manifest('ay_trick_msgs')
-import sys
-import rospy
 import rospkg
-import ay_trick_msgs.msg
-import ay_trick_msgs.srv
+from ur_dashboard_gui import *
 
-roslib.load_manifest('ay_py')
-from ay_py.core import CPrint
-from ay_py.tool.py_panel import TSimplePanel, InitPanelApp, RunPanelApp, AskYesNoDialog, QtCore, QtGui
-from ay_py.ros.base import SetupServiceProxy
-import subprocess
-import threading
-import std_msgs.msg
-import std_srvs.srv
-import sensor_msgs.msg
-
-class TProcessManager(QtCore.QObject):
+class TProcessManagerJoy(TProcessManager):
   def __init__(self):
-    QtCore.QObject.__init__(self)
-    self.procs= {}
-
-  #command: list of command and arguments.
-  def RunFGProcess(self, command, shell=False):
-    p= subprocess.Popen(command, shell=shell)
-    p.wait()
-
-  #command: list of command and arguments.
-  def RunBGProcess(self, name, command, shell=False):
-    self.TerminateBGProcess(name)
-    p= subprocess.Popen(command, shell=shell)
-    self.procs[name]= p
-
-  def TerminateBGProcess(self, name):
-    if name not in self.procs:
-      print 'No process named',name
-      return
-    self.procs[name].terminate()
-    self.procs[name].wait()
-    #TODO: wait(): It is safer to have timeout.  For ver<3.3, implement like:
-    #while p.poll() is None:
-      #print 'Process still running...'
-      #time.sleep(0.1)
-    del self.procs[name]
-
-  def TerminateAllBGProcesses(self):
-    for name,p in self.procs.iteritems():
-      print 'Terminating',name
-      p.terminate()
-      p.wait()
-      #TODO: wait(): It is safer to have timeout.  For ver<3.3, implement like:
-      #while p.poll() is None:
-        #print 'Process still running...'
-        #time.sleep(0.1)
-    self.procs= {}
-
-  #WARNING: This is not safe.  When killing roscore, rosmaster is still alive.
-  def KillBGProcess(self, name):
-    if name not in self.procs:
-      print 'No process named',name
-      return
-    self.procs[name].kill()
-    self.procs[name].wait()
-    #TODO: wait(): It is safer to have timeout.  For ver<3.3, implement like:
-    #while p.poll() is None:
-      #print 'Process still running...'
-      #time.sleep(0.1)
-    del self.procs[name]
-
-  def IsBGProcessRunning(self, name):
-    return self.procs[name].poll() is None
-
-  def InitNode(self):
-    rospy.init_node('mikata_panel')
-    rospy.sleep(0.1)
-
-  def ConnectToScriptNode(self, timeout=5.0):
-    self.connected_to_script_node= False
-    try:
-      rospy.wait_for_service('/ros_node/wait_finish', timeout=timeout)
-      rospy.wait_for_service('/ros_node/get_result_as_yaml', timeout=timeout)
-      rospy.wait_for_service('/ros_node/get_attr_as_yaml', timeout=timeout)
-      rospy.wait_for_service('/ros_node/set_attr_with_yaml', timeout=timeout)
-      self.srvp_wait_finish= rospy.ServiceProxy('/ros_node/wait_finish', std_srvs.srv.Empty, persistent=False)
-      self.srvp_get_result_as_yaml= rospy.ServiceProxy('/ros_node/get_result_as_yaml', ay_trick_msgs.srv.GetString, persistent=False)
-      self.srvp_get_attr_as_yaml= rospy.ServiceProxy('/ros_node/get_attr_as_yaml', ay_trick_msgs.srv.GetAttrAsString, persistent=False)
-      self.srvp_set_attr_with_yaml= rospy.ServiceProxy('/ros_node/set_attr_with_yaml', ay_trick_msgs.srv.SetAttrWithString, persistent=False)
-      self.connected_to_script_node= True
-    except rospy.ROSException as e:
-      CPrint(4,'Error in ConnectToScriptNode:', e)
-      self.srvp_wait_finish= None
-      self.srvp_get_result_as_yaml= None
-      self.srvp_get_attr_as_yaml= None
-      self.srvp_set_attr_with_yaml= None
-    self.pub_cmd= rospy.Publisher('/ros_node/command', std_msgs.msg.String, queue_size=10)
-    self.pub_key= rospy.Publisher('/ros_node/stdin', std_msgs.msg.String, queue_size=10)
-    self.sub_stdout= rospy.Subscriber('/ros_node/stdout', std_msgs.msg.String, self.StdOutCallback)
-    self.script_node_status= None
-    self.sub_script_node_status= rospy.Subscriber('/ros_node/node_status', ay_trick_msgs.msg.ROSNodeMode, self.ScriptNodeStatusCallback)
-
-  def RunFGScript(self, cmd):
-    if not hasattr(self,'connected_to_script_node'):
-      CPrint(4,'Not connected to the script node.')
-      return
-    self.srvp_wait_finish()  #Wait for previously executed scripts.
-    self.pub_cmd.publish(std_msgs.msg.String(cmd))
-    print '###DEBUG/RunFGScript###',cmd
-    self.srvp_wait_finish()
-
-  def RunBGScript(self, cmd):
-    if not hasattr(self,'connected_to_script_node'):
-      CPrint(4,'Not connected to the script node.')
-      return
-    self.srvp_wait_finish()  #Wait for previously executed scripts.
-    self.pub_cmd.publish(std_msgs.msg.String(cmd))
-    print '###DEBUG/RunBGScript###',cmd
-
-  def SendString(self, key):
-    if not hasattr(self,'connected_to_script_node'):
-      CPrint(4,'Not connected to the script node.')
-      return
-    self.pub_key.publish(std_msgs.msg.String(key))
-
-  def WaitForBGScript(self):
-    if not hasattr(self,'connected_to_script_node'):
-      CPrint(4,'Not connected to the script node.')
-      return
-    self.srvp_wait_finish()
-
-  def GetScriptResult(self):
-    if not hasattr(self,'connected_to_script_node'):
-      CPrint(4,'Not connected to the script node.')
-      return
-    res= self.srvp_get_result_as_yaml()
-    if res.success:
-      return yamlload(res.result, Loader=YLoader)
-    else:
-      return None
-
-  def StdOutCallback(self, msg):
-    #sys.stdout.write(msg.data)
-    #sys.stdout.flush()
-    pass
-
-  def ScriptNodeStatusCallback(self, msg):
-    self.script_node_status= msg.mode
-    self.script_node_status_stamp= rospy.Time.now()
-
-  #status: ay_trick_msgs.msg.ROSNodeMode.{BUSY,READY,PROGRAM_RUNNING}
-  def WaitForScriptNodeStatus(self, status, timeout=10):
-    if not hasattr(self,'script_node_status'):
-      CPrint(4,'Script node status is not subscribed.')
-      return False
-    t_start= rospy.Time.now()
-    rate= rospy.Rate(20)
-    while self.script_node_status != status:
-      rate.sleep()
-      if (rospy.Time.now()-t_start).to_sec()>timeout:
-        print 'WaitForScriptNodeStatus timeout.'
-        return False
-    return True
+    super(TProcessManagerJoy,self).__init__(node_name='mikata_panel')
 
   def StartVirtualJoyStick(self):
     self.pub_joy= rospy.Publisher('/joy', sensor_msgs.msg.Joy, queue_size=10)
@@ -278,7 +123,7 @@ if __name__=='__main__':
     if isinstance(cmds[key][0],str):
       cmds[key][0]= cmds[key][0].format(**config).split(' ')
 
-  pm= TProcessManager()
+  pm= TProcessManagerJoy()
   run_cmd= lambda name: pm.RunBGProcess(name,cmds[name][0]) if cmds[name][1]=='bg' else\
                         pm.RunFGProcess(cmds[name][0]) if cmds[name][1]=='fg' else\
                         None
@@ -298,10 +143,11 @@ if __name__=='__main__':
   if is_sim:
     scripts['setup']= ['mikata.setup "sim",True','fg']
   for key in scripts.iterkeys():
-    if isinstance(scripts[key][0],str):
+    if isinstance(scripts[key],list) and isinstance(scripts[key][0],str):
       scripts[key][0]= scripts[key][0].format(**config)
 
-  run_script= lambda name: pm.RunBGScript(scripts[name][0]) if scripts[name][1]=='bg' else\
+  run_script= lambda name: None if scripts[name] is None else\
+                           pm.RunBGScript(scripts[name][0]) if scripts[name][1]=='bg' else\
                            pm.RunFGScript(scripts[name][0]) if scripts[name][1]=='fg' else\
                            None
 
