@@ -148,16 +148,12 @@ if __name__=='__main__':
 
   #List of script commands (name: [[script/args],'fg'/'bg']).
   scripts= {
-    'setup1': ['robot "{URType}"','fg'],
-    'setup2': ['fv.fv "on", "all", {"A":{RIGHT:"fvp_1_r",LEFT:"fvp_1_l"} }','fg'],
-    'setup3': ['viz ""','fg'],
+    'setup': ['ur.setup "{URType}",True','fg'],
     'joy': ['j','bg'],
     #'stop_joy': ['q','fg'],
     'move_to_init': ['ct.robot.MoveToQ({Q_INIT},dt=5.0,blocking=True)','fg'],
     #'move_to_park': ['ct.robot.MoveToQ({Q_PARK},dt=5.0,blocking=True)','fg'],
     }
-  if is_sim:
-    scripts['setup2']= None
   for key in scripts.iterkeys():
     if isinstance(scripts[key],list) and isinstance(scripts[key][0],str):
       scripts[key][0]= scripts[key][0].format(**config)
@@ -325,9 +321,7 @@ MainProgram: {script_status}'''.format(
                       pm.ConnectToScriptNode(),
                       pm.WaitForScriptNodeStatus(ay_trick_msgs.msg.ROSNodeMode.READY),
                       rospy.sleep(0.2),
-                      run_script('setup1'),
-                      run_script('setup2'),
-                      run_script('setup3'),
+                      run_script('setup'),
                      ),
                    lambda w,obj:(
                       #stop_cmd('rviz'),
