@@ -335,7 +335,7 @@ class TProcessManager(QtCore.QObject):
     self.ur_program_running= msg.data
 
   #mode: ur_dashboard_msgs.msg.RobotMode.{POWER_OFF,BOOTING,IDLE,RUNNING}
-  def WaitForRobotMode(self, mode, timeout=10):
+  def WaitForRobotMode(self, mode, timeout=20):
     if mode==ur_dashboard_msgs.msg.RobotMode.POWER_OFF and\
       self.ur_robot_mode in (ur_dashboard_msgs.msg.RobotMode.BOOTING,
                              ur_dashboard_msgs.msg.RobotMode.IDLE,
@@ -354,7 +354,7 @@ class TProcessManager(QtCore.QObject):
     return True
 
   #mode: ur_dashboard_msgs.msg.SafetyMode.{NORMAL,PROTECTIVE_STOP,ROBOT_EMERGENCY_STOP,FAULT}
-  def WaitForSafetyMode(self, mode, timeout=10):
+  def WaitForSafetyMode(self, mode, timeout=20):
     t_start= rospy.Time.now()
     rate= rospy.Rate(20)
     while self.ur_safety_mode != mode:
@@ -365,7 +365,7 @@ class TProcessManager(QtCore.QObject):
     return True
 
   #program_running: True or False
-  def WaitForProgramRunning(self, program_running, timeout=10):
+  def WaitForProgramRunning(self, program_running, timeout=20):
     t_start= rospy.Time.now()
     rate= rospy.Rate(20)
     while self.ur_program_running != program_running:
@@ -376,7 +376,7 @@ class TProcessManager(QtCore.QObject):
     return True
 
   #ur_ros_running: True or False
-  def WaitForURROSRunning(self, ur_ros_running, timeout=10):
+  def WaitForURROSRunning(self, ur_ros_running, timeout=20):
     t_start= rospy.Time.now()
     rate= rospy.Rate(20)
     while self.ur_ros_running != ur_ros_running:
@@ -397,7 +397,7 @@ class TProcessManager(QtCore.QObject):
     self.pub_io_states.publish(msg)
 
 
-  def ConnectToScriptNode(self, timeout=10.0):
+  def ConnectToScriptNode(self, timeout=20):
     self.connected_to_script_node= False
     try:
       rospy.wait_for_service('/ros_node/wait_finish', timeout=timeout)

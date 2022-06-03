@@ -28,7 +28,8 @@ class TProcessManagerJoy(TProcessManager):
   joy_state.axes[1]  #X, WY(pitch)
   joy_state.axes[3]  #WZ(yaw)
   joy_state.axes[4]  #Z
-  joy_state.axes[5], joy_state.axes[2]  #RT, LT: Negative and positive multiplier [1(base),-1]
+  joy_state.axes[5]  #RT: Negative multiplier [1(base),-1]
+  joy_state.axes[2]  #LT: Positive multiplier [1(base),-1]
   #multiplier= (1.0+joy_state.axes[5])*0.5 + (1.0-joy_state.axes[2])*2.0
   joy_state.buttons[7]  #START button (quit)
   joy_state.buttons[0]  #A (gripper mode)
@@ -49,13 +50,13 @@ class TProcessManagerJoy(TProcessManager):
     joy_state= self.joy_state
     #reset:
     joy_state.axes[:]= [0.0]*6
-    joy_state.axes[2]= 1.0
-    joy_state.axes[5]= 1.0
+    joy_state.axes[5]= -0.5  #RT: Negative multiplier [1(base),-1]
+    joy_state.axes[2]= 1.0  #LT: Positive multiplier [1(base),-1]
     joy_state.buttons[:]= [0]*16
     if kind=='reset':
       pass
     elif kind=='xy':
-      joy_state.axes[0]= -value[0]  #Y, -WX(roll), Gripper step
+      joy_state.axes[0]= -1.5*value[0]  #Y, -WX(roll), Gripper step
       joy_state.axes[1]= value[1]  #X, WY(pitch)
       joy_state.buttons[5]= is_active  #RB (0:inactive, 1:active)
     elif kind=='z':
@@ -69,7 +70,7 @@ class TProcessManagerJoy(TProcessManager):
       joy_state.axes[3]= -value[0]  #WZ(yaw)
       joy_state.buttons[5]= is_active  #RB (0:inactive, 1:active)
     elif kind=='grip':
-      joy_state.axes[0]= -0.2*value[0]  #Y, -WX(roll), Gripper step
+      joy_state.axes[0]= -4.0*value[0]  #Y, -WX(roll), Gripper step
       joy_state.buttons[0]= 1  #A (gripper mode)
       joy_state.buttons[5]= is_active  #RB (0:inactive, 1:active)
     elif kind=='quit':
@@ -92,6 +93,8 @@ class TProcessManagerJoy(TProcessManager):
     elif kind=='hold_off':
       joy_state.buttons[13]= 1  #d-pad, UP (fv.hold)
       joy_state.buttons[5]= 0  #RB (0:inactive, 1:active)
+    elif kind=='open':
+      joy_state.buttons[11]=1  #d-pad, LEFT (fv.open)
     self.pub_joy.publish(joy_state)
 
 def UpdateProcList(pm,combobox):
@@ -109,12 +112,12 @@ if __name__=='__main__':
     'URType': 'UR3e125hzDxlpY1',
     'URType_SIM': 'UR3eDxlpY1_SIM',
     'JoyUSB': 'js0',
-    'DxlUSB': 'USB0',
-    'WeightUSB_dst': 'USB1',
+    'DxlUSB': 'USB1',
     'FV_L_DEV': '/media/video_fv1',
     'FV_R_DEV': '/media/video_fv2',
     #'ShutdownRobotAfterUse': False,
-    'Q_INIT': [0.03572946786880493, -2.027292076741354, 1.6515636444091797, -1.1894968191729944, -1.5706136862384241, -3.1061676184283655],
+    #'Q_INIT': [0.03572946786880493, -2.027292076741354, 1.6515636444091797, -1.1894968191729944, -1.5706136862384241, -3.1061676184283655],
+    'Q_INIT': [0.03572946786880493, -2.027292076741354, 1.6515636444091797, -1.1894968191729944, -1.5706136862384241, 0.0],
     #'Q_PARK': [0.03572946786880493, -2.027292076741354, 1.6515636444091797, -1.1894968191729944, -1.5706136862384241, -3.1061676184283655],
     }
 
@@ -153,6 +156,7 @@ if __name__=='__main__':
     #'stop_joy': ['q','fg'],
     'move_to_init': ['ct.robot.MoveToQ({Q_INIT},dt=5.0,blocking=True)','fg'],
     #'move_to_park': ['ct.robot.MoveToQ({Q_PARK},dt=5.0,blocking=True)','fg'],
+    'grip_plus':  ['fv.open ct.robot.Arm, ct.robot.GripperPos()+0.015, True','fg'],
     }
   for key in scripts.iterkeys():
     if isinstance(scripts[key],list) and isinstance(scripts[key][0],str):
@@ -167,7 +171,7 @@ if __name__=='__main__':
   #stop_joy= lambda: run_script('stop_joy')
   pm.joy_script_active= False
   start_joy= lambda: (setattr(pm,'joy_script_active',True), run_script('joy'))
-  stop_joy= lambda: pm.SendString('q') if pm.joy_script_active and pm.GetScriptNodeStatus()==ay_trick_msgs.msg.ROSNodeMode.PROGRAM_RUNNING else None
+  stop_joy= lambda: (setattr(pm,'joy_script_active',False), pm.SendString('q')) if pm.joy_script_active and pm.GetScriptNodeStatus()==ay_trick_msgs.msg.ROSNodeMode.PROGRAM_RUNNING else setattr(pm,'joy_script_active',False)
   def run_script_during_joy(name):
     if pm.joy_script_active:
       stop_joy()
@@ -375,8 +379,8 @@ MainProgram: {script_status}'''.format(
         'size_policy': ('expanding', 'fixed'),
         #'font_size_range': (8,24),
         'onstatuschanged':lambda w,obj,status:(
-                      obj.setChecked(False),
-                      stop_joy() ),
+                      obj.setChecked(False) if status not in (pm.WAIT_REQUEST,pm.PROGRAM_RUNNING) else None,
+                      stop_joy() if status not in (pm.WAIT_REQUEST,pm.PROGRAM_RUNNING) else None ),
         'onclick':(lambda w,obj:(
                       start_joy(),
                      ),
@@ -458,6 +462,14 @@ MainProgram: {script_status}'''.format(
         'stick_color':[255,128,128],
         'size_policy': ('expanding','minimum'),
         'onstickmoved': lambda w,obj:set_joy('grip',obj.position(),is_active=w.widgets['btn_activate'].isChecked()), }),
+    'btn_grip_open': (
+      'button',{
+        'text': '[ + ]',
+        'size_policy': ('expanding', 'fixed'),
+        'onclick': lambda w,obj:(
+                      #run_script_during_joy('grip_plus'),
+                      set_joy('open'),
+                      ), }),
     }
 
   layout_joy= (
@@ -467,7 +479,7 @@ MainProgram: {script_status}'''.format(
         ('label_pitch',1,0,'center'), ('label_xy',1,1,'center'), ('label_z',1,2,'center'),
         ('joy_pitch',2,0), ('joy_xy',2,1), ('joy_z',2,2),
         (('boxh',None,('label_yaw','joy_yaw')),3,0,1,3),
-        (('boxh',None,('label_grip','joy_grip')),4,0,1,3),
+        (('boxh',None,('label_grip','joy_grip','btn_grip_open')),4,0,1,3),
         )),
       ('boxh',None, ('btn_init_pose',)),
       ('boxh',None, ('btn_push','btn_hold','btn_pick')),
@@ -643,7 +655,7 @@ MainProgram: {script_status}'''.format(
       ))
 
   app= InitPanelApp()
-  win_size= (800,600)
+  win_size= (1000,800)
   if fullscreen:  #NOTE: fullscreen mode will work only with Qt5.
     print 'Screen size:', app.screens()[0].size()
     screen_size= app.screens()[0].size()
