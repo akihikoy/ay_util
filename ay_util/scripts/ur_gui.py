@@ -30,6 +30,9 @@ if __name__=='__main__':
       (':pair', ('run',['roslaunch ay_util ur_selector.launch robot_code:={URType} jsdev:=/dev/input/{JoyUSB} dxldev:=/dev/tty{DxlUSB}',E]),
                 ('kill',['C-c']) ),
       ('calib',['roslaunch ay_util ur_calib.launch robot_code:={URType}',E]) ]),
+    ('UR',[
+      ('dashboard_gui',['rosrun ay_util ur_dashboard_gui.py',E]),
+      ]),
     #('Mikata',[
       #('survo-off',['rosrun ay_py mikata_off.py',E]),
       #('reboot',['rosrun ay_py mikata_reboot.py',E])  ]),
