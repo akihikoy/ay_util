@@ -109,6 +109,8 @@ if __name__=='__main__':
     else:  return default
   robot_code= get_arg('-robot_code=',get_arg('--robot_code=','UR3e125hzDxlpY1'))
   sim_robot_code= get_arg('-sim_robot_code=',get_arg('--sim_robot_code=','UR3eDxlpY1_SIM'))
+  joy_dev= get_arg('-joy_dev=',get_arg('--joy_dev=','js0'))
+  dxl_dev= get_arg('-dxl_dev=',get_arg('--dxl_dev=','USB1'))
   fullscreen= True if '-fullscreen' in sys.argv or '--fullscreen' in sys.argv else False
   is_sim= True if '-sim' in sys.argv or '--sim' in sys.argv else False
 
@@ -117,8 +119,8 @@ if __name__=='__main__':
   config={
     'URType': robot_code,
     'URType_SIM': sim_robot_code,
-    'JoyUSB': 'js0',
-    'DxlUSB': 'USB1',
+    'JoyUSB': joy_dev,
+    'DxlUSB': dxl_dev,
     'FV_L_DEV': '/media/video_fv1',
     'FV_R_DEV': '/media/video_fv2',
     #'ShutdownRobotAfterUse': False,
