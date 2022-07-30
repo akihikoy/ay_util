@@ -103,14 +103,20 @@ def UpdateProcList(pm,combobox):
     combobox.addItem('{0}/{1}'.format(name,proc.pid))
 
 if __name__=='__main__':
+  def get_arg(opt_name, default):
+    exists= map(lambda a:a.startswith(opt_name),sys.argv)
+    if any(exists):  return sys.argv[exists.index(True)].replace(opt_name,'')
+    else:  return default
+  robot_code= get_arg('-robot_code=',get_arg('--robot_code=','UR3e125hzDxlpY1'))
+  sim_robot_code= get_arg('-sim_robot_code=',get_arg('--sim_robot_code=','UR3eDxlpY1_SIM'))
   fullscreen= True if '-fullscreen' in sys.argv or '--fullscreen' in sys.argv else False
   is_sim= True if '-sim' in sys.argv or '--sim' in sys.argv else False
 
   RVIZ_CONFIG= os.environ['HOME']+'/.rviz/default.rviz'
   #Parameters:
   config={
-    'URType': 'UR3e125hzDxlpY1',
-    'URType_SIM': 'UR3eDxlpY1_SIM',
+    'URType': robot_code,
+    'URType_SIM': sim_robot_code,
     'JoyUSB': 'js0',
     'DxlUSB': 'USB1',
     'FV_L_DEV': '/media/video_fv1',
@@ -120,6 +126,7 @@ if __name__=='__main__':
     'Q_INIT': [0.03572946786880493, -2.027292076741354, 1.6515636444091797, -1.1894968191729944, -1.5706136862384241, 0.0],
     #'Q_PARK': [0.03572946786880493, -2.027292076741354, 1.6515636444091797, -1.1894968191729944, -1.5706136862384241, -3.1061676184283655],
     }
+  print config
 
   #List of commands (name: [[command/args],'fg'/'bg']).
   cmds= {
