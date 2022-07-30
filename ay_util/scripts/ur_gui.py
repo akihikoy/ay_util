@@ -11,6 +11,12 @@ import roslib; roslib.load_manifest('ay_py')
 from ay_py.tool.py_gui import RunTerminalTab
 
 if __name__=='__main__':
+  robot_list= [
+    'UR3', 'UR3DxlG', 'UR3ThG', 'UR3DxlpY1', 'UR3_SIM', 'UR3DxlG_SIM', 'UR3ThG_SIM', 'UR3DxlpY1_SIM',
+    'UR3e','UR3eDxlG','UR3eThG','UR3eDxlpY1','UR3e_SIM','UR3eDxlG_SIM','UR3eThG_SIM','UR3eDxlpY1_SIM',
+    'UR5e','UR5eDxlG','UR5eThG','UR5eDxlpY1','UR5e_SIM','UR5eDxlG_SIM','UR5eThG_SIM','UR5eDxlpY1_SIM',
+    'Gen3','Gen3ThG','Gen3DxlO3',
+    ]
   E= 'Enter'
   widgets= [
     ('main',[
@@ -19,17 +25,18 @@ if __name__=='__main__':
     ('roscore',[
       (':pair', ('roscore',['roscore',E]),
                 ('kill',['C-c']) )  ]),
-    ('URType',':cmb',['UR3','UR3DxlG','UR3ThG','UR3_SIM','UR3DxlG_SIM','UR3ThG_SIM', 'UR3e','UR3eThG','UR3eDxlG','UR3e_SIM','UR3eThG_SIM','UR3eDxlG_SIM',
-    'UR5e','UR5eThG','UR5e_SIM','UR5eThG_SIM',
-    'Gen3','Gen3ThG','Gen3DxlO3',]),
+    ('URType',':cmb',robot_list),
     ('JoyUSB',':radio',['js0','js1']),
-    ('DxlUSB',':radio',['USB0','USB1']),
+    ('DxlUSB',':radio',['USB0','USB1','USB2','USB3']),
     ('Dynamixel',[
-      ('fix_usb',['rosrun ay_util fix_usb_latency.sh tty{DxlUSB}',E])  ]),
+      ('fix_usb',['rosrun ay_util fix_usb_latency.sh tty{DxlUSB}',E]),
+      ]),
     ('System',[
       (':pair', ('run',['roslaunch ay_util ur_selector.launch robot_code:={URType} jsdev:=/dev/input/{JoyUSB} dxldev:=/dev/tty{DxlUSB}',E]),
                 ('kill',['C-c']) ),
-      ('calib',['roslaunch ay_util ur_calib.launch robot_code:={URType}',E]) ]),
+      ('UR calib',['roslaunch ay_util ur_calib.launch robot_code:={URType}',E]),
+      ('Rboot dxlg',['roslaunch ay_util ur_gripper_reboot.launch robot_code:={URType} dxldev:=/dev/tty{DxlUSB}',E]),
+      ]),
     ('UR',[
       ('dashboard_gui',['rosrun ay_util ur_dashboard_gui.py',E]),
       ]),
@@ -51,40 +58,48 @@ if __name__=='__main__':
     #('pose_est',[
       #(':pair', ('start',['roslaunch ay_3dvision rt_pose_estimator_m100.launch',E]),
                 #('kill',['C-c']) )  ]),
-    ('PiID',':radio',['pi13','pi14','pi15','local01','local12']),
-    ('aypiX',[
-      (':pair', ('stream',['ssh ayg@ay{PiID} "./stream.sh"',E]),
-                ('stop',[E]) ),
-      ('reboot',['ssh ayg@ay{PiID} "sudo reboot"',E]),
-      ('shutdown',['ssh ayg@ay{PiID} "sudo halt -p"',E])  ]),
-    ('aypiX-2',[
-      ('config',['ssh ayg@ay{PiID} "./conf_elp.sh"',E]),  ]),
-    ('local',[
-      ('config(elp)',['cd ~/ros_ws/ay_tools/fingervision/tools',E,'./conf_elp.sh {PiID}',E]),
-      ('config(asahi)',['cd ~/ros_ws/ay_tools/fingervision/tools',E,'./conf_asahi.sh {PiID}',E]),  ]),
+    #('PiID',':radio',['pi13','pi14','pi15','local01','local12']),
+    #('aypiX',[
+      #(':pair', ('stream',['ssh ayg@ay{PiID} "./stream.sh"',E]),
+                #('stop',[E]) ),
+      #('reboot',['ssh ayg@ay{PiID} "sudo reboot"',E]),
+      #('shutdown',['ssh ayg@ay{PiID} "sudo halt -p"',E])  ]),
+    #('aypiX-2',[
+      #('config',['ssh ayg@ay{PiID} "./conf_elp.sh"',E]),  ]),
+    #('local',[
+      #('config(elp)',['cd ~/ros_ws/ay_tools/fingervision/tools',E,'./conf_elp.sh {PiID}',E]),
+      #('config(asahi)',['cd ~/ros_ws/ay_tools/fingervision/tools',E,'./conf_asahi.sh {PiID}',E]),  ]),
+    #('fingervision',[
+      #(':pair', ('start',['roslaunch ay_fv_extra fv_{PiID}.launch',E]),
+                #('kill',['C-c']) )  ]),
     ('fingervision',[
-      (':pair', ('start',['roslaunch ay_fv_extra fv_{PiID}.launch',E]),
-                ('kill',['C-c']) )  ]),
+      (':pair', ('fvp_3',['roslaunch ay_fv_extra fvp_3.launch',E]),
+                ('kill',['C-c']) ),
+      ]),
+    ('fv_util',[
+      ('config(L)',['rosrun fingervision conf_cam2.py /media/video_fv1 "file:CameraParams:0:`rospack find ay_fv_extra`/config/fvp_3_l.yaml"',E]),
+      ('config(R)',['rosrun fingervision conf_cam2.py /media/video_fv2 "file:CameraParams:0:`rospack find ay_fv_extra`/config/fvp_3_r.yaml"',E]),
+      ]),
     #('aypi13-no3',[
       #(':pair', ('stream',['ssh aypi13 "./stream_no3.sh"',E]),
                 #('stop',[E]) )  ]),
     #('monitor11-no3',[
       #(':pair', ('run',['~/prg/testl/cv/capture.out "http://aypi13:8082/?action=stream&dummy=file.mjpg"',E]),
                 #('kill',['C-c']) )  ]),
-    ('aypi10',[
-      (':pair', ('stream1',['ssh ayg@aypi10 "./stream1.sh"',E]),
-                ('stop',[E]) ),
-      #(':pair', ('stream2',['ssh ayg@aypi10 "./stream.sh"',E]),
+    #('aypi10',[
+      #(':pair', ('stream1',['ssh ayg@aypi10 "./stream1.sh"',E]),
                 #('stop',[E]) ),
-      ('reboot',['ssh ayg@aypi10 "sudo reboot"',E]),
-      ('shutdown',['ssh ayg@aypi10 "sudo halt -p"',E])  ]),
-    ('aypi10-2',[
-      ('config1',['ssh ayg@aypi10 "./conf_elp1.sh"',E]),
-      #('config2',['ssh ayg@aypi10 "./conf_elp.sh"',E])
-      ]),
-    ('monitor10',[
-      (':pair', ('run',['~/prg/testl/cv/capture.out "http://aypi10:8080/?action=stream&dummy=file.mjpg"',E]),
-                ('kill',['C-c']) )  ]),
+      ##(':pair', ('stream2',['ssh ayg@aypi10 "./stream.sh"',E]),
+                ##('stop',[E]) ),
+      #('reboot',['ssh ayg@aypi10 "sudo reboot"',E]),
+      #('shutdown',['ssh ayg@aypi10 "sudo halt -p"',E])  ]),
+    #('aypi10-2',[
+      #('config1',['ssh ayg@aypi10 "./conf_elp1.sh"',E]),
+      ##('config2',['ssh ayg@aypi10 "./conf_elp.sh"',E])
+      #]),
+    #('monitor10',[
+      #(':pair', ('run',['~/prg/testl/cv/capture.out "http://aypi10:8080/?action=stream&dummy=file.mjpg"',E]),
+                #('kill',['C-c']) )  ]),
     ('segm_obj',[
       (':pair', ('start',['roslaunch ay_vision segm_obj3.launch',E]),
                 ('kill',['C-c']) )  ]),
