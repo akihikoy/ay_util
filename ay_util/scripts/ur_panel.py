@@ -12,6 +12,7 @@ import rospkg
 import ay_trick_msgs.msg
 import ay_trick_msgs.srv
 from ur_dashboard_gui import *
+from ay_py.core import InsertDict, LoadYAML, SaveYAML
 
 class TProcessManagerJoy(TProcessManager):
   def __init__(self):
@@ -123,6 +124,7 @@ if __name__=='__main__':
     'DxlUSB': dxl_dev,
     'FV_L_DEV': '/media/video_fv1',
     'FV_R_DEV': '/media/video_fv2',
+    'FV_CTRL_CONFIG': '{}/data/config/fv_ctrl.yaml'.format(os.environ['HOME']),
     #'ShutdownRobotAfterUse': False,
     #'Q_INIT': [0.03572946786880493, -2.027292076741354, 1.6515636444091797, -1.1894968191729944, -1.5706136862384241, -3.1061676184283655],
     'Q_INIT': [0.03572946786880493, -2.027292076741354, 1.6515636444091797, -1.1894968191729944, -1.5706136862384241, 0.0],
@@ -209,6 +211,51 @@ MainProgram: {script_status}'''.format(
       robot_mode=pm.ur_robot_mode_names[pm.ur_robot_mode] if pm.ur_ros_running and pm.ur_robot_mode in pm.ur_robot_mode_names else 'UNRECOGNIZED',
       program_running=pm.ur_ros_running and pm.ur_program_running,
       script_status=pm.script_node_status_names[pm.script_node_status] if pm.script_node_running and pm.script_node_status in pm.script_node_status_names else 'UNRECOGNIZED' ))
+
+
+  #UI for configuring FV control parameters:
+  ctrl_config= {
+      #Common control parameters:
+      'min_gstep': 0.0005,
+      #Parameters used in fv.hold, fv.pickup2a, fv.pickup2b:
+      'hold_sensitivity_slip': 0.08,  #Sensitivity of slip detection (smaller is more sensitive).
+      'hold_sensitivity_oc': 0.2,  #Sensitivity of object-center-movement detection (smaller is more sensitive).
+      'hold_sensitivity_oo': 0.5,  #Sensitivity of object-orientation-movement detection (smaller is more sensitive).
+      'hold_sensitivity_oa': 0.4,  #Sensitivity of object-area-change detection (smaller is more sensitive).
+      'pickup2a_area_drop_ratio': 0.3,  #If object area becomes smaller than this ratio, it's considered as dropped.
+      'pickup2a_z_final': 0.05,  #Final height (offset from the beginning).
+      'pickup2a_obj_area_filter_len': 5,  #Filter length for obj_area.
+      #Parameters used in fv.openif:
+      'openif_sensitivity_slip': 0.6,  #Sensitivity of slip detection (smaller is more sensitive).
+      'openif_sensitivity_oc': 0.4,  #Sensitivity of object-center-movement detection (smaller is more sensitive).
+      'openif_sensitivity_oo': 4.0,  #Sensitivity of object-orientation-movement detection (smaller is more sensitive).
+      'openif_sensitivity_oa': 0.6,  #Sensitivity of object-area-change detection (smaller is more sensitive).
+      'openif_sensitivity_force':0.9,  #Sensitivity of each force element; if the norm of force change is larger than this threshold, the point is counted as a force change point.
+      'openif_nforce_threshold': 20,  #Threshold of number of force changing points to open the gripper.
+      'openif_dw_grip': 0.02,  #Displacement of gripper movement.
+    }
+  if os.path.exists(config['FV_CTRL_CONFIG']):
+    InsertDict(ctrl_config, LoadYAML(config['FV_CTRL_CONFIG']))
+  def UpdateCtrlConfig(name, value):
+    ctrl_config[name]= value
+    SaveYAML(ctrl_config, config['FV_CTRL_CONFIG'], interactive=False)
+  def AddCtrlConfigSliderWidget(widgets, name, prange):
+    widgets['slider_ctrl_config_{}'.format(name)]= (
+      'sliderh',{
+        'range': prange,
+        'value': ctrl_config[name],
+        'n_labels': 3,
+        'slider_style':1,
+        'font_size_range': (5,6),
+        'onvaluechange': lambda w,obj:UpdateCtrlConfig(name,obj.value())} )
+    widgets['label_ctrl_config_{}'.format(name)]= (
+      'label',{
+        'text': name,
+        'font_size_range': (5,6),
+        'size_policy': ('minimum', 'minimum')} )
+  def CtrlConfigSliderLayout(name):
+    return ('label_ctrl_config_{}'.format(name),'slider_ctrl_config_{}'.format(name))
+
 
   widgets_common= {
     'status_signal_bar1': (
@@ -494,6 +541,43 @@ MainProgram: {script_status}'''.format(
       ('boxh',None, ('btn_push','btn_hold','btn_pick')),
       ))
 
+  widgets_ctrl_config= {
+    }
+  AddCtrlConfigSliderWidget(widgets_ctrl_config, 'min_gstep', (0.0,0.01,0.0001))
+  AddCtrlConfigSliderWidget(widgets_ctrl_config, 'hold_sensitivity_slip', (0.0,2.0,0.01))
+  AddCtrlConfigSliderWidget(widgets_ctrl_config, 'hold_sensitivity_oc', (0.0,2.0,0.01))
+  AddCtrlConfigSliderWidget(widgets_ctrl_config, 'hold_sensitivity_oo', (0.0,4.0,0.01))
+  AddCtrlConfigSliderWidget(widgets_ctrl_config, 'hold_sensitivity_oa', (0.0,2.0,0.01))
+  AddCtrlConfigSliderWidget(widgets_ctrl_config, 'pickup2a_area_drop_ratio', (0.0,1.0,0.01))
+  AddCtrlConfigSliderWidget(widgets_ctrl_config, 'pickup2a_z_final', (0.0,0.15,0.01))
+  AddCtrlConfigSliderWidget(widgets_ctrl_config, 'pickup2a_obj_area_filter_len', (1,20,1))
+  AddCtrlConfigSliderWidget(widgets_ctrl_config, 'openif_sensitivity_slip', (0.0,2.0,0.01))
+  AddCtrlConfigSliderWidget(widgets_ctrl_config, 'openif_sensitivity_oc', (0.0,2.0,0.01))
+  AddCtrlConfigSliderWidget(widgets_ctrl_config, 'openif_sensitivity_oo', (0.0,4.0,0.01))
+  AddCtrlConfigSliderWidget(widgets_ctrl_config, 'openif_sensitivity_oa', (0.0,2.0,0.01))
+  AddCtrlConfigSliderWidget(widgets_ctrl_config, 'openif_sensitivity_force', (0.0,4.0,0.01))
+  AddCtrlConfigSliderWidget(widgets_ctrl_config, 'openif_nforce_threshold', (1,100,1))
+  AddCtrlConfigSliderWidget(widgets_ctrl_config, 'openif_dw_grip', (0.0,0.1,0.001))
+
+  layout_ctrl_config= (
+    'boxv',None, (
+        ('boxh',None, CtrlConfigSliderLayout('min_gstep') ),
+        ('boxh',None, CtrlConfigSliderLayout('hold_sensitivity_slip') ),
+        ('boxh',None, CtrlConfigSliderLayout('hold_sensitivity_oc') ),
+        ('boxh',None, CtrlConfigSliderLayout('hold_sensitivity_oo') ),
+        ('boxh',None, CtrlConfigSliderLayout('hold_sensitivity_oa') ),
+        ('boxh',None, CtrlConfigSliderLayout('pickup2a_area_drop_ratio') ),
+        ('boxh',None, CtrlConfigSliderLayout('pickup2a_z_final') ),
+        ('boxh',None, CtrlConfigSliderLayout('pickup2a_obj_area_filter_len') ),
+        ('boxh',None, CtrlConfigSliderLayout('openif_sensitivity_slip') ),
+        ('boxh',None, CtrlConfigSliderLayout('openif_sensitivity_oc') ),
+        ('boxh',None, CtrlConfigSliderLayout('openif_sensitivity_oo') ),
+        ('boxh',None, CtrlConfigSliderLayout('openif_sensitivity_oa') ),
+        ('boxh',None, CtrlConfigSliderLayout('openif_sensitivity_force') ),
+        ('boxh',None, CtrlConfigSliderLayout('openif_nforce_threshold') ),
+        ('boxh',None, CtrlConfigSliderLayout('openif_dw_grip') ),
+      ))
+
   widgets_recovery= {
     'chkbx_safety_to_recover': (
       'checkbox',{
@@ -656,6 +740,7 @@ MainProgram: {script_status}'''.format(
         ('tab','maintab',(
           ('Initialize',layout_init),
           ('Joy',layout_joy),
+          ('Control Config',layout_ctrl_config),
           ('Recovery',layout_recovery),
           ('Debug',layout_debug),
           )),'spacer_cmn1')),
@@ -673,6 +758,7 @@ MainProgram: {script_status}'''.format(
   panel.AddWidgets(widgets_common)
   panel.AddWidgets(widgets_init)
   panel.AddWidgets(widgets_joy)
+  panel.AddWidgets(widgets_ctrl_config)
   panel.AddWidgets(widgets_recovery)
   panel.AddWidgets(widgets_debug)
   panel.Construct(layout_main)
