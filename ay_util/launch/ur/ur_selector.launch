@@ -14,6 +14,14 @@ Since this uses eval in if, it works with Kinetic+.
   sim_flag to reduce the complexity.
   ##################################################################################-->
 
+  <!--Uploading the parameters to the server-->
+  <rosparam subst_value="True">
+    robot_code: $(arg robot_code)
+    jsdev: $(arg jsdev)
+    dxldev: $(arg dxldev)
+    with_gripper: $(arg with_gripper)
+  </rosparam>
+
   <!--Launch a robot arm controller-->
 
   <group if="$(eval robot_code in ('UR3','UR3DxlG','UR3ThG','UR3DxlpO2_Straight1','UR3DxlpO2_SRound1','UR3DxlpO2_Fork1','UR3DxlpY1') )">
