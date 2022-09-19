@@ -17,6 +17,11 @@ Since this uses eval in if, it works with Kinetic+.
           args="$(arg dxldev) RHP12RNGripper" />
   </group>
 
+  <group if="$(eval robot_code in ('UR3ThGA','UR3eThGA','UR3e125hzThGA','UR5eThGA','Gen3ThGA') )">
+    <node pkg="ay_util" type="dxlg_driver.py" name="gripper_driver" output="screen"
+          args="$(arg dxldev) RHP12RNAGripper" />
+  </group>
+
   <group if="$(eval robot_code in ('UR3DxlpO2_Straight1','UR3DxlpO2_SRound1','UR3DxlpO2_Fork1', 'UR3eDxlpO2_Straight1','UR3eDxlpO2_SRound1','UR3eDxlpO2_Fork1', 'UR3e125hzDxlpO2_Straight1','UR3e125hzDxlpO2_SRound1','UR3e125hzDxlpO2_Fork1') )">
     <arg name="finger_type" value="$(eval robot_code.split('_')[1] )" />
     <node pkg="ay_util" type="dxlg_driver.py" name="gripper_driver" output="screen"

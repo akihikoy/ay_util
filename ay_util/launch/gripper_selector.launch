@@ -16,6 +16,11 @@ Choosing a launcher of gripper from the gripper type.
           args="$(arg dxldev) RHP12RNGripper" />
   </group>
 
+  <group if="$(eval gripper_type in ('RHP12RNAGripper','ThGA') )">
+    <node pkg="ay_util" type="dxlg_driver.py" name="gripper_driver" output="screen"
+          args="$(arg dxldev) RHP12RNAGripper" />
+  </group>
+
   <group if="$(eval gripper_type in ('DxlpO2Gripper_Straight1','DxlpO2Gripper_SRound1','DxlpO2Gripper_Fork1', 'DxlpO2_Straight1','DxlpO2_SRound1','DxlpO2_Fork1') )">
     <arg name="finger_type" value="$(eval gripper_type.split('_')[1] )" />
     <node pkg="ay_util" type="dxlg_driver.py" name="gripper_driver" output="screen"
