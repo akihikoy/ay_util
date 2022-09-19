@@ -1,0 +1,35 @@
+<!--
+Choosing a launcher of gripper from the gripper type.
+-->
+<launch>
+
+  <arg name="gripper_type" default="" />
+  <arg name="dxldev" default="/dev/ttyUSB0" />
+
+  <group if="$(eval gripper_type in ('DxlGripper','DxlG') )">
+    <node pkg="ay_util" type="dxlg_driver.py" name="gripper_driver" output="screen"
+          args="$(arg dxldev) DxlGripper" />
+  </group>
+
+  <group if="$(eval gripper_type in ('RHP12RNGripper','ThG') )">
+    <node pkg="ay_util" type="dxlg_driver.py" name="gripper_driver" output="screen"
+          args="$(arg dxldev) RHP12RNGripper" />
+  </group>
+
+  <group if="$(eval gripper_type in ('DxlpO2Gripper_Straight1','DxlpO2Gripper_SRound1','DxlpO2Gripper_Fork1', 'DxlpO2_Straight1','DxlpO2_SRound1','DxlpO2_Fork1') )">
+    <arg name="finger_type" value="$(eval gripper_type.split('_')[1] )" />
+    <node pkg="ay_util" type="dxlg_driver.py" name="gripper_driver" output="screen"
+          args="$(arg dxldev) DxlpO2Gripper $(arg finger_type)" />
+  </group>
+
+  <group if="$(eval gripper_type in ('DxlpY1Gripper','DxlpY1') )">
+    <node pkg="ay_util" type="dxlg_driver.py" name="gripper_driver" output="screen"
+          args="$(arg dxldev) DxlpY1Gripper" />
+  </group>
+
+  <group if="$(eval gripper_type in ('EZGripper','EZG') )">
+    <node pkg="ay_util" type="dxlg_driver.py" name="gripper_driver" output="screen"
+          args="$(arg dxldev) EZGripper" />
+  </group>
+
+</launch>
