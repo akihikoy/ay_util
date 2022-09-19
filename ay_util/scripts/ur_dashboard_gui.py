@@ -27,8 +27,9 @@ try:
   import ur_msgs.srv
 except Exception as e:
   print e
+from proc_manager import TSubProcManager
 
-class TProcessManager(QtCore.QObject):
+class TProcessManagerUR(QtCore.QObject, TSubProcManager):
 
   #Definition of states:
   UNDEFINED= -10
@@ -135,9 +136,8 @@ class TProcessManager(QtCore.QObject):
 
   def __init__(self, node_name='ur_dashboard'):
     QtCore.QObject.__init__(self)
+    TSubProcManager.__init__(self)
     self.node_name= node_name
-
-    self.procs= {}
 
     self.status_names= {
       self.UNDEFINED:           'UNDEFINED'           ,
@@ -185,56 +185,6 @@ class TProcessManager(QtCore.QObject):
 
     self.thread_status_update= None
     self.thread_status_update_running= False
-
-  #command: list of command and arguments.
-  def RunFGProcess(self, command, shell=False):
-    p= subprocess.Popen(command, shell=shell)
-    p.wait()
-
-  #command: list of command and arguments.
-  def RunBGProcess(self, name, command, shell=False):
-    self.TerminateBGProcess(name)
-    p= subprocess.Popen(command, shell=shell)
-    self.procs[name]= p
-
-  def TerminateBGProcess(self, name):
-    if name not in self.procs:
-      print 'No process named',name
-      return
-    self.procs[name].terminate()
-    self.procs[name].wait()
-    #TODO: wait(): It is safer to have timeout.  For ver<3.3, implement like:
-    #while p.poll() is None:
-      #print 'Process still running...'
-      #time.sleep(0.1)
-    del self.procs[name]
-
-  def TerminateAllBGProcesses(self):
-    for name,p in self.procs.iteritems():
-      print 'Terminating',name
-      p.terminate()
-      p.wait()
-      #TODO: wait(): It is safer to have timeout.  For ver<3.3, implement like:
-      #while p.poll() is None:
-        #print 'Process still running...'
-        #time.sleep(0.1)
-    self.procs= {}
-
-  #WARNING: This is not safe.  When killing roscore, rosmaster is still alive.
-  def KillBGProcess(self, name):
-    if name not in self.procs:
-      print 'No process named',name
-      return
-    self.procs[name].kill()
-    self.procs[name].wait()
-    #TODO: wait(): It is safer to have timeout.  For ver<3.3, implement like:
-    #while p.poll() is None:
-      #print 'Process still running...'
-      #time.sleep(0.1)
-    del self.procs[name]
-
-  def IsBGProcessRunning(self, name):
-    return self.procs[name].poll() is None
 
   def InitNode(self):
     rospy.init_node(self.node_name)
@@ -501,7 +451,7 @@ if __name__=='__main__':
       },
     }
 
-  pm= TProcessManager()
+  pm= TProcessManagerUR()
 
   def UpdateStatusTextBox(w,obj,status):
     #obj= w.widgets['status_textbox']
