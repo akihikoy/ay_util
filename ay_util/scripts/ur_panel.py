@@ -7,6 +7,7 @@
 import roslib
 roslib.load_manifest('ay_trick_msgs')
 import os,sys
+import subprocess
 import rospy
 import rospkg
 import ay_trick_msgs.msg
@@ -46,6 +47,9 @@ if __name__=='__main__':
     'DxlUSB': dxl_dev,
     'FV_L_DEV': '/media/video_fv1',
     'FV_R_DEV': '/media/video_fv2',
+    'FV_BASE_DIR': subprocess.check_output('rospack find ay_fv_extra'.split(' ')).strip(),
+    'FV_L_CONFIG': 'config/fvp_3_l.yaml',
+    'FV_R_CONFIG': 'config/fvp_3_r.yaml',
     'FV_CTRL_CONFIG': '{}/data/config/fv_ctrl.yaml'.format(os.environ['HOME']),
     #'ShutdownRobotAfterUse': False,
     #'Q_INIT': [0.03572946786880493, -2.027292076741354, 1.6515636444091797, -1.1894968191729944, -1.5706136862384241, -3.1061676184283655],
@@ -61,16 +65,18 @@ if __name__=='__main__':
     'ur_ros': ['roslaunch ay_util ur_selector.launch robot_code:={URType} jsdev:=/dev/input/{JoyUSB} dxldev:=/dev/tty{DxlUSB} with_gripper:=false','bg'],
     'ur_gripper': ['roslaunch ay_util ur_gripper_selector.launch robot_code:={URType} dxldev:=/dev/tty{DxlUSB}','bg'],
     'ur_calib': ['roslaunch ay_util ur_calib.launch robot_code:={URType}','fg'],
-    'fvp_3': ['roslaunch ay_fv_extra fvp_3.launch','bg'],
-    'config_fv_l': ['rosrun fingervision conf_cam2.py {FV_L_DEV} "file:CameraParams:0:`rospack find ay_fv_extra`/config/fvp_3_l.yaml"','fg'],
-    'config_fv_r': ['rosrun fingervision conf_cam2.py {FV_R_DEV} "file:CameraParams:0:`rospack find ay_fv_extra`/config/fvp_3_r.yaml"','fg'],
+    'fvp': ['roslaunch fingervision fvp_general.launch pkg_dir:={FV_BASE_DIR} config1:={FV_L_CONFIG} config2:={FV_R_CONFIG}','bg'],
+    'fvp_file': ['roslaunch ay_fv_extra fvp_file1.launch','bg'],
+    'config_fv_l': ['rosrun fingervision conf_cam2.py {FV_L_DEV} file:CameraParams:0:{FV_BASE_DIR}/{FV_L_CONFIG}','fg'],
+    'config_fv_r': ['rosrun fingervision conf_cam2.py {FV_R_DEV} file:CameraParams:0:{FV_BASE_DIR}/{FV_R_CONFIG}','fg'],
     'realsense': ['roslaunch realsense2_camera rs_camera.launch align_depth:=true enable_pointcloud:=true depth_fps:=15 color_fps:=30 depth_width:=640 depth_height:=480 color_width:=640 color_height:=480','bg'],
     'ay_trick_ros': ['rosrun ay_trick ros_node.py','bg'],
     'rviz': ['rosrun rviz rviz -d {0}'.format(RVIZ_CONFIG),'bg'],
     }
   if is_sim:
     config['URType']= config['URType_SIM']
-    for c in ('fix_usb','ur_calib','fvp_3','config_fv_l','config_fv_r','realsense'):
+    cmds['fvp']= cmds['fvp_file']
+    for c in ('fix_usb','ur_calib','config_fv_l','config_fv_r','realsense'):
       cmds[c][1]= None
   for key in cmds.iterkeys():
     if isinstance(cmds[key][0],str):
@@ -290,11 +296,11 @@ MainProgram: {script_status}'''.format(
                       status==pm.ROBOT_EMERGENCY_STOP and (
                         #stop_cmd('rviz'),
                         stop_cmd('ay_trick_ros'),
-                        stop_cmd('fvp_3'),
+                        stop_cmd('fvp'),
                         ),
                       ),
         'onclick':(lambda w,obj:(
-                      run_cmd('fvp_3'),
+                      run_cmd('fvp'),
                       rospy.sleep(0.2),
                       run_cmd('config_fv_l'),
                       run_cmd('config_fv_r'),
@@ -308,7 +314,7 @@ MainProgram: {script_status}'''.format(
                    lambda w,obj:(
                       #stop_cmd('rviz'),
                       stop_cmd('ay_trick_ros'),
-                      stop_cmd('fvp_3'),
+                      stop_cmd('fvp'),
                      ) )}),
     'btn_reset_estop': (
       'button',{
