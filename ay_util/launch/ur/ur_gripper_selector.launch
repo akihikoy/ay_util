@@ -14,7 +14,9 @@ Since this uses eval in if, it works with Kinetic+.
 
   <group if="$(eval robot_code in ('UR3ThG','UR3eThG','UR3e125hzThG','UR5eThG','Gen3ThG') )">
     <node pkg="ay_util" type="dxlg_driver.py" name="gripper_driver" output="screen"
-          args="$(arg dxldev) RHP12RNGripper" />
+          args="$(arg dxldev) RHP12RNAGripper" />
+    <!--NOTE:Changed to use the gripper with the newer protocol (A) even for an older robot_code.
+        In case we want to use both versions, replace this by RHP12RNGripper. -->
   </group>
 
   <group if="$(eval robot_code in ('UR3ThGA','UR3eThGA','UR3e125hzThGA','UR5eThGA','Gen3ThGA') )">
