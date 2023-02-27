@@ -24,6 +24,11 @@ def OperateDxlGripper(dev='/dev/ttyUSB0', gripper_type='DxlGripper', finger_type
     dxl[0].Id= 1
     dxl[0].Baudrate= 2e6
     dxl[0].Setup()
+  elif gripper_type=='RHP12RNAGripper':
+    dxl= [TDynamixel1('RH-P12-RN(A)')]
+    dxl[0].Id= 1
+    dxl[0].Baudrate= 2e6
+    dxl[0].Setup()
   elif gripper_type=='EZGripper':
     pass
   elif gripper_type=='DxlpO2Gripper':
@@ -41,6 +46,7 @@ def OperateDxlGripper(dev='/dev/ttyUSB0', gripper_type='DxlGripper', finger_type
   #Set callback to exit when Ctrl+C is pressed.
   DxlPortHandler.ReopenCallback= lambda: not rospy.is_shutdown()
 
+  print 'Executing the command:',command
   if command=='EnableTorque':  #Enable joint_names (joint_names is [], all joints are enabled).
     for d in dxl:
       d.EnableTorque()
@@ -50,13 +56,16 @@ def OperateDxlGripper(dev='/dev/ttyUSB0', gripper_type='DxlGripper', finger_type
   elif command=='Reboot':  #Reboot joint_names (joint_names is [], all joints are rebooted).
     for d in dxl:
       d.Reboot()
+  elif command=='FactoryReset':  #FactoryReset joint_names (joint_names is [], all joints are rebooted).
+    for d in dxl:
+      d.FactoryReset()
 
 
 if __name__=='__main__':
   dev= sys.argv[1] if len(sys.argv)>1 else '/dev/ttyUSB0'
   gripper_type= sys.argv[2] if len(sys.argv)>2 else 'DxlGripper'
   finger_type= sys.argv[3] if len(sys.argv)>3 else None
-  command= 'Reboot'
+  command= sys.argv[4] if len(sys.argv)>4 else 'Reboot'
   print 'args=',sys.argv
   OperateDxlGripper(dev, gripper_type, finger_type, command)
 
