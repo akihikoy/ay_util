@@ -134,7 +134,17 @@ class TProcessManagerUR(QtCore.QObject, TSubProcManager):
     if self.thread_status_update is not None:
       self.thread_status_update.join()
 
-  def __init__(self, node_name='ur_dashboard'):
+  def __init__(self, node_name='ur_dashboard', config=None):
+    if config is None:
+      config= {
+          'PIN_STATE_LED_RED': 0,
+          'PIN_STATE_LED_YELLOW': 1,
+          'PIN_STATE_LED_GREEN': 2,
+          'PIN_STATE_BEEP': 3,
+          'PIN_START_BTN_LED': 4,
+          'PIN_STOP_BTN_LED': 5,
+        }
+    self.config= config
     QtCore.QObject.__init__(self)
     TSubProcManager.__init__(self)
     self.node_name= node_name
@@ -248,26 +258,31 @@ class TProcessManagerUR(QtCore.QObject, TSubProcManager):
     self.SetBeep(False)
     self.SetStartStopLEDs(False, False)
 
-  #color: 'red','yellow','green'  #FIXME: the pin id is hard-coded, should be put in a config file.
+  #color: 'red','yellow','green'
   def SetLEDLight(self, color, is_on):
-    pin= {'red':0,'yellow':1,'green':2}[color]
+    config_name= {'red':'PIN_STATE_LED_RED',
+                  'yellow':'PIN_STATE_LED_YELLOW',
+                  'green':'PIN_STATE_LED_GREEN'}[color]
+    if config_name not in self.config:  return
+    pin= self.config[config_name]
     state= ur_msgs.srv.SetIORequest.STATE_ON if is_on else ur_msgs.srv.SetIORequest.STATE_OFF
     return self.SetURIO(ur_msgs.srv.SetIORequest.FUN_SET_DIGITAL_OUT, pin, state)
 
-  #FIXME: the pin id is hard-coded, should be put in a config file.
   def SetBeep(self, is_on):
-    pin= 3
+    if 'PIN_STATE_BEEP' not in self.config:  return
+    pin= self.config['PIN_STATE_BEEP']
     state= ur_msgs.srv.SetIORequest.STATE_ON if is_on else ur_msgs.srv.SetIORequest.STATE_OFF
     return self.SetURIO(ur_msgs.srv.SetIORequest.FUN_SET_DIGITAL_OUT, pin, state)
 
-  #FIXME: the pin id is hard-coded, should be put in a config file.
   def SetStartStopLEDs(self, is_start_on, is_stop_on):
-    start_pin= 4
-    start_state= ur_msgs.srv.SetIORequest.STATE_ON if is_start_on else ur_msgs.srv.SetIORequest.STATE_OFF
-    self.SetURIO(ur_msgs.srv.SetIORequest.FUN_SET_DIGITAL_OUT, start_pin, start_state)
-    stop_pin= 5
-    stop_state= ur_msgs.srv.SetIORequest.STATE_ON if is_stop_on else ur_msgs.srv.SetIORequest.STATE_OFF
-    self.SetURIO(ur_msgs.srv.SetIORequest.FUN_SET_DIGITAL_OUT, stop_pin, stop_state)
+    if 'PIN_START_BTN_LED' in self.config:
+      start_pin= self.config['PIN_START_BTN_LED']
+      start_state= ur_msgs.srv.SetIORequest.STATE_ON if is_start_on else ur_msgs.srv.SetIORequest.STATE_OFF
+      self.SetURIO(ur_msgs.srv.SetIORequest.FUN_SET_DIGITAL_OUT, start_pin, start_state)
+    if 'PIN_STOP_BTN_LED' in self.config:
+      stop_pin= self.config['PIN_STOP_BTN_LED']
+      stop_state= ur_msgs.srv.SetIORequest.STATE_ON if is_stop_on else ur_msgs.srv.SetIORequest.STATE_OFF
+      self.SetURIO(ur_msgs.srv.SetIORequest.FUN_SET_DIGITAL_OUT, stop_pin, stop_state)
 
   def JointStatesCallback(self, msg):
     self.ur_topic_stamp= rospy.Time.now()
@@ -377,7 +392,7 @@ class TProcessManagerUR(QtCore.QObject, TSubProcManager):
       return
     self.srvp_wait_finish()  #Wait for previously executed scripts.
     self.pub_cmd.publish(std_msgs.msg.String(cmd))
-    print '###DEBUG/RunFGScript###',cmd
+    print '###INFO/RunFGScript###',cmd
     self.srvp_wait_finish()
 
   def RunBGScript(self, cmd):
@@ -386,7 +401,7 @@ class TProcessManagerUR(QtCore.QObject, TSubProcManager):
       return
     self.srvp_wait_finish()  #Wait for previously executed scripts.
     self.pub_cmd.publish(std_msgs.msg.String(cmd))
-    print '###DEBUG/RunBGScript###',cmd
+    print '###INFO/RunBGScript###',cmd
 
   def SendString(self, key):
     if not hasattr(self,'connected_to_script_node'):

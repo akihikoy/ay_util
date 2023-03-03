@@ -17,8 +17,8 @@ from joy_fv import TJoyEmulator
 from ay_py.core import InsertDict, LoadYAML, SaveYAML
 
 class TProcessManagerJoy(TProcessManagerUR, TJoyEmulator):
-  def __init__(self, node_name='ur_panel'):
-    TProcessManagerUR.__init__(self, node_name=node_name)
+  def __init__(self, node_name='ur_panel', ur_status_pins=None):
+    TProcessManagerUR.__init__(self, node_name=node_name, config=ur_status_pins)
     TJoyEmulator.__init__(self)
 
 def UpdateProcList(pm,combobox):
@@ -55,6 +55,13 @@ if __name__=='__main__':
     #'Q_INIT': [0.03572946786880493, -2.027292076741354, 1.6515636444091797, -1.1894968191729944, -1.5706136862384241, -3.1061676184283655],
     'Q_INIT': [0.03572946786880493, -2.027292076741354, 1.6515636444091797, -1.1894968191729944, -1.5706136862384241, 0.0],
     #'Q_PARK': [0.03572946786880493, -2.027292076741354, 1.6515636444091797, -1.1894968191729944, -1.5706136862384241, -3.1061676184283655],
+    'UR_STATUS_PINS':{
+      'PIN_STATE_LED_RED': 0,
+      'PIN_STATE_LED_YELLOW': 1,
+      'PIN_STATE_LED_GREEN': 2,
+      'PIN_STATE_BEEP': 3,
+      'PIN_START_BTN_LED': 4,
+      'PIN_STOP_BTN_LED': 5,}
     }
   print config
 
@@ -82,7 +89,7 @@ if __name__=='__main__':
     if isinstance(cmds[key][0],str):
       cmds[key][0]= cmds[key][0].format(**config).split(' ')
 
-  pm= TProcessManagerJoy()
+  pm= TProcessManagerJoy(ur_status_pins=config['UR_STATUS_PINS'])
   run_cmd= lambda name: pm.RunBGProcess(name,cmds[name][0]) if cmds[name][1]=='bg' else\
                         pm.RunFGProcess(cmds[name][0]) if cmds[name][1]=='fg' else\
                         None
