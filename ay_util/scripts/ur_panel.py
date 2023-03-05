@@ -79,6 +79,8 @@ if __name__=='__main__':
     'realsense': ['roslaunch realsense2_camera rs_camera.launch align_depth:=true enable_pointcloud:=true depth_fps:=15 color_fps:=30 depth_width:=640 depth_height:=480 color_width:=640 color_height:=480','bg'],
     'ay_trick_ros': ['rosrun ay_trick ros_node.py','bg'],
     'rviz': ['rosrun rviz rviz -d {0}'.format(RVIZ_CONFIG),'bg'],
+    'reboot_dxlg': ['roslaunch ay_util ur_gripper_reboot.launch robot_code:={URType} dxldev:=/dev/tty{DxlUSB} command:=Reboot','fg'],
+    'factory_reset_dxlg': ['roslaunch ay_util ur_gripper_reboot.launch robot_code:={URType} dxldev:=/dev/tty{DxlUSB} command:=FactoryReset','fg'],
     }
   if is_sim:
     config['URType']= config['URType_SIM']
@@ -181,12 +183,13 @@ MainProgram: {script_status}'''.format(
         'value': ctrl_config[name],
         'n_labels': 3,
         'slider_style':1,
-        'font_size_range': (5,6),
+        'font_size_range': (10,12),
+        #'size_policy': ('minimum', 'minimum'),
         'onvaluechange': lambda w,obj:UpdateCtrlConfig(name,obj.value())} )
     widgets['label_ctrl_config_{}'.format(name)]= (
       'label',{
         'text': name,
-        'font_size_range': (5,6),
+        'font_size_range': (12,14),
         'size_policy': ('minimum', 'minimum')} )
   def CtrlConfigSliderLayout(name):
     return ('label_ctrl_config_{}'.format(name),'slider_ctrl_config_{}'.format(name))
@@ -494,9 +497,12 @@ MainProgram: {script_status}'''.format(
   AddCtrlConfigSliderWidget(widgets_ctrl_config, 'openif_nforce_threshold', (1,100,1))
   AddCtrlConfigSliderWidget(widgets_ctrl_config, 'openif_dw_grip', (0.0,0.1,0.001))
 
-  layout_ctrl_config= (
+  layout_ctrl_config1= (
     'boxv',None, (
         ('boxh',None, CtrlConfigSliderLayout('min_gstep') ),
+        #('boxh',None, CtrlConfigSliderLayout('grasp_th') ),
+        #('boxh',None, CtrlConfigSliderLayout('grasp_filter_len') ),
+        #('boxh',None, CtrlConfigSliderLayout('grasp_dstate_th') ),
         ('boxh',None, CtrlConfigSliderLayout('hold_sensitivity_slip') ),
         ('boxh',None, CtrlConfigSliderLayout('hold_sensitivity_oc') ),
         ('boxh',None, CtrlConfigSliderLayout('hold_sensitivity_oo') ),
@@ -504,6 +510,9 @@ MainProgram: {script_status}'''.format(
         ('boxh',None, CtrlConfigSliderLayout('pickup2a_area_drop_ratio') ),
         ('boxh',None, CtrlConfigSliderLayout('pickup2a_z_final') ),
         ('boxh',None, CtrlConfigSliderLayout('pickup2a_obj_area_filter_len') ),
+      ))
+  layout_ctrl_config2= (
+    'boxv',None, (
         ('boxh',None, CtrlConfigSliderLayout('openif_sensitivity_slip') ),
         ('boxh',None, CtrlConfigSliderLayout('openif_sensitivity_oc') ),
         ('boxh',None, CtrlConfigSliderLayout('openif_sensitivity_oo') ),
@@ -605,6 +614,23 @@ MainProgram: {script_status}'''.format(
         'text': 'CloseSafetyPopup',
         'font_size_range': (8,24),
         'onclick': lambda w,obj: pm.RunURDashboard('close_safety_popup'), }),
+    'label_dxlg': (
+      'label',{
+        'text': 'DynamixelGripper: ',
+        'font_size_range': (8,24),
+        'size_policy': ('minimum', 'minimum')}),
+    'btn_dxlg_reboot': (
+      'button',{
+        'text': 'Reboot',
+        'font_size_range': (8,24),
+        #'size_policy': ('minimum', 'minimum'),
+        'onclick': lambda w,obj: run_cmd('reboot_dxlg'), }),
+    'btn_dxlg_factory_reset': (
+      'button',{
+        'text': 'FactoryReset',
+        'font_size_range': (8,24),
+        #'size_policy': ('minimum', 'minimum'),
+        'onclick': lambda w,obj: run_cmd('factory_reset_dxlg'), }),
     'label_processes': (
       'label',{
         'text': 'Processes: ',
@@ -658,6 +684,10 @@ MainProgram: {script_status}'''.format(
                             'btn_ur_close_safety_popup')),
                         ))
                      )),
+      ('boxh',None, ('label_dxlg', ('boxv',None, (
+                        ('boxh',None, ('btn_dxlg_reboot','btn_dxlg_factory_reset')),
+                        ))
+                     )),
       ('boxh',None, ('label_processes', ('boxv',None, (
                         'combobox_procs',
                         ('boxh',None, ('btn_update_proc_list','btn_terminate_proc','btn_kill_proc')),
@@ -675,7 +705,8 @@ MainProgram: {script_status}'''.format(
         ('tab','maintab',(
           ('Initialize',layout_init),
           ('Joy',layout_joy),
-          ('Control Config',layout_ctrl_config),
+          ('Config/1',layout_ctrl_config1),
+          ('Config/2',layout_ctrl_config2),
           ('Recovery',layout_recovery),
           ('Debug',layout_debug),
           )),'spacer_cmn1')),
