@@ -134,7 +134,7 @@ class TProcessManagerUR(QtCore.QObject, TSubProcManager):
     if self.thread_status_update is not None:
       self.thread_status_update.join()
 
-  def __init__(self, node_name='ur_dashboard', config=None):
+  def __init__(self, node_name='ur_dashboard', config=None, is_sim=False):
     if config is None:
       config= {
           'PIN_STATE_LED_RED': 0,
@@ -148,6 +148,7 @@ class TProcessManagerUR(QtCore.QObject, TSubProcManager):
     QtCore.QObject.__init__(self)
     TSubProcManager.__init__(self)
     self.node_name= node_name
+    self.is_sim= is_sim
 
     self.status_names= {
       self.UNDEFINED:           'UNDEFINED'           ,
@@ -201,6 +202,7 @@ class TProcessManagerUR(QtCore.QObject, TSubProcManager):
     rospy.sleep(0.1)
 
   def ConnectToURDashboard(self, timeout=6.0):
+    if self.is_sim:  return
     services= ['power_on', 'power_off', 'brake_release', 'play', 'stop', 'shutdown', 'unlock_protective_stop', 'restart_safety', 'close_safety_popup']
     #for service in services:
       #self.srvp_ur_dashboard[service]= SetupServiceProxy('/ur_hardware_interface/dashboard/{0}'.format(service), std_srvs.srv.Trigger, persistent=False, time_out=3.0)
@@ -222,6 +224,7 @@ class TProcessManagerUR(QtCore.QObject, TSubProcManager):
     self.sub_program_running= rospy.Subscriber('/ur_hardware_interface/robot_program_running', std_msgs.msg.Bool, self.ProgramRunningCallback)
 
   def DisconnectUR(self):
+    if self.is_sim:  return
     self.TurnOffLEDAll()
     self.srvp_ur_set_io= None  #TODO: srvp_ur_set_io may be used from other thread, so the LED may be turned on before this.
     self.srvp_ur_dashboard= {}
@@ -260,6 +263,7 @@ class TProcessManagerUR(QtCore.QObject, TSubProcManager):
 
   #color: 'red','yellow','green'
   def SetLEDLight(self, color, is_on):
+    if self.is_sim:  return
     config_name= {'red':'PIN_STATE_LED_RED',
                   'yellow':'PIN_STATE_LED_YELLOW',
                   'green':'PIN_STATE_LED_GREEN'}[color]
@@ -269,12 +273,14 @@ class TProcessManagerUR(QtCore.QObject, TSubProcManager):
     return self.SetURIO(ur_msgs.srv.SetIORequest.FUN_SET_DIGITAL_OUT, pin, state)
 
   def SetBeep(self, is_on):
+    if self.is_sim:  return
     if 'PIN_STATE_BEEP' not in self.config:  return
     pin= self.config['PIN_STATE_BEEP']
     state= ur_msgs.srv.SetIORequest.STATE_ON if is_on else ur_msgs.srv.SetIORequest.STATE_OFF
     return self.SetURIO(ur_msgs.srv.SetIORequest.FUN_SET_DIGITAL_OUT, pin, state)
 
   def SetStartStopLEDs(self, is_start_on, is_stop_on):
+    if self.is_sim:  return
     if 'PIN_START_BTN_LED' in self.config:
       start_pin= self.config['PIN_START_BTN_LED']
       start_state= ur_msgs.srv.SetIORequest.STATE_ON if is_start_on else ur_msgs.srv.SetIORequest.STATE_OFF
@@ -301,6 +307,7 @@ class TProcessManagerUR(QtCore.QObject, TSubProcManager):
 
   #mode: ur_dashboard_msgs.msg.RobotMode.{POWER_OFF,BOOTING,IDLE,RUNNING}
   def WaitForRobotMode(self, mode, timeout=20):
+    if self.is_sim:  return True
     if mode==ur_dashboard_msgs.msg.RobotMode.POWER_OFF and\
       self.ur_robot_mode in (ur_dashboard_msgs.msg.RobotMode.BOOTING,
                              ur_dashboard_msgs.msg.RobotMode.IDLE,
@@ -320,6 +327,7 @@ class TProcessManagerUR(QtCore.QObject, TSubProcManager):
 
   #mode: ur_dashboard_msgs.msg.SafetyMode.{NORMAL,PROTECTIVE_STOP,ROBOT_EMERGENCY_STOP,FAULT}
   def WaitForSafetyMode(self, mode, timeout=20):
+    if self.is_sim:  return True
     t_start= rospy.Time.now()
     rate= rospy.Rate(20)
     while self.ur_safety_mode != mode:
@@ -331,6 +339,7 @@ class TProcessManagerUR(QtCore.QObject, TSubProcManager):
 
   #program_running: True or False
   def WaitForProgramRunning(self, program_running, timeout=20):
+    if self.is_sim:  return True
     t_start= rospy.Time.now()
     rate= rospy.Rate(20)
     while self.ur_program_running != program_running:
@@ -342,6 +351,7 @@ class TProcessManagerUR(QtCore.QObject, TSubProcManager):
 
   #ur_ros_running: True or False
   def WaitForURROSRunning(self, ur_ros_running, timeout=20):
+    if self.is_sim:  return True
     t_start= rospy.Time.now()
     rate= rospy.Rate(20)
     while self.ur_ros_running != ur_ros_running:
