@@ -5,19 +5,37 @@
 #\version 0.1
 #\date    Sep.19, 2022
 import subprocess
+import re
 
 class TSubProcManager(object):
   def __init__(self):
     self.procs= {}
+    self.re_split= re.compile(r'''((?:[^\ "']|"[^"]*"|'[^']*')+)''')
 
-  #command: list of command and arguments.
-  def RunFGProcess(self, command, shell=False):
+  #Split a given string command into a list according to the mode.
+  #mode:
+  #  'auto': Split if command is a string including spaces.
+  #  True: Split.
+  #  False: Not split.
+  def SplitCommand(self, command, mode):
+    if mode=='auto':
+      mode= isinstance(command,str) and ' ' in command
+    if mode and isinstance(command,str):
+      command= self.re_split.split(command)[1::2]
+    return command
+
+  #command: command string or list of command and arguments.
+  #A string command is split into a list according to the split_cmd mode (cf. SplitCommand).
+  def RunFGProcess(self, command, shell=False, split_cmd='auto'):
+    command= self.SplitCommand(command, split_cmd)
     p= subprocess.Popen(command, shell=shell)
     p.wait()
 
-  #command: list of command and arguments.
-  def RunBGProcess(self, name, command, shell=False):
+  #command: command string or list of command and arguments.
+  #A string command is split into a list according to the split_cmd mode (cf. SplitCommand).
+  def RunBGProcess(self, name, command, shell=False, split_cmd='auto'):
     self.TerminateBGProcess(name)
+    command= self.SplitCommand(command, split_cmd)
     p= subprocess.Popen(command, shell=shell)
     self.procs[name]= p
 
