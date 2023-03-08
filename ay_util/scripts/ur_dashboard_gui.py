@@ -13,6 +13,7 @@ from ay_py.ros.base import SetupServiceProxy
 import sys
 import subprocess
 import threading
+import copy
 import rospy
 import std_msgs.msg
 import std_srvs.srv
@@ -186,6 +187,7 @@ class TProcessManagerUR(QtCore.QObject, TSubProcManager):
     self.ur_ros_running= None
     self.script_node_running= None
     self.ur_topic_stamp= None
+    self.io_states= None
     self.srvp_ur_dashboard= {}
     self.srvp_ur_set_io= None
     self.ur_robot_mode= None
@@ -219,6 +221,7 @@ class TProcessManagerUR(QtCore.QObject, TSubProcManager):
     self.pub_io_states= rospy.Publisher('/ur_hardware_interface/io_states', ur_msgs.msg.IOStates, queue_size=10)
 
     self.sub_joint_states= rospy.Subscriber('/joint_states', sensor_msgs.msg.JointState, self.JointStatesCallback)
+    self.sub_io_states= rospy.Subscriber('/ur_hardware_interface/io_states', ur_msgs.msg.IOStates, self.IOStatesCallback)
     self.sub_robot_mode= rospy.Subscriber('/ur_hardware_interface/robot_mode', ur_dashboard_msgs.msg.RobotMode, self.RobotModeCallback)
     self.sub_safety_mode= rospy.Subscriber('/ur_hardware_interface/safety_mode', ur_dashboard_msgs.msg.SafetyMode, self.SafetyModeCallback)
     self.sub_program_running= rospy.Subscriber('/ur_hardware_interface/robot_program_running', std_msgs.msg.Bool, self.ProgramRunningCallback)
@@ -293,6 +296,9 @@ class TProcessManagerUR(QtCore.QObject, TSubProcManager):
   def JointStatesCallback(self, msg):
     self.ur_topic_stamp= rospy.Time.now()
 
+  def IOStatesCallback(self, msg):
+    self.io_states= msg
+
   def RobotModeCallback(self, msg):
     self.ur_robot_mode= msg.mode
 
@@ -362,12 +368,13 @@ class TProcessManagerUR(QtCore.QObject, TSubProcManager):
     return True
 
   def SendFakeDigitalInDignal(self, signal_idx, signal_trg):
-    msg= ur_msgs.msg.IOStates()
-    msg.digital_in_states= [ur_msgs.msg.Digital(pin,False) for pin in range(18)]
-    msg.digital_out_states= [ur_msgs.msg.Digital(pin,False) for pin in range(18)]
-    msg.flag_states= [ur_msgs.msg.Digital(pin,False) for pin in range(2)]
-    msg.analog_in_states= [ur_msgs.msg.Analog(pin,0,0) for pin in range(2)]
-    msg.analog_out_states= [ur_msgs.msg.Analog(pin,0,0) for pin in range(2)]
+    #msg= ur_msgs.msg.IOStates()
+    #msg.digital_in_states= [ur_msgs.msg.Digital(pin,False) for pin in range(18)]
+    #msg.digital_out_states= [ur_msgs.msg.Digital(pin,False) for pin in range(18)]
+    #msg.flag_states= [ur_msgs.msg.Digital(pin,False) for pin in range(2)]
+    #msg.analog_in_states= [ur_msgs.msg.Analog(pin,0,0) for pin in range(2)]
+    #msg.analog_out_states= [ur_msgs.msg.Analog(pin,0,0) for pin in range(2)]
+    msg= copy.deepcopy(self.io_states)
     msg.digital_in_states[signal_idx]= ur_msgs.msg.Digital(signal_idx,signal_trg)
     self.pub_io_states.publish(msg)
 
