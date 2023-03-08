@@ -62,7 +62,7 @@ class TProcessManagerUR(QtCore.QObject, TSubProcManager):
     #print ((t_now-self.ur_topic_stamp).to_sec()) if self.ur_topic_stamp is not None else '--'
     #print ((t_now-self.script_node_status_stamp).to_sec()) if self.script_node_status_stamp is not None else '++'
     self.ur_ros_running= ((t_now-self.ur_topic_stamp).to_sec() < 0.1) if self.ur_topic_stamp is not None else False
-    self.script_node_running= ((t_now-self.script_node_status_stamp).to_sec() < 0.2) if self.script_node_status_stamp is not None else False
+    self.script_node_running= ((t_now-self.script_node_status_stamp).to_sec() < 0.4) if self.script_node_status_stamp is not None else False
 
     status= self.UNDEFINED
     if not self.ur_ros_running:
