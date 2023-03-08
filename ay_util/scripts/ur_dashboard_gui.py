@@ -368,13 +368,15 @@ class TProcessManagerUR(QtCore.QObject, TSubProcManager):
     return True
 
   def SendFakeDigitalInDignal(self, signal_idx, signal_trg):
-    #msg= ur_msgs.msg.IOStates()
-    #msg.digital_in_states= [ur_msgs.msg.Digital(pin,False) for pin in range(18)]
-    #msg.digital_out_states= [ur_msgs.msg.Digital(pin,False) for pin in range(18)]
-    #msg.flag_states= [ur_msgs.msg.Digital(pin,False) for pin in range(2)]
-    #msg.analog_in_states= [ur_msgs.msg.Analog(pin,0,0) for pin in range(2)]
-    #msg.analog_out_states= [ur_msgs.msg.Analog(pin,0,0) for pin in range(2)]
-    msg= copy.deepcopy(self.io_states)
+    if self.io_states is not None:
+      msg= copy.deepcopy(self.io_states)
+    else:
+      msg= ur_msgs.msg.IOStates()
+      msg.digital_in_states= [ur_msgs.msg.Digital(pin,False) for pin in range(18)]
+      msg.digital_out_states= [ur_msgs.msg.Digital(pin,False) for pin in range(18)]
+      msg.flag_states= [ur_msgs.msg.Digital(pin,False) for pin in range(2)]
+      msg.analog_in_states= [ur_msgs.msg.Analog(pin,0,0) for pin in range(2)]
+      msg.analog_out_states= [ur_msgs.msg.Analog(pin,0,0) for pin in range(2)]
     msg.digital_in_states[signal_idx]= ur_msgs.msg.Digital(signal_idx,signal_trg)
     self.pub_io_states.publish(msg)
 
