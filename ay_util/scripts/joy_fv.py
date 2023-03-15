@@ -57,7 +57,7 @@ class TJoyEmulator(object):
       joy_state.buttons[5]= is_active  #RB (0:inactive, 1:active)
     elif kind=='z':
       joy_state.axes[4]= value[0]  #Z
-      joy_state.buttons[5]= 1  #RB (0:inactive, 1:active)
+      joy_state.buttons[5]= is_active  #RB (0:inactive, 1:active)
     elif kind=='pitch':
       joy_state.axes[1]= value[0]  #X, WY(pitch)
       joy_state.buttons[4]= 1  #LB (0:position, 1:orientation)
