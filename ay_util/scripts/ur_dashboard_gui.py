@@ -204,27 +204,29 @@ class TProcessManagerUR(QtCore.QObject, TSubProcManager):
     rospy.sleep(0.1)
 
   def ConnectToURDashboard(self, timeout=6.0):
-    if self.is_sim:  return
-    services= ['power_on', 'power_off', 'brake_release', 'play', 'stop', 'shutdown', 'unlock_protective_stop', 'restart_safety', 'close_safety_popup']
-    #for service in services:
-      #self.srvp_ur_dashboard[service]= SetupServiceProxy('/ur_hardware_interface/dashboard/{0}'.format(service), std_srvs.srv.Trigger, persistent=False, time_out=3.0)
-    #self.srvp_ur_set_io= SetupServiceProxy('/ur_hardware_interface/set_io', ur_msgs.srv.SetIO, persistent=False, time_out=10.0)
-    threads= {}
-    for service in services:
-      threads[service]= threading.Thread(name=service, target=lambda service=service:(self.srvp_ur_dashboard.__setitem__(service,SetupServiceProxy('/ur_hardware_interface/dashboard/{0}'.format(service), std_srvs.srv.Trigger, persistent=False, time_out=timeout))))
-      threads[service].start()
-    threads['srvp_ur_set_io']= threading.Thread(name='srvp_ur_set_io', target=lambda:(setattr(self,'srvp_ur_set_io',SetupServiceProxy('/ur_hardware_interface/set_io', ur_msgs.srv.SetIO, persistent=False, time_out=timeout))))
-    threads['srvp_ur_set_io'].start()
-    for name,th in threads.iteritems():  th.join()
+    if not self.is_sim:
+      services= ['power_on', 'power_off', 'brake_release', 'play', 'stop', 'shutdown', 'unlock_protective_stop', 'restart_safety', 'close_safety_popup']
+      #for service in services:
+        #self.srvp_ur_dashboard[service]= SetupServiceProxy('/ur_hardware_interface/dashboard/{0}'.format(service), std_srvs.srv.Trigger, persistent=False, time_out=3.0)
+      #self.srvp_ur_set_io= SetupServiceProxy('/ur_hardware_interface/set_io', ur_msgs.srv.SetIO, persistent=False, time_out=10.0)
+      threads= {}
+      for service in services:
+        threads[service]= threading.Thread(name=service, target=lambda service=service:(self.srvp_ur_dashboard.__setitem__(service,SetupServiceProxy('/ur_hardware_interface/dashboard/{0}'.format(service), std_srvs.srv.Trigger, persistent=False, time_out=timeout))))
+        threads[service].start()
+      threads['srvp_ur_set_io']= threading.Thread(name='srvp_ur_set_io', target=lambda:(setattr(self,'srvp_ur_set_io',SetupServiceProxy('/ur_hardware_interface/set_io', ur_msgs.srv.SetIO, persistent=False, time_out=timeout))))
+      threads['srvp_ur_set_io'].start()
+      for name,th in threads.iteritems():  th.join()
 
-    #Connect to io_states to publish a fake io_states for debug.
+    #Connect to io_states to publish a fake io_states.
     self.pub_io_states= rospy.Publisher('/ur_hardware_interface/io_states', ur_msgs.msg.IOStates, queue_size=10)
 
     self.sub_joint_states= rospy.Subscriber('/joint_states', sensor_msgs.msg.JointState, self.JointStatesCallback)
     self.sub_io_states= rospy.Subscriber('/ur_hardware_interface/io_states', ur_msgs.msg.IOStates, self.IOStatesCallback)
-    self.sub_robot_mode= rospy.Subscriber('/ur_hardware_interface/robot_mode', ur_dashboard_msgs.msg.RobotMode, self.RobotModeCallback)
-    self.sub_safety_mode= rospy.Subscriber('/ur_hardware_interface/safety_mode', ur_dashboard_msgs.msg.SafetyMode, self.SafetyModeCallback)
-    self.sub_program_running= rospy.Subscriber('/ur_hardware_interface/robot_program_running', std_msgs.msg.Bool, self.ProgramRunningCallback)
+
+    if not self.is_sim:
+      self.sub_robot_mode= rospy.Subscriber('/ur_hardware_interface/robot_mode', ur_dashboard_msgs.msg.RobotMode, self.RobotModeCallback)
+      self.sub_safety_mode= rospy.Subscriber('/ur_hardware_interface/safety_mode', ur_dashboard_msgs.msg.SafetyMode, self.SafetyModeCallback)
+      self.sub_program_running= rospy.Subscriber('/ur_hardware_interface/robot_program_running', std_msgs.msg.Bool, self.ProgramRunningCallback)
 
   def DisconnectUR(self):
     if self.is_sim:  return
@@ -233,13 +235,14 @@ class TProcessManagerUR(QtCore.QObject, TSubProcManager):
     self.srvp_ur_dashboard= {}
 
     self.sub_joint_states.unregister()
-    self.sub_robot_mode.unregister()
-    self.sub_safety_mode.unregister()
-    self.sub_program_running.unregister()
     self.sub_joint_states= None
-    self.sub_robot_mode= None
-    self.sub_safety_mode= None
-    self.sub_program_running= None
+    if not self.is_sim:
+      self.sub_robot_mode.unregister()
+      self.sub_safety_mode.unregister()
+      self.sub_program_running.unregister()
+      self.sub_robot_mode= None
+      self.sub_safety_mode= None
+      self.sub_program_running= None
 
     self.pub_io_states.unregister()
     self.pub_io_states= None
@@ -367,8 +370,8 @@ class TProcessManagerUR(QtCore.QObject, TSubProcManager):
         return False
     return True
 
-  def SendFakeDigitalInDignal(self, signal_idx, signal_trg):
-    if self.io_states is not None:
+  def SendFakeDigitalInSignal(self, signal_idx, signal_trg):
+    if self.ur_robot_mode is not None and self.io_states is not None:
       msg= copy.deepcopy(self.io_states)
     else:
       msg= ur_msgs.msg.IOStates()
@@ -472,6 +475,12 @@ class TProcessManagerUR(QtCore.QObject, TSubProcManager):
 
 
 if __name__=='__main__':
+  try:
+    is_sim_default= rospy.get_param('robot_code').endswith('_SIM')
+  except KeyError:
+    is_sim_default= False
+  is_sim= True if '-sim' in sys.argv or '--sim' in sys.argv else is_sim_default
+
   #NOTE: Some constants are defined in ctrl_paramX.yaml
   #Parameters:
   config={
@@ -485,7 +494,7 @@ if __name__=='__main__':
       },
     }
 
-  pm= TProcessManagerUR()
+  pm= TProcessManagerUR(is_sim=is_sim)
 
   def UpdateStatusTextBox(w,obj,status):
     #obj= w.widgets['status_textbox']
@@ -590,12 +599,12 @@ MainProgram: {script_status}'''.format(
       'button',{
         'text': 'START',
         #'onstatuschanged':lambda w,obj,status:(obj.setEnabled(status in (pm.PROGRAM_RUNNING,)) ),
-        'onclick': lambda w,obj: pm.SendFakeDigitalInDignal(config['START_BTN']['SIGNAL_IDX'], config['START_BTN']['SIGNAL_ON']), }),
+        'onclick': lambda w,obj: pm.SendFakeDigitalInSignal(config['START_BTN']['SIGNAL_IDX'], config['START_BTN']['SIGNAL_ON']), }),
     'btn_stop': (
       'button',{
         'text': 'STOP',
         #'onstatuschanged':lambda w,obj,status:(obj.setEnabled(status in (pm.PROGRAM_RUNNING,)) ),
-        'onclick': lambda w,obj: pm.SendFakeDigitalInDignal(config['STOP_BTN']['SIGNAL_IDX'], config['STOP_BTN']['SIGNAL_ON']), }),
+        'onclick': lambda w,obj: pm.SendFakeDigitalInSignal(config['STOP_BTN']['SIGNAL_IDX'], config['STOP_BTN']['SIGNAL_ON']), }),
     }
 
   widgets_recovery= {

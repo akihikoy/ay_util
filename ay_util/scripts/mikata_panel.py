@@ -316,12 +316,12 @@ if __name__=='__main__':
       #'button',{
         #'text': 'START',
         #'onstatuschanged':lambda w,obj,status:(obj.setEnabled(status in (pm.PROGRAM_RUNNING,)) ),
-        #'onclick': lambda w,obj: pm.SendFakeDigitalInDignal(config['START_BTN']['SIGNAL_IDX'], config['START_BTN']['SIGNAL_ON']), }),
+        #'onclick': lambda w,obj: pm.SendFakeDigitalInSignal(config['START_BTN']['SIGNAL_IDX'], config['START_BTN']['SIGNAL_ON']), }),
     #'btn_stop': (
       #'button',{
         #'text': 'STOP',
         #'onstatuschanged':lambda w,obj,status:(obj.setEnabled(status in (pm.PROGRAM_RUNNING,)) ),
-        #'onclick': lambda w,obj: pm.SendFakeDigitalInDignal(config['STOP_BTN']['SIGNAL_IDX'], config['STOP_BTN']['SIGNAL_ON']), }),
+        #'onclick': lambda w,obj: pm.SendFakeDigitalInSignal(config['STOP_BTN']['SIGNAL_IDX'], config['STOP_BTN']['SIGNAL_ON']), }),
     'label_pitch': (
       'label',{
         'text': '  P  ',
