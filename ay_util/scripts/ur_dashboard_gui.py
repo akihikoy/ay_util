@@ -56,19 +56,21 @@ class TURManager(object):
     self.ur_safety_mode= None
     self.ur_program_running= None
 
-  def ConnectToURDashboard(self, timeout=6.0):
+  def ConnectToURDashboard(self, timeout=6.0, with_thread=True):
     if not self.is_sim:
       services= ['power_on', 'power_off', 'brake_release', 'play', 'stop', 'shutdown', 'unlock_protective_stop', 'restart_safety', 'close_safety_popup']
-      #for service in services:
-        #self.srvp_ur_dashboard[service]= SetupServiceProxy('/ur_hardware_interface/dashboard/{0}'.format(service), std_srvs.srv.Trigger, persistent=False, time_out=3.0)
-      #self.srvp_ur_set_io= SetupServiceProxy('/ur_hardware_interface/set_io', ur_msgs.srv.SetIO, persistent=False, time_out=10.0)
-      threads= {}
-      for service in services:
-        threads[service]= threading.Thread(name=service, target=lambda service=service:(self.srvp_ur_dashboard.__setitem__(service,SetupServiceProxy('/ur_hardware_interface/dashboard/{0}'.format(service), std_srvs.srv.Trigger, persistent=False, time_out=timeout))))
-        threads[service].start()
-      threads['srvp_ur_set_io']= threading.Thread(name='srvp_ur_set_io', target=lambda:(setattr(self,'srvp_ur_set_io',SetupServiceProxy('/ur_hardware_interface/set_io', ur_msgs.srv.SetIO, persistent=False, time_out=timeout))))
-      threads['srvp_ur_set_io'].start()
-      for name,th in threads.iteritems():  th.join()
+      if with_thread:
+        threads= {}
+        for service in services:
+          threads[service]= threading.Thread(name=service, target=lambda service=service:(self.srvp_ur_dashboard.__setitem__(service,SetupServiceProxy('/ur_hardware_interface/dashboard/{0}'.format(service), std_srvs.srv.Trigger, persistent=False, time_out=timeout))))
+          threads[service].start()
+        threads['srvp_ur_set_io']= threading.Thread(name='srvp_ur_set_io', target=lambda:(setattr(self,'srvp_ur_set_io',SetupServiceProxy('/ur_hardware_interface/set_io', ur_msgs.srv.SetIO, persistent=False, time_out=timeout))))
+        threads['srvp_ur_set_io'].start()
+        for name,th in threads.iteritems():  th.join()
+      else:
+        for service in services:
+          self.srvp_ur_dashboard[service]= SetupServiceProxy('/ur_hardware_interface/dashboard/{0}'.format(service), std_srvs.srv.Trigger, persistent=False, time_out=timeout)
+        self.srvp_ur_set_io= SetupServiceProxy('/ur_hardware_interface/set_io', ur_msgs.srv.SetIO, persistent=False, time_out=timeout)
 
     #Connect to io_states to publish a fake io_states.
     self.pub_io_states= rospy.Publisher('/ur_hardware_interface/io_states', ur_msgs.msg.IOStates, queue_size=10)
