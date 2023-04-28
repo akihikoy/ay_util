@@ -7,7 +7,8 @@
 import roslib
 roslib.load_manifest('ay_py')
 roslib.load_manifest('ay_trick_msgs')
-from ay_py.core import CPrint
+import rostopic
+from ay_py.core import CPrint, InsertDict
 from ay_py.tool.py_panel import TSimplePanel, InitPanelApp, RunPanelApp, AskYesNoDialog, QtCore, QtGui
 from ay_py.ros.base import SetupServiceProxy
 import sys
@@ -48,7 +49,6 @@ class TURManager(object):
 
     #self.panel= None
     self.ur_ros_running= None
-    self.ur_topic_stamp= None
     self.io_states= None
     self.srvp_ur_dashboard= {}
     self.srvp_ur_set_io= None
@@ -75,7 +75,6 @@ class TURManager(object):
     #Connect to io_states to publish a fake io_states.
     self.pub_io_states= rospy.Publisher('/ur_hardware_interface/io_states', ur_msgs.msg.IOStates, queue_size=10)
 
-    self.sub_joint_states= rospy.Subscriber('/joint_states', sensor_msgs.msg.JointState, self.JointStatesCallback)
     self.sub_io_states= rospy.Subscriber('/ur_hardware_interface/io_states', ur_msgs.msg.IOStates, self.IOStatesCallback)
 
     if not self.is_sim:
@@ -88,8 +87,6 @@ class TURManager(object):
     self.srvp_ur_set_io= None  #TODO: srvp_ur_set_io may be used from other thread, so the LED may be turned on before this.
     self.srvp_ur_dashboard= {}
 
-    self.sub_joint_states.unregister()
-    self.sub_joint_states= None
     if not self.is_sim:
       self.sub_robot_mode.unregister()
       self.sub_safety_mode.unregister()
@@ -113,9 +110,6 @@ class TURManager(object):
   def SetURIO(self, fun, pin, state):
     if self.srvp_ur_set_io is None:  return
     return self.srvp_ur_set_io(ur_msgs.srv.SetIORequest(fun, pin, state)).success
-
-  def JointStatesCallback(self, msg):
-    self.ur_topic_stamp= rospy.Time.now()
 
   def IOStatesCallback(self, msg):
     self.io_states= msg
@@ -233,7 +227,8 @@ class TProcessManagerUR(QtCore.QObject, TSubProcManager, TURManager):
     t_now= rospy.Time.now()
     #print ((t_now-self.ur_topic_stamp).to_sec()) if self.ur_topic_stamp is not None else '--'
     #print ((t_now-self.script_node_status_stamp).to_sec()) if self.script_node_status_stamp is not None else '++'
-    self.ur_ros_running= ((t_now-self.ur_topic_stamp).to_sec() < 0.1) if self.ur_topic_stamp is not None else False
+    #self.ur_ros_running= ((t_now-self.ur_topic_stamp).to_sec() < 0.1) if self.ur_topic_stamp is not None else False
+    self.ur_ros_running= self.IsActive('Robot')
     self.script_node_running= ((t_now-self.script_node_status_stamp).to_sec() < 0.4) if self.script_node_status_stamp is not None else False
 
     status= self.UNDEFINED
@@ -298,6 +293,10 @@ class TProcessManagerUR(QtCore.QObject, TSubProcManager, TURManager):
       rate.sleep()
 
   def StartUpdateStatusThread(self):
+    self.ConnectToStatusTopics()
+    self.thread_topics_hz_running= True
+    self.thread_topics_hz= threading.Thread(name='topics_hz', target=self.UpdateTopicsHzThread)
+    self.thread_topics_hz.start()
     self.thread_status_update_running= True
     self.thread_status_update= threading.Thread(name='status_update', target=self.UpdateStatusThread)
     self.thread_status_update.start()
@@ -306,18 +305,58 @@ class TProcessManagerUR(QtCore.QObject, TSubProcManager, TURManager):
     self.thread_status_update_running= False
     if self.thread_status_update is not None:
       self.thread_status_update.join()
+    self.thread_topics_hz_running= False
+    if self.thread_topics_hz is not None:
+      self.thread_topics_hz.join()
+    self.DisconnectStatusTopics()
 
-  def __init__(self, node_name='ur_dashboard', config=None, is_sim=False):
-    if config is None:
-      config= {
-          'PIN_STATE_LED_RED': 0,
-          'PIN_STATE_LED_YELLOW': 1,
-          'PIN_STATE_LED_GREEN': 2,
-          'PIN_STATE_BEEP': 3,
-          'PIN_START_BTN_LED': 4,
-          'PIN_STOP_BTN_LED': 5,
-        }
-    self.config= config
+  def ConnectToStatusTopics(self, window_size=3):
+    self.topic_hz= rostopic.ROSTopicHz(window_size)
+    self.DisconnectStatusTopics()
+    self.sub_status_topics= dict()
+    for key,topic in self.topics_to_monitor.iteritems():
+      self.sub_status_topics[key]= rospy.Subscriber(topic, rospy.AnyMsg, self.topic_hz.callback_hz, callback_args=topic)
+
+  def DisconnectStatusTopics(self):
+    for key,sub in self.sub_status_topics.iteritems():
+      sub.unregister()
+    self.topics_hz= dict()
+
+  def UpdateTopicsHzThread(self):
+    rate= rospy.Rate(20)
+    while self.thread_topics_hz_running and not rospy.is_shutdown():
+      for key,topic in self.topics_to_monitor.iteritems():
+        hz= self.topic_hz.get_hz(topic)
+        hz= hz[0] if hz is not None else None
+        self.topics_hz[key]= hz
+      rate.sleep()
+
+  def GetTopicHz(self, key):
+    if key not in self.topics_hz:  return None
+    return self.topics_hz[key]
+
+  def IsActive(self, key):
+    return self.GetTopicHz(key) is not None
+
+  def __init__(self, node_name='ur_dashboard', config=None, topics_to_monitor=None, is_sim=False):
+    config_base= {
+        'PIN_STATE_LED_RED': 0,
+        'PIN_STATE_LED_YELLOW': 1,
+        'PIN_STATE_LED_GREEN': 2,
+        'PIN_STATE_BEEP': 3,
+        'PIN_START_BTN_LED': 4,
+        'PIN_STOP_BTN_LED': 5,
+      }
+    if config is not None:  InsertDict(config_base, config)
+    self.config= config_base
+
+    topics_to_monitor_base= {
+      'Robot': '/joint_states',
+      'Gripper': '/gripper_driver/joint_states',
+      }
+    if topics_to_monitor is not None:  InsertDict(topics_to_monitor_base, topics_to_monitor)
+    self.topics_to_monitor= topics_to_monitor_base
+
     QtCore.QObject.__init__(self)
     TSubProcManager.__init__(self)
     TURManager.__init__(self, is_sim)
@@ -353,6 +392,12 @@ class TProcessManagerUR(QtCore.QObject, TSubProcManager, TURManager):
 
     self.thread_status_update= None
     self.thread_status_update_running= False
+
+    self.topic_hz= None
+    self.topics_hz= dict()
+    self.sub_status_topics= dict()
+    self.thread_topics_hz= None
+    self.thread_topics_hz_running= False
 
   def InitNode(self):
     rospy.init_node(self.node_name)
@@ -518,11 +563,13 @@ if __name__=='__main__':
 SafetyMode: {safety_mode}
 RobotMode: {robot_mode}
 URProgram: {program_running}
+Gripper: {gripper_status}
 MainProgram: {script_status}'''.format(
       status=pm.status_names[pm.status],
       safety_mode=pm.ur_safety_mode_names[pm.ur_safety_mode] if pm.ur_ros_running and pm.ur_safety_mode in pm.ur_safety_mode_names else 'UNRECOGNIZED',
       robot_mode=pm.ur_robot_mode_names[pm.ur_robot_mode] if pm.ur_ros_running and pm.ur_robot_mode in pm.ur_robot_mode_names else 'UNRECOGNIZED',
       program_running=pm.ur_ros_running and pm.ur_program_running,
+      gripper_status='active' if pm.IsActive('Gripper') else 'disabled',
       script_status=pm.script_node_status_names[pm.script_node_status] if pm.script_node_running and pm.script_node_status in pm.script_node_status_names else 'UNRECOGNIZED' ))
 
   widgets_common= {
