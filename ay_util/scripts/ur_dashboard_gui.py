@@ -581,7 +581,31 @@ MainProgram: {script_status}'''.format(
       gripper_status='active' if pm.IsActive('Gripper') else 'disabled',
       script_status=pm.script_node_status_names[pm.script_node_status] if pm.script_node_running and pm.script_node_status in pm.script_node_status_names else 'UNRECOGNIZED' ))
 
-  def UpdateStatusGrid(obj):
+  status_grid_list_text= [
+      dict(label='Status', type='text', state='UNRECOGNIZED'),
+      dict(label='MainProgram', type='text', state='UNRECOGNIZED'),
+      dict(label='SafetyMode', type='text', state='UNRECOGNIZED'),
+    ]
+  status_grid_list_color= [
+      dict(label='Safety', type='color', state='red'),
+      dict(label='RobotMode', type='color', state='red'),
+      dict(label='URProgram', type='color', state='red'),
+      dict(label='ScriptServer', type='color', state='red'),
+    ] + [dict(label=key, type='color', state='red') for key in sorted(pm.topics_to_monitor.iterkeys())]
+  def UpdateStatusGridText(w,obj,status):
+    obj.UpdateStatus('Status', pm.status_names[pm.status])
+    if pm.ur_ros_running:
+      obj.UpdateStatus('SafetyMode', pm.ur_safety_mode_names[pm.ur_safety_mode] if pm.ur_safety_mode in pm.ur_safety_mode_names else 'UNRECOGNIZED')
+    obj.UpdateStatus('MainProgram', pm.script_node_status_names[pm.script_node_status] if pm.script_node_running and pm.script_node_status in pm.script_node_status_names else 'UNRECOGNIZED')
+  def UpdateStatusGridColor(w,obj,status):
+    if pm.ur_ros_running:
+      obj.UpdateStatus('Safety', 'green' if pm.ur_safety_mode in pm.ur_safety_mode_names and pm.ur_safety_mode_names[pm.ur_safety_mode]=='NORMAL' else 'red')
+      if pm.ur_robot_mode in pm.ur_robot_mode_names:
+        obj.UpdateStatus('RobotMode', 'green' if pm.ur_robot_mode_names[pm.ur_robot_mode]=='RUNNING' else 'red' if pm.ur_robot_mode_names[pm.ur_robot_mode]=='POWER_OFF' else 'yellow')
+      else:
+        obj.UpdateStatus('RobotMode', 'red')
+      obj.UpdateStatus('URProgram', 'green' if pm.ur_program_running else 'red')
+    obj.UpdateStatus('ScriptServer', 'green' if pm.script_node_running else 'red')
     #obj= panel.widgets['status_grid1']
     for key,topic in pm.topics_to_monitor.iteritems():
       obj.UpdateStatus(key, 'green' if pm.IsActive(key) else 'red')
@@ -608,20 +632,30 @@ MainProgram: {script_status}'''.format(
         'minimum_size': (None,20),
         'maximum_size': (None,20),
         'size_policy': ('expanding', 'fixed')}),
-    'status_textbox': (
-      'textedit',{
-        'read_only': True,
-        'font_size_range': (6,24),
-        'text': 'Status Text Box',
-        'onstatuschanged': UpdateStatusTextBox, }),
-    'status_grid1': (
+    #'status_textbox': (
+      #'textedit',{
+        #'read_only': True,
+        #'font_size_range': (6,24),
+        #'text': 'Status Text Box',
+        #'onstatuschanged': UpdateStatusTextBox, }),
+    'status_grid_text': (
       'status_grid',{
-        'list_status':[dict(label=key, type='color', state='red') for key in sorted(pm.topics_to_monitor.iterkeys())],
+        'list_status': status_grid_list_text,
         'direction':'vertical',
         'shape':'square',
         'margin':(0.05,0.05),
         'rows':None,
-        'columns':2, }),
+        'columns':1,
+        'onstatuschanged': UpdateStatusGridText, }),
+    'status_grid_color': (
+      'status_grid',{
+        'list_status': status_grid_list_color,
+        'direction':'vertical',
+        'shape':'square',
+        'margin':(0.05,0.05),
+        'rows':None,
+        'columns':2,
+        'onstatuschanged': UpdateStatusGridColor, }),
     'spacer_cmn1': ('spacer', {
         'w': 400,
         'h': 1,
@@ -772,7 +806,7 @@ MainProgram: {script_status}'''.format(
     'boxv',None,(
       'status_signal_bar1',
       ('boxh',None, (
-        ('boxv',None, ('status_textbox','status_grid1','btn_start','btn_stop')),
+        ('boxv',None, ('status_grid_text','status_grid_color','btn_start','btn_stop')),  #'status_textbox',
         ('boxv',None, (
           ('boxh',None, ('btn_ur_power','btn_shutdown_ur')),
           ('boxv',None, (
@@ -812,7 +846,7 @@ MainProgram: {script_status}'''.format(
   for w_name, (w_type, w_param) in panel.widgets_in.iteritems():
     if 'onstatuschanged' in w_param and w_param['onstatuschanged'] is not None:
       pm.onstatuschanged.connect(lambda status,w_param=w_param,w_name=w_name: w_param['onstatuschanged'](panel,panel.widgets[w_name],status))
-  pm.thread_topics_hz_callback= lambda obj=panel.widgets['status_grid1']: UpdateStatusGrid(obj)
+  pm.thread_topics_hz_callback= lambda w=panel,obj1=panel.widgets['status_grid_text'],obj2=panel.widgets['status_grid_color'],status=pm.status: (UpdateStatusGridText(w,obj1,status),UpdateStatusGridColor(w,obj2,status))
 
   pm.InitNode()
   pm.StartUpdateStatusThread()
