@@ -323,12 +323,14 @@ class TProcessManagerUR(QtCore.QObject, TSubProcManager, TURManager):
     self.topics_hz= dict()
 
   def UpdateTopicsHzThread(self):
-    rate= rospy.Rate(20)
+    rate= rospy.Rate(2)
     while self.thread_topics_hz_running and not rospy.is_shutdown():
       for key,topic in self.topics_to_monitor.iteritems():
         hz= self.topic_hz.get_hz(topic)
         hz= hz[0] if hz is not None else None
         self.topics_hz[key]= hz
+      if self.thread_topics_hz_callback is not None:
+        self.thread_topics_hz_callback()
       rate.sleep()
 
   def GetTopicHz(self, key):
@@ -398,6 +400,7 @@ class TProcessManagerUR(QtCore.QObject, TSubProcManager, TURManager):
     self.sub_status_topics= dict()
     self.thread_topics_hz= None
     self.thread_topics_hz_running= False
+    self.thread_topics_hz_callback= None
 
   def InitNode(self):
     rospy.init_node(self.node_name)
@@ -540,6 +543,12 @@ if __name__=='__main__':
   except KeyError:
     is_sim_default= False
   is_sim= True if '-sim' in sys.argv or '--sim' in sys.argv else is_sim_default
+  def get_arg(opt_name, default):
+    exists= map(lambda a:a.startswith(opt_name),sys.argv)
+    if any(exists):  return sys.argv[exists.index(True)].replace(opt_name,'')
+    else:  return default
+  topics_to_monitor= get_arg('-topics=',get_arg('--topics=',''))
+  topics_to_monitor= None if topics_to_monitor=='' else {p.split(':')[0]:p.split(':')[-1] for p in topics_to_monitor.split(',')}
 
   #NOTE: Some constants are defined in ctrl_paramX.yaml
   #Parameters:
@@ -554,7 +563,7 @@ if __name__=='__main__':
       },
     }
 
-  pm= TProcessManagerUR(is_sim=is_sim)
+  pm= TProcessManagerUR(is_sim=is_sim, topics_to_monitor=topics_to_monitor)
 
   def UpdateStatusTextBox(w,obj,status):
     #obj= w.widgets['status_textbox']
@@ -571,6 +580,11 @@ MainProgram: {script_status}'''.format(
       program_running=pm.ur_ros_running and pm.ur_program_running,
       gripper_status='active' if pm.IsActive('Gripper') else 'disabled',
       script_status=pm.script_node_status_names[pm.script_node_status] if pm.script_node_running and pm.script_node_status in pm.script_node_status_names else 'UNRECOGNIZED' ))
+
+  def UpdateStatusGrid(obj):
+    #obj= panel.widgets['status_grid1']
+    for key,topic in pm.topics_to_monitor.iteritems():
+      obj.UpdateStatus(key, 'green' if pm.IsActive(key) else 'red')
 
   widgets_common= {
     'status_signal_bar1': (
@@ -600,6 +614,14 @@ MainProgram: {script_status}'''.format(
         'font_size_range': (6,24),
         'text': 'Status Text Box',
         'onstatuschanged': UpdateStatusTextBox, }),
+    'status_grid1': (
+      'status_grid',{
+        'list_status':[dict(label=key, type='color', state='red') for key in sorted(pm.topics_to_monitor.iterkeys())],
+        'direction':'vertical',
+        'shape':'square',
+        'margin':(0.05,0.05),
+        'rows':None,
+        'columns':2, }),
     'spacer_cmn1': ('spacer', {
         'w': 400,
         'h': 1,
@@ -750,7 +772,7 @@ MainProgram: {script_status}'''.format(
     'boxv',None,(
       'status_signal_bar1',
       ('boxh',None, (
-        ('boxv',None, ('status_textbox','btn_start','btn_stop')),
+        ('boxv',None, ('status_textbox','status_grid1','btn_start','btn_stop')),
         ('boxv',None, (
           ('boxh',None, ('btn_ur_power','btn_shutdown_ur')),
           ('boxv',None, (
@@ -790,6 +812,7 @@ MainProgram: {script_status}'''.format(
   for w_name, (w_type, w_param) in panel.widgets_in.iteritems():
     if 'onstatuschanged' in w_param and w_param['onstatuschanged'] is not None:
       pm.onstatuschanged.connect(lambda status,w_param=w_param,w_name=w_name: w_param['onstatuschanged'](panel,panel.widgets[w_name],status))
+  pm.thread_topics_hz_callback= lambda obj=panel.widgets['status_grid1']: UpdateStatusGrid(obj)
 
   pm.InitNode()
   pm.StartUpdateStatusThread()
