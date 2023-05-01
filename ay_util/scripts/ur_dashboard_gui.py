@@ -646,6 +646,7 @@ MainProgram: {script_status}'''.format(
         'margin':(0.05,0.05),
         'rows':None,
         'columns':1,
+        'font_size_range': (6,24),
         'onstatuschanged': UpdateStatusGridText, }),
     'status_grid_color': (
       'status_grid',{
@@ -655,6 +656,7 @@ MainProgram: {script_status}'''.format(
         'margin':(0.05,0.05),
         'rows':None,
         'columns':2,
+        'font_size_range': (6,24),
         'onstatuschanged': UpdateStatusGridColor, }),
     'spacer_cmn1': ('spacer', {
         'w': 400,
