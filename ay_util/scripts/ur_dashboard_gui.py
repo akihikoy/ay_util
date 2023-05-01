@@ -214,6 +214,7 @@ class TProcessManagerUR(QtCore.QObject, TSubProcManager, TURManager):
   PROGRAM_RUNNING= 7
 
   onstatuschanged= QtCore.pyqtSignal(int)
+  ontopicshzupdated= QtCore.pyqtSignal()
 
   def UpdateStatus(self):
     #self.ur_robot_mode= None  #ur_dashboard_msgs.msg.RobotMode.{POWER_OFF,BOOTING,IDLE,RUNNING}
@@ -329,8 +330,9 @@ class TProcessManagerUR(QtCore.QObject, TSubProcManager, TURManager):
         hz= self.topic_hz.get_hz(topic)
         hz= hz[0] if hz is not None else None
         self.topics_hz[key]= hz
-      if self.thread_topics_hz_callback is not None:
-        self.thread_topics_hz_callback()
+      #if self.thread_topics_hz_callback is not None:
+        #self.thread_topics_hz_callback()
+      self.ontopicshzupdated.emit()
       rate.sleep()
 
   def GetTopicHz(self, key):
@@ -400,7 +402,7 @@ class TProcessManagerUR(QtCore.QObject, TSubProcManager, TURManager):
     self.sub_status_topics= dict()
     self.thread_topics_hz= None
     self.thread_topics_hz_running= False
-    self.thread_topics_hz_callback= None
+    #self.thread_topics_hz_callback= None
 
   def InitNode(self):
     rospy.init_node(self.node_name)
@@ -592,12 +594,12 @@ MainProgram: {script_status}'''.format(
       dict(label='URProgram', type='color', state='red'),
       dict(label='ScriptServer', type='color', state='red'),
     ] + [dict(label=key, type='color', state='red') for key in sorted(pm.topics_to_monitor.iterkeys())]
-  def UpdateStatusGridText(w,obj,status):
+  def UpdateStatusGridText(w,obj,status=None):
     obj.UpdateStatus('Status', pm.status_names[pm.status])
     if pm.ur_ros_running:
       obj.UpdateStatus('SafetyMode', pm.ur_safety_mode_names[pm.ur_safety_mode] if pm.ur_safety_mode in pm.ur_safety_mode_names else 'UNRECOGNIZED')
     obj.UpdateStatus('MainProgram', pm.script_node_status_names[pm.script_node_status] if pm.script_node_running and pm.script_node_status in pm.script_node_status_names else 'UNRECOGNIZED')
-  def UpdateStatusGridColor(w,obj,status):
+  def UpdateStatusGridColor(w,obj,status=None):
     if pm.ur_ros_running:
       obj.UpdateStatus('Safety', 'green' if pm.ur_safety_mode in pm.ur_safety_mode_names and pm.ur_safety_mode_names[pm.ur_safety_mode]=='NORMAL' else 'red')
       if pm.ur_robot_mode in pm.ur_robot_mode_names:
@@ -647,7 +649,8 @@ MainProgram: {script_status}'''.format(
         'rows':None,
         'columns':1,
         'font_size_range': (6,24),
-        'onstatuschanged': UpdateStatusGridText, }),
+        'onstatuschanged': UpdateStatusGridText,
+        'ontopicshzupdated': UpdateStatusGridText, }),
     'status_grid_color': (
       'status_grid',{
         'list_status': status_grid_list_color,
@@ -657,7 +660,8 @@ MainProgram: {script_status}'''.format(
         'rows':None,
         'columns':2,
         'font_size_range': (6,24),
-        'onstatuschanged': UpdateStatusGridColor, }),
+        'onstatuschanged': UpdateStatusGridColor,
+        'ontopicshzupdated': UpdateStatusGridColor, }),
     'spacer_cmn1': ('spacer', {
         'w': 400,
         'h': 1,
@@ -848,7 +852,10 @@ MainProgram: {script_status}'''.format(
   for w_name, (w_type, w_param) in panel.widgets_in.iteritems():
     if 'onstatuschanged' in w_param and w_param['onstatuschanged'] is not None:
       pm.onstatuschanged.connect(lambda status,w_param=w_param,w_name=w_name: w_param['onstatuschanged'](panel,panel.widgets[w_name],status))
-  pm.thread_topics_hz_callback= lambda w=panel,obj1=panel.widgets['status_grid_text'],obj2=panel.widgets['status_grid_color'],status=pm.status: (UpdateStatusGridText(w,obj1,status),UpdateStatusGridColor(w,obj2,status))
+  #Similarly, connect to ontopicshzupdated slots:
+  for w_name, (w_type, w_param) in panel.widgets_in.iteritems():
+    if 'ontopicshzupdated' in w_param and w_param['ontopicshzupdated'] is not None:
+      pm.ontopicshzupdated.connect(lambda w_param=w_param,w_name=w_name: w_param['ontopicshzupdated'](panel,panel.widgets[w_name]))
 
   pm.InitNode()
   pm.StartUpdateStatusThread()
