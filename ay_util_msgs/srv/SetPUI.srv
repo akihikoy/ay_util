@@ -1,0 +1,21 @@
+#List of actions:
+uint8 OFF=0
+uint8 ON=1
+uint8 PATTERN=2
+uint8 OFF_ALL=3
+
+#Action: one of above list:
+int32 action
+
+#Name of the UI:
+string name
+
+#(action==PATTERN only) Time to start the pattern:
+time start
+#(action==PATTERN only) Sequence of on/off pattern:
+bool[] on_off_traj
+#(action==PATTERN only) Sequence of times from start corresponding to on_off_traj:
+float64[] t_traj
+
+---
+bool res
