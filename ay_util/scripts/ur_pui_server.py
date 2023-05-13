@@ -12,7 +12,7 @@ from ay_py.core import InsertDict
 from ay_py.ros.base import SetupServiceProxy
 import sys
 import threading
-#import copy
+import numpy as np
 import rospy
 #import std_msgs.msg
 #import std_srvs.srv
@@ -94,7 +94,11 @@ class TURPhysicalUIServer(object):
     for name in self.config.iterkeys():
       self.StopPatternThread(name)
 
-  def PatternLoop(self, th_info, f_set_pin, t_start, on_off_traj, t_traj):
+  def PatternLoop(self, th_info, f_set_pin, t_start, on_off_traj, dt_traj, n_repeat):
+    subt_traj= [0.0]+np.cumsum(dt_traj).tolist()
+    t_traj= [k*subt_traj[-1]+t for k in range(n_repeat) for t in subt_traj[:-1]]+[n_repeat*subt_traj[-1]]
+    on_off_traj= list(on_off_traj)*n_repeat+[on_off_traj[-1]]
+    assert(len(on_off_traj)==len(t_traj))
     rate_adjuster= rospy.Rate(self.hz)
     while not rospy.is_shutdown() and th_info['running']:
       t_now= (rospy.Time.now()-t_start).to_sec()
@@ -108,6 +112,7 @@ class TURPhysicalUIServer(object):
         idx= len(t_traj)-1
       f_set_pin(on_off_traj[idx])
       rate_adjuster.sleep()
+    f_set_pin(on_off_traj[-1])
     th_info['thread']= None
 
   #req: ay_util_msgs.srv.SetPUIRequest
@@ -119,11 +124,11 @@ class TURPhysicalUIServer(object):
       if   req.action==req.ON :  self.SetPin(self.config[req.name], is_on=True)
       elif req.action==req.OFF:  self.SetPin(self.config[req.name], is_on=False)
       elif req.action==req.PATTERN:
-        assert(len(req.on_off_traj)==len(req.t_traj))
+        assert(len(req.on_off_traj)==len(req.dt_traj))
         th_info= self.pattern_threads[req.name]
         f_set_pin= lambda is_on: self.SetPin(self.config[req.name],is_on)
         thread= threading.Thread(name=req.name,
-                                target=lambda th_info=th_info,f_set_pin=f_set_pin,t_start=req.start,on_off_traj=req.on_off_traj,t_traj=req.t_traj:self.PatternLoop(th_info, f_set_pin, t_start, on_off_traj, t_traj))
+                                target=lambda th_info=th_info,f_set_pin=f_set_pin,t_start=req.start,on_off_traj=req.on_off_traj,dt_traj=req.dt_traj,n_repeat=req.n_repeat:self.PatternLoop(th_info, f_set_pin, t_start, on_off_traj, dt_traj, n_repeat))
         th_info['running']= True
         th_info['thread']= thread
         th_info['thread'].start()

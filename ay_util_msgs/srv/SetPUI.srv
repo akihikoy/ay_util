@@ -14,8 +14,11 @@ string name
 time start
 #(action==PATTERN only) Sequence of on/off pattern:
 bool[] on_off_traj
-#(action==PATTERN only) Sequence of times from start corresponding to on_off_traj:
-float64[] t_traj
+#(action==PATTERN only) Sequence of duration pattern corresponding to on_off_traj:
+#  (NOTE: At the end of the pattern, the state is set to on_off_traj[-1])
+float64[] dt_traj
+#(action==PATTERN only) Number of repeating the [on_off_traj,dt_traj] pattern.
+int32 n_repeat
 
 ---
 bool res
