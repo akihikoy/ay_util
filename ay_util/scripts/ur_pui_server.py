@@ -146,7 +146,7 @@ if __name__=='__main__':
     if any(exists):  return sys.argv[exists.index(True)].replace(opt_name,'')
     else:  return default
   node_name= get_arg('-node_name=',get_arg('--node_name=','ur_pui_server'))
-  config_yaml= get_arg('-config=',get_arg('--config=',None))
+  config_yaml= get_arg('-config_yaml=',get_arg('--config_yaml=',None))
   config_yaml_section= get_arg('-config_section=',get_arg('--config_section=','UR_STATUS_PINS'))
   config= None
   if config_yaml is not None and config_yaml!='':

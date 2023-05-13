@@ -38,7 +38,8 @@ if __name__=='__main__':
       ('Rboot dxlg',['roslaunch ay_util ur_gripper_reboot.launch robot_code:={URType} dxldev:=/dev/tty{DxlUSB}',E]),
       ]),
     ('UR',[
-      ('dashboard_gui',['rosrun ay_util ur_dashboard_gui.py',E]),
+      (':pair', ('dashboard_gui',['roslaunch ay_util ur_dashboard_gui.launch',E]),
+                ('kill',['C-c']) ),
       ]),
     #('Mikata',[
       #('survo-off',['rosrun ay_py mikata_off.py',E]),

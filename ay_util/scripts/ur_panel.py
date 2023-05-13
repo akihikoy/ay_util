@@ -17,8 +17,8 @@ from joy_fv import TJoyEmulator
 from ay_py.core import InsertDict, LoadYAML, SaveYAML
 
 class TProcessManagerJoy(TProcessManagerUR, TJoyEmulator):
-  def __init__(self, node_name='ur_panel', ur_status_pins=None):
-    TProcessManagerUR.__init__(self, node_name=node_name, config=ur_status_pins)
+  def __init__(self, node_name='ur_panel'):  #, ur_status_pins=None
+    TProcessManagerUR.__init__(self, node_name=node_name)  #, config=ur_status_pins
     TJoyEmulator.__init__(self)
 
 def UpdateProcList(pm,combobox):
@@ -55,13 +55,13 @@ if __name__=='__main__':
     #'Q_INIT': [0.03572946786880493, -2.027292076741354, 1.6515636444091797, -1.1894968191729944, -1.5706136862384241, -3.1061676184283655],
     'Q_INIT': [0.03572946786880493, -2.027292076741354, 1.6515636444091797, -1.1894968191729944, -1.5706136862384241, 0.0],
     #'Q_PARK': [0.03572946786880493, -2.027292076741354, 1.6515636444091797, -1.1894968191729944, -1.5706136862384241, -3.1061676184283655],
-    'UR_STATUS_PINS':{
-      'PIN_STATE_LED_RED': 0,
-      'PIN_STATE_LED_YELLOW': 1,
-      'PIN_STATE_LED_GREEN': 2,
-      'PIN_STATE_BEEP': 3,
-      'PIN_START_BTN_LED': 4,
-      'PIN_STOP_BTN_LED': 5,}
+    #'UR_STATUS_PINS':{
+      #'STATE_LED_RED': 0,
+      #'STATE_LED_YELLOW': 1,
+      #'STATE_LED_GREEN': 2,
+      #'STATE_BEEP': 3,
+      #'START_BTN_LED': 4,
+      #'STOP_BTN_LED': 5,}
     }
   print config
 
@@ -72,6 +72,7 @@ if __name__=='__main__':
     'ur_ros': ['roslaunch ay_util ur_selector.launch robot_code:={URType} jsdev:=/dev/input/{JoyUSB} dxldev:=/dev/tty{DxlUSB} with_gripper:=false','bg'],
     'ur_gripper': ['roslaunch ay_util ur_gripper_selector.launch robot_code:={URType} dxldev:=/dev/tty{DxlUSB}','bg'],
     'ur_calib': ['roslaunch ay_util ur_calib.launch robot_code:={URType}','fg'],
+    'ur_pui_server': ['rosrun ay_util ur_pui_server.py','bg'],
     'fvp': ['roslaunch fingervision fvp_general.launch pkg_dir:={FV_BASE_DIR} config1:={FV_L_CONFIG} config2:={FV_R_CONFIG}','bg'],
     'fvp_file': ['roslaunch ay_fv_extra fvp_file1.launch','bg'],
     'config_fv_l': ['rosrun fingervision conf_cam2.py {FV_L_DEV} file:CameraParams:0:{FV_BASE_DIR}/{FV_L_CONFIG}','fg'],
@@ -91,7 +92,7 @@ if __name__=='__main__':
     if isinstance(cmds[key][0],str):
       cmds[key][0]= cmds[key][0].format(**config).split(' ')
 
-  pm= TProcessManagerJoy(ur_status_pins=config['UR_STATUS_PINS'])
+  pm= TProcessManagerJoy()  #ur_status_pins=config['UR_STATUS_PINS']
   run_cmd= lambda name: pm.RunBGProcess(name,cmds[name][0]) if cmds[name][1]=='bg' else\
                         pm.RunFGProcess(cmds[name][0]) if cmds[name][1]=='fg' else\
                         None
@@ -252,6 +253,7 @@ MainProgram: {script_status}'''.format(
                       #rospy.wait_for_service('/rosout/get_loggers', timeout=5.0),
                       run_cmd('fix_usb'),
                       run_cmd('ur_ros'),
+                      run_cmd('ur_pui_server'),
                       #pm.InitNode(),//
                       #pm.StartUpdateStatusThread(),
                       pm.ConnectToURDashboard(),
@@ -263,6 +265,7 @@ MainProgram: {script_status}'''.format(
                       #pm.RunURDashboard('shutdown') if config['ShutdownRobotAfterUse'] else None,
                       pm.DisconnectUR(),  #NOTE: This should be done after shutdown.
                       #pm.StopUpdateStatusThread(),
+                      stop_cmd('ur_pui_server'),
                       stop_cmd('ur_ros'),
                       #stop_cmd('roscore'),
                      ) )}),

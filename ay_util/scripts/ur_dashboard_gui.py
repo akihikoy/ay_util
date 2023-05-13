@@ -21,6 +21,7 @@ import std_srvs.srv
 import sensor_msgs.msg
 import ay_trick_msgs.msg
 import ay_trick_msgs.srv
+import ay_util_msgs.srv
 try:
   roslib.load_manifest('ur_dashboard_msgs')
   import ur_dashboard_msgs.msg
@@ -51,7 +52,8 @@ class TURManager(object):
     self.ur_ros_running= None
     self.io_states= None
     self.srvp_ur_dashboard= {}
-    self.srvp_ur_set_io= None
+    #self.srvp_ur_set_io= None
+    self.srvp_ur_set_pui= None
     self.ur_robot_mode= None
     self.ur_safety_mode= None
     self.ur_program_running= None
@@ -64,13 +66,16 @@ class TURManager(object):
         for service in services:
           threads[service]= threading.Thread(name=service, target=lambda service=service:(self.srvp_ur_dashboard.__setitem__(service,SetupServiceProxy('/ur_hardware_interface/dashboard/{0}'.format(service), std_srvs.srv.Trigger, persistent=False, time_out=timeout))))
           threads[service].start()
-        threads['srvp_ur_set_io']= threading.Thread(name='srvp_ur_set_io', target=lambda:(setattr(self,'srvp_ur_set_io',SetupServiceProxy('/ur_hardware_interface/set_io', ur_msgs.srv.SetIO, persistent=False, time_out=timeout))))
-        threads['srvp_ur_set_io'].start()
+        #threads['srvp_ur_set_io']= threading.Thread(name='srvp_ur_set_io', target=lambda:(setattr(self,'srvp_ur_set_io',SetupServiceProxy('/ur_hardware_interface/set_io', ur_msgs.srv.SetIO, persistent=False, time_out=timeout))))
+        #threads['srvp_ur_set_io'].start()
+        threads['srvp_ur_set_pui']= threading.Thread(name='srvp_ur_set_pui', target=lambda:(setattr(self,'srvp_ur_set_pui',SetupServiceProxy('/ur_pui_server/set_pui', ay_util_msgs.srv.SetPUI, persistent=False, time_out=timeout))))
+        threads['srvp_ur_set_pui'].start()
         for name,th in threads.iteritems():  th.join()
       else:
         for service in services:
           self.srvp_ur_dashboard[service]= SetupServiceProxy('/ur_hardware_interface/dashboard/{0}'.format(service), std_srvs.srv.Trigger, persistent=False, time_out=timeout)
-        self.srvp_ur_set_io= SetupServiceProxy('/ur_hardware_interface/set_io', ur_msgs.srv.SetIO, persistent=False, time_out=timeout)
+        #self.srvp_ur_set_io= SetupServiceProxy('/ur_hardware_interface/set_io', ur_msgs.srv.SetIO, persistent=False, time_out=timeout)
+        self.srvp_ur_set_pui= SetupServiceProxy('/ur_pui_server/set_pui', ay_util_msgs.srv.SetPUI, persistent=False, time_out=timeout)
 
     #Connect to io_states to publish a fake io_states.
     self.pub_io_states= rospy.Publisher('/ur_hardware_interface/io_states', ur_msgs.msg.IOStates, queue_size=10)
@@ -84,7 +89,8 @@ class TURManager(object):
 
   def DisconnectUR(self):
     if self.is_sim:  return
-    self.srvp_ur_set_io= None  #TODO: srvp_ur_set_io may be used from other thread, so the LED may be turned on before this.
+    #self.srvp_ur_set_io= None
+    self.srvp_ur_set_pui= None  #TODO: srvp_ur_set_pui may be used from other thread, so the LED may be turned on before this.
     self.srvp_ur_dashboard= {}
 
     if not self.is_sim:
@@ -104,12 +110,12 @@ class TURManager(object):
     res= self.srvp_ur_dashboard[service]()
     return res.success
 
-  #int8 fun, int8 pin, float32 state
-  #fun: ur_msgs.srv.SetIORequest.{FUN_SET_DIGITAL_OUT,FUN_SET_FLAG,FUN_SET_ANALOG_OUT,FUN_SET_TOOL_VOLTAGE}
-  #state: ur_msgs.srv.SetIORequest.{STATE_OFF,STATE_ON}
-  def SetURIO(self, fun, pin, state):
-    if self.srvp_ur_set_io is None:  return
-    return self.srvp_ur_set_io(ur_msgs.srv.SetIORequest(fun, pin, state)).success
+  ##int8 fun, int8 pin, float32 state
+  ##fun: ur_msgs.srv.SetIORequest.{FUN_SET_DIGITAL_OUT,FUN_SET_FLAG,FUN_SET_ANALOG_OUT,FUN_SET_TOOL_VOLTAGE}
+  ##state: ur_msgs.srv.SetIORequest.{STATE_OFF,STATE_ON}
+  #def SetURIO(self, fun, pin, state):
+    #if self.srvp_ur_set_io is None:  return
+    #return self.srvp_ur_set_io(ur_msgs.srv.SetIORequest(fun, pin, state)).success
 
   def IOStatesCallback(self, msg):
     self.io_states= msg
@@ -342,17 +348,17 @@ class TProcessManagerUR(QtCore.QObject, TSubProcManager, TURManager):
   def IsActive(self, key):
     return self.GetTopicHz(key) is not None
 
-  def __init__(self, node_name='ur_dashboard', config=None, topics_to_monitor=None, is_sim=False):
-    config_base= {
-        'PIN_STATE_LED_RED': 0,
-        'PIN_STATE_LED_YELLOW': 1,
-        'PIN_STATE_LED_GREEN': 2,
-        'PIN_STATE_BEEP': 3,
-        'PIN_START_BTN_LED': 4,
-        'PIN_STOP_BTN_LED': 5,
-      }
-    if config is not None:  InsertDict(config_base, config)
-    self.config= config_base
+  def __init__(self, node_name='ur_dashboard', topics_to_monitor=None, is_sim=False):
+    #config_base= {
+        #'PIN_STATE_LED_RED': 0,
+        #'PIN_STATE_LED_YELLOW': 1,
+        #'PIN_STATE_LED_GREEN': 2,
+        #'PIN_STATE_BEEP': 3,
+        #'PIN_START_BTN_LED': 4,
+        #'PIN_STOP_BTN_LED': 5,
+      #}
+    #if config is not None:  InsertDict(config_base, config)
+    #self.config= config_base
 
     topics_to_monitor_base= {
       'Robot': '/joint_states',
@@ -412,37 +418,51 @@ class TProcessManagerUR(QtCore.QObject, TSubProcManager, TURManager):
     self.SetLEDLight('red', False)
     self.SetLEDLight('green', False)
     self.SetLEDLight('yellow', False)
-    self.SetBeep(False)
+    #self.SetBeep(False)
     self.SetStartStopLEDs(False, False)
 
   #color: 'red','yellow','green'
   def SetLEDLight(self, color, is_on):
     if self.is_sim:  return
-    config_name= {'red':'PIN_STATE_LED_RED',
-                  'yellow':'PIN_STATE_LED_YELLOW',
-                  'green':'PIN_STATE_LED_GREEN'}[color]
-    if config_name not in self.config:  return
-    pin= self.config[config_name]
-    state= ur_msgs.srv.SetIORequest.STATE_ON if is_on else ur_msgs.srv.SetIORequest.STATE_OFF
-    return self.SetURIO(ur_msgs.srv.SetIORequest.FUN_SET_DIGITAL_OUT, pin, state)
+    if self.srvp_ur_set_pui is None:  return
+    config_name= {'red':'STATE_LED_RED',
+                  'yellow':'STATE_LED_YELLOW',
+                  'green':'STATE_LED_GREEN'}[color]
+    #if config_name not in self.config:  return
+    #pin= self.config[config_name]
+    #state= ur_msgs.srv.SetIORequest.STATE_ON if is_on else ur_msgs.srv.SetIORequest.STATE_OFF
+    #return self.SetURIO(ur_msgs.srv.SetIORequest.FUN_SET_DIGITAL_OUT, pin, state)
+    req= ay_util_msgs.srv.SetPUIRequest()
+    req.name= config_name
+    req.action= req.ON if is_on else req.OFF
+    return self.srvp_ur_set_pui(req)
 
-  def SetBeep(self, is_on):
-    if self.is_sim:  return
-    if 'PIN_STATE_BEEP' not in self.config:  return
-    pin= self.config['PIN_STATE_BEEP']
-    state= ur_msgs.srv.SetIORequest.STATE_ON if is_on else ur_msgs.srv.SetIORequest.STATE_OFF
-    return self.SetURIO(ur_msgs.srv.SetIORequest.FUN_SET_DIGITAL_OUT, pin, state)
+  #def SetBeep(self, is_on):
+    #if self.is_sim:  return
+    #if 'PIN_STATE_BEEP' not in self.config:  return
+    #pin= self.config['PIN_STATE_BEEP']
+    #state= ur_msgs.srv.SetIORequest.STATE_ON if is_on else ur_msgs.srv.SetIORequest.STATE_OFF
+    #return self.SetURIO(ur_msgs.srv.SetIORequest.FUN_SET_DIGITAL_OUT, pin, state)
 
   def SetStartStopLEDs(self, is_start_on, is_stop_on):
     if self.is_sim:  return
-    if 'PIN_START_BTN_LED' in self.config:
-      start_pin= self.config['PIN_START_BTN_LED']
-      start_state= ur_msgs.srv.SetIORequest.STATE_ON if is_start_on else ur_msgs.srv.SetIORequest.STATE_OFF
-      self.SetURIO(ur_msgs.srv.SetIORequest.FUN_SET_DIGITAL_OUT, start_pin, start_state)
-    if 'PIN_STOP_BTN_LED' in self.config:
-      stop_pin= self.config['PIN_STOP_BTN_LED']
-      stop_state= ur_msgs.srv.SetIORequest.STATE_ON if is_stop_on else ur_msgs.srv.SetIORequest.STATE_OFF
-      self.SetURIO(ur_msgs.srv.SetIORequest.FUN_SET_DIGITAL_OUT, stop_pin, stop_state)
+    if self.srvp_ur_set_pui is None:  return
+    #if 'PIN_START_BTN_LED' in self.config:
+      #start_pin= self.config['PIN_START_BTN_LED']
+      #start_state= ur_msgs.srv.SetIORequest.STATE_ON if is_start_on else ur_msgs.srv.SetIORequest.STATE_OFF
+      #self.SetURIO(ur_msgs.srv.SetIORequest.FUN_SET_DIGITAL_OUT, start_pin, start_state)
+    req= ay_util_msgs.srv.SetPUIRequest()
+    req.name= 'START_BTN_LED'
+    req.action= req.ON if is_start_on else req.OFF
+    self.srvp_ur_set_pui(req)
+    #if 'PIN_STOP_BTN_LED' in self.config:
+      #stop_pin= self.config['PIN_STOP_BTN_LED']
+      #stop_state= ur_msgs.srv.SetIORequest.STATE_ON if is_stop_on else ur_msgs.srv.SetIORequest.STATE_OFF
+      #self.SetURIO(ur_msgs.srv.SetIORequest.FUN_SET_DIGITAL_OUT, stop_pin, stop_state)
+    req= ay_util_msgs.srv.SetPUIRequest()
+    req.name= 'STOP_BTN_LED'
+    req.action= req.ON if is_stop_on else req.OFF
+    self.srvp_ur_set_pui(req)
 
   def DisconnectUR(self):
     if self.is_sim:  return

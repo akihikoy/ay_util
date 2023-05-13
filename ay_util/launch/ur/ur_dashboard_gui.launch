@@ -1,0 +1,11 @@
+<launch>
+
+  <!--<arg name="sim" default="" />-->
+  <arg name="topics" default="" />
+  <arg name="config_yaml" default="" />
+
+  <node pkg="ay_util" type="ur_pui_server.py" name="ur_pui_server" output="screen"
+        args="-config_yaml=$(arg config_yaml)" />
+  <node pkg="ay_util" type="ur_dashboard_gui.py" name="ur_dashboard_gui" output="screen"
+        args="-topics=$(arg topics)" />
+</launch>
