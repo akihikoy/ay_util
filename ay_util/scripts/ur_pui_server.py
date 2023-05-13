@@ -8,7 +8,7 @@ import roslib
 roslib.load_manifest('ay_py')
 roslib.load_manifest('ay_util_msgs')
 #import rostopic
-from ay_py.core import InsertDict
+from ay_py.core import InsertDict, LoadYAML
 from ay_py.ros.base import SetupServiceProxy
 import sys
 import threading
@@ -39,7 +39,8 @@ class TURPhysicalUIServer(object):
         'START_BTN_LED': 4,
         'STOP_BTN_LED': 5,
       }
-    if config is not None:  InsertDict(config_base, config)
+    #if config is not None:  InsertDict(config_base, config)
+    if config is not None:  config_base= config
     self.config= config_base
 
     self.node_name= node_name
@@ -148,8 +149,10 @@ if __name__=='__main__':
   config_yaml= get_arg('-config=',get_arg('--config=',None))
   config_yaml_section= get_arg('-config_section=',get_arg('--config_section=','UR_STATUS_PINS'))
   config= None
-  if config_yaml is not None:
-    config= load_yaml(config_yaml)[config_yaml_section]
+  if config_yaml is not None and config_yaml!='':
+    config= LoadYAML(config_yaml)[config_yaml_section]
+    print 'Loaded config from YAML={}, section={}'.format(config_yaml,config_yaml_section)
+    print 'config=',config
   hz= get_arg('-hz=',get_arg('--hz=',50))
 
   server= TURPhysicalUIServer(node_name=node_name, config=config, hz=hz, is_sim=is_sim)
