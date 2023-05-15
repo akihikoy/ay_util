@@ -266,14 +266,15 @@ class TProcessManagerUR(QtCore.QObject, TSubProcManager, TURManager):
             elif self.script_node_status == ay_trick_msgs.msg.ROSNodeMode.PROGRAM_RUNNING:
               status= self.PROGRAM_RUNNING
 
-    if status in (self.UNDEFINED, self.EMERGENCY, self.ROBOT_EMERGENCY_STOP):
+    #NOTE: Do not use yellow as it is used by other modules.
+    if status in (self.UNDEFINED, self.FAULT, self.EMERGENCY, self.ROBOT_EMERGENCY_STOP, self.PROTECTIVE_STOP):
       self.status_color= ['red']
     elif status in (self.WAIT_REQUEST,):
-      self.status_color= ['green','yellow']
+      self.status_color= ['green']
     elif status in (self.PROGRAM_RUNNING,):
       self.status_color= ['green']
     else:
-      self.status_color= ['yellow']
+      self.status_color= []
 
     if self.status != status:
       self.status= status
@@ -395,7 +396,7 @@ class TProcessManagerUR(QtCore.QObject, TSubProcManager, TURManager):
 
     #self.panel= None
     self.status= self.UNDEFINED
-    self.status_color= []  #List of 'red','yellow','green'
+    self.status_color= []  #List of 'red','green' (yellow is used by the other modules).
     self.script_node_running= None
     self.script_node_status= None
     self.script_node_status_stamp= None
@@ -417,7 +418,7 @@ class TProcessManagerUR(QtCore.QObject, TSubProcManager, TURManager):
   def TurnOffLEDAll(self):
     self.SetLEDLight('red', False)
     self.SetLEDLight('green', False)
-    self.SetLEDLight('yellow', False)
+    #self.SetLEDLight('yellow', False)
     #self.SetBeep(False)
     self.SetStartStopLEDs(False, False)
 

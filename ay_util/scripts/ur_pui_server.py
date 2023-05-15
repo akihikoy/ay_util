@@ -48,6 +48,7 @@ class TURPhysicalUIServer(object):
 
     self.srvp_ur_set_io= None
 
+    self.state= {name:False for name in self.config.iterkeys()}
     self.pattern_threads= {name:dict(thread=None,running=False) for name in self.config.iterkeys()}
     self.hz= hz
 
@@ -76,14 +77,20 @@ class TURPhysicalUIServer(object):
     if self.srvp_ur_set_io is None:  return
     return self.srvp_ur_set_io(ur_msgs.srv.SetIORequest(fun, pin, state)).success
 
-  def SetPin(self, pin, is_on):
+  def SetByPin(self, pin, is_on):
     state= ur_msgs.srv.SetIORequest.STATE_ON if is_on else ur_msgs.srv.SetIORequest.STATE_OFF
     return self.SetURIO(ur_msgs.srv.SetIORequest.FUN_SET_DIGITAL_OUT, pin, state)
 
-  def TurnOffAll(self):
+  def SetByName(self, name, is_on, update_state=True):
+    pin= self.config[name]
+    res= self.SetByPin(pin, is_on)
+    if update_state:  self.state[name]= is_on
+    return res
+
+  def TurnOffAll(self, update_state=True):
     self.StopAllPatternThreads()
-    for name,pin in self.config.iteritems():
-      self.SetPin(pin, False)
+    for name in self.config.iterkeys():
+      self.SetByName(name, False, update_state=update_state)
 
   def StopPatternThread(self, name):
     self.pattern_threads[name]['running']= False
@@ -95,7 +102,8 @@ class TURPhysicalUIServer(object):
     for name in self.config.iterkeys():
       self.StopPatternThread(name)
 
-  def PatternLoop(self, th_info, f_set_pin, t_start, on_off_traj, dt_traj, n_repeat):
+  def PatternLoop(self, th_info, name, t_start, on_off_traj, dt_traj, n_repeat):
+    f_set_pin= lambda is_on: self.SetByPin(self.config[name],is_on)
     subt_traj= [0.0]+np.cumsum(dt_traj).tolist()
     t_traj= [k*subt_traj[-1]+t for k in range(n_repeat) for t in subt_traj[:-1]]+[n_repeat*subt_traj[-1]]
     on_off_traj= list(on_off_traj)*n_repeat+[on_off_traj[-1]]
@@ -113,23 +121,25 @@ class TURPhysicalUIServer(object):
         idx= len(t_traj)-1
       f_set_pin(on_off_traj[idx])
       rate_adjuster.sleep()
-    f_set_pin(on_off_traj[-1])
+    f_set_pin(self.state[name])
     th_info['thread']= None
 
   #req: ay_util_msgs.srv.SetPUIRequest
   def SetPUI(self, req):
+    print 'set_pui: received req=',req
     if req.action==req.OFF_ALL:  self.TurnOffAll()
     else:
-      if req.name not in self.config:  return ay_util_msgs.srv.SetPUIResponse(False)
+      if req.name not in self.config:
+        print 'set_pui: Warning: req.name {} not in config'.format(req.name)
+        return ay_util_msgs.srv.SetPUIResponse(False)
       self.StopPatternThread(req.name)
-      if   req.action==req.ON :  self.SetPin(self.config[req.name], is_on=True)
-      elif req.action==req.OFF:  self.SetPin(self.config[req.name], is_on=False)
+      if   req.action==req.ON :  self.SetByName(req.name, is_on=True)
+      elif req.action==req.OFF:  self.SetByName(req.name, is_on=False)
       elif req.action==req.PATTERN:
         assert(len(req.on_off_traj)==len(req.dt_traj))
         th_info= self.pattern_threads[req.name]
-        f_set_pin= lambda is_on: self.SetPin(self.config[req.name],is_on)
         thread= threading.Thread(name=req.name,
-                                target=lambda th_info=th_info,f_set_pin=f_set_pin,t_start=req.start,on_off_traj=req.on_off_traj,dt_traj=req.dt_traj,n_repeat=req.n_repeat:self.PatternLoop(th_info, f_set_pin, t_start, on_off_traj, dt_traj, n_repeat))
+                                target=lambda th_info=th_info,name=req.name,t_start=req.start,on_off_traj=req.on_off_traj,dt_traj=req.dt_traj,n_repeat=req.n_repeat:self.PatternLoop(th_info, name, t_start, on_off_traj, dt_traj, n_repeat))
         th_info['running']= True
         th_info['thread']= thread
         th_info['thread'].start()
