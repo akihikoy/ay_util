@@ -79,14 +79,14 @@ def LoadLoop(files, queue_req, queue_res):
   finally:
     queue_res.put((TContainer(),None))
 
-def SearchDataFiles(filename):
+def SearchDataFiles(filename, ext_list=['.dat','.dat.gz','.pickle','.pkl']):
   if os.path.isabs(filename):
     filepath= filename
   else:
     filepath= os.path.join(os.environ['HOME'],'data',filename)
   if os.path.isdir(filepath):
     files= [os.path.join(filepath,f) for f in sorted(os.listdir(filepath))
-            if not os.path.isdir(os.path.join(filepath,f))]
+            if not os.path.isdir(os.path.join(filepath,f)) and any(f.endswith(ext) for ext in ext_list)]
     return files
   else:
     return [filepath]
