@@ -1,4 +1,4 @@
-# Dynamixel low-level IO.
+# Low-level IO for a driver of Dynamixel-based system (grippers, robot arm, etc.).
 
 # Joint names.
 string[] joint_names
@@ -13,6 +13,7 @@ string[] joint_names
 #   'SetCurrent'  Set current.  input: joint_names, data_fa (currents in mA).
 #   'SetVelocity'  Set velocity.  input: joint_names, data_fa (velocities in rad/s).
 #   'SetPWM'  Set PWM.  input: joint_names, data_fa (PWM values in percentage).
+#   'SetCurrentLimit'  Set the current limit and max current.  input: joint_names, data_fa (currents in mA).
 string command
 
 # Input data.  The use is different for each command.

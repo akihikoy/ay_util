@@ -151,6 +151,19 @@ class TDxlGripperDriver(object):
     elif req.command=='Reboot':  #Reboot joint_names (joint_names is [], all joints are rebooted).
       with self.gripper.port_locker:
         for j in joint_names:  self.dxl[j].Reboot()
+    elif req.command=='SetCurrentLimit':  #Set the current limit of joint_names (joint_names is [], all joints are rebooted).
+      cl_list= [req.data_fa[0]]*len(joint_names) if len(req.data_fa)==1 else req.data_fa
+      with self.gripper.port_locker:
+        for j,cl in zip(joint_names,cl_list):
+          cl_cmd= self.dxl[j].InvConvCurr(cl)
+          print req,'cl_cmd=',cl_cmd
+          self.dxl[j].DisableTorque()
+          self.dxl[j].CurrentLimit= cl_cmd
+          self.dxl[j].MAX_CURRENT= cl_cmd
+          self.dxl[j].Write('CURRENT_LIMIT', cl_cmd)
+        rospy.sleep(0.1)
+        for j in joint_names:
+          self.dxl[j].EnableTorque()
 
     j= joint_names[-1]
     res.result= self.dxl[j].dxl_result  #dynamixel.getLastTxRxResult
