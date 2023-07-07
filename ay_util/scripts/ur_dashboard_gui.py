@@ -7,7 +7,6 @@
 import roslib
 roslib.load_manifest('ay_py')
 roslib.load_manifest('ay_trick_msgs')
-import rostopic
 from ay_py.core import CPrint, InsertDict
 from ay_py.tool.py_panel import TSimplePanel, InitPanelApp, RunPanelApp, AskYesNoDialog, QtCore, QtGui
 from ay_py.ros.base import SetupServiceProxy
@@ -31,6 +30,7 @@ try:
 except Exception as e:
   print e
 from proc_manager import TSubProcManager
+from topic_monitor import TTopicMonitor
 
 #Simple module to operate UR.
 class TURManager(object):
@@ -202,7 +202,7 @@ class TURManager(object):
     self.pub_io_states.publish(msg)
 
 
-class TProcessManagerUR(QtCore.QObject, TSubProcManager, TURManager):
+class TProcessManagerUR(QtCore.QObject, TSubProcManager, TURManager, TTopicMonitor):
 
   #Definition of states:
   UNDEFINED= -10
@@ -301,10 +301,7 @@ class TProcessManagerUR(QtCore.QObject, TSubProcManager, TURManager):
       rate.sleep()
 
   def StartUpdateStatusThread(self):
-    self.ConnectToStatusTopics()
-    self.thread_topics_hz_running= True
-    self.thread_topics_hz= threading.Thread(name='topics_hz', target=self.UpdateTopicsHzThread)
-    self.thread_topics_hz.start()
+    self.StartTopicMonitorThread()
     self.thread_status_update_running= True
     self.thread_status_update= threading.Thread(name='status_update', target=self.UpdateStatusThread)
     self.thread_status_update.start()
@@ -313,41 +310,7 @@ class TProcessManagerUR(QtCore.QObject, TSubProcManager, TURManager):
     self.thread_status_update_running= False
     if self.thread_status_update is not None:
       self.thread_status_update.join()
-    self.thread_topics_hz_running= False
-    if self.thread_topics_hz is not None:
-      self.thread_topics_hz.join()
-    self.DisconnectStatusTopics()
-
-  def ConnectToStatusTopics(self, window_size=3):
-    self.topic_hz= rostopic.ROSTopicHz(window_size)
-    self.DisconnectStatusTopics()
-    self.sub_status_topics= dict()
-    for key,topic in self.topics_to_monitor.iteritems():
-      self.sub_status_topics[key]= rospy.Subscriber(topic, rospy.AnyMsg, self.topic_hz.callback_hz, callback_args=topic)
-
-  def DisconnectStatusTopics(self):
-    for key,sub in self.sub_status_topics.iteritems():
-      sub.unregister()
-    self.topics_hz= dict()
-
-  def UpdateTopicsHzThread(self):
-    rate= rospy.Rate(2)
-    while self.thread_topics_hz_running and not rospy.is_shutdown():
-      for key,topic in self.topics_to_monitor.iteritems():
-        hz= self.topic_hz.get_hz(topic)
-        hz= hz[0] if hz is not None else None
-        self.topics_hz[key]= hz
-      #if self.thread_topics_hz_callback is not None:
-        #self.thread_topics_hz_callback()
-      self.ontopicshzupdated.emit()
-      rate.sleep()
-
-  def GetTopicHz(self, key):
-    if key not in self.topics_hz:  return None
-    return self.topics_hz[key]
-
-  def IsActive(self, key):
-    return self.GetTopicHz(key) is not None
+    self.StopTopicMonitorThread()
 
   def __init__(self, node_name='ur_dashboard', topics_to_monitor=None, is_sim=False):
     #config_base= {
@@ -366,7 +329,8 @@ class TProcessManagerUR(QtCore.QObject, TSubProcManager, TURManager):
       'Gripper': '/gripper_driver/joint_states',
       }
     if topics_to_monitor is not None:  InsertDict(topics_to_monitor_base, topics_to_monitor)
-    self.topics_to_monitor= topics_to_monitor_base
+    TTopicMonitor.__init__(self, topics_to_monitor_base)
+    self.thread_topics_hz_callback= lambda: self.ontopicshzupdated.emit()
 
     QtCore.QObject.__init__(self)
     TSubProcManager.__init__(self)
@@ -403,13 +367,6 @@ class TProcessManagerUR(QtCore.QObject, TSubProcManager, TURManager):
 
     self.thread_status_update= None
     self.thread_status_update_running= False
-
-    self.topic_hz= None
-    self.topics_hz= dict()
-    self.sub_status_topics= dict()
-    self.thread_topics_hz= None
-    self.thread_topics_hz_running= False
-    #self.thread_topics_hz_callback= None
 
   def InitNode(self):
     rospy.init_node(self.node_name)
