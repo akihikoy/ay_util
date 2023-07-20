@@ -11,7 +11,6 @@
 #   $ rosrun ay_util topic_monitor.py --topics=Robot:/joint_states,Gripper:/gripper_driver/joint_states
 import roslib
 roslib.load_manifest('ay_py')
-roslib.load_manifest('ay_trick_msgs')
 from ay_py.core import CPrint, InsertDict
 import rospy
 import rostopic
