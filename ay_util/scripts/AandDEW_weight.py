@@ -17,6 +17,10 @@ import ay_util_msgs.msg
 import sys
 import serial
 
+def HandleRezero(req, ser):
+  ser.write('Z\r\n')
+  return std_srvs.srv.EmptyResponse()
+
 if __name__=='__main__':
   rospy.init_node('weight')
   dev= sys.argv[1] if len(sys.argv)>1 else '/dev/ttyUSB0'
@@ -27,7 +31,7 @@ if __name__=='__main__':
 
   pub_value= rospy.Publisher('~value', ay_util_msgs.msg.Float64Stamped, queue_size=1)
   pub_raw= rospy.Publisher('~raw', ay_util_msgs.msg.StringStamped, queue_size=1)
-  ser_rezero= rospy.Service('~rezero', std_srvs.srv.Empty, lambda req:ser.write('Z\r\n'))
+  ser_rezero= rospy.Service('~rezero', std_srvs.srv.Empty, lambda req, ser=ser:HandleRezero(req, ser))
 
   header= std_msgs.msg.Header()
   header.frame_id= ''  #Shall we use node name? (rospy.get_name())
