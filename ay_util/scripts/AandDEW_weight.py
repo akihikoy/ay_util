@@ -12,6 +12,7 @@ import roslib;
 roslib.load_manifest('ay_util_msgs')
 import rospy
 import std_msgs.msg
+import std_srvs.srv
 import ay_util_msgs.msg
 import sys
 import serial
@@ -26,6 +27,7 @@ if __name__=='__main__':
 
   pub_value= rospy.Publisher('~value', ay_util_msgs.msg.Float64Stamped, queue_size=1)
   pub_raw= rospy.Publisher('~raw', ay_util_msgs.msg.StringStamped, queue_size=1)
+  rezero = rospy.Service('~rezero', std_srvs.srv.Empty, lambda req: ser.write('Z\r\n'))
 
   header= std_msgs.msg.Header()
   header.frame_id= ''  #Shall we use node name? (rospy.get_name())
