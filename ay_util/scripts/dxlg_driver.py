@@ -14,6 +14,21 @@ import sys
 import ay_util_msgs.srv
 from ay_py.misc.dxl_util import DxlPortHandler
 
+#Table of gripper type aliases.
+GRIPPER_TYPE_ALIASES={
+    'DxlG'   : 'DxlGripper',
+    'ThG'    : 'RHP12RNGripper',
+    'ThGA'   : 'RHP12RNAGripper',
+    'DxlpO2' : 'DxlpO2Gripper',
+    'DxlO3'  : 'DxlO3Gripper',
+    'DxlpY1' : 'DxlpY1Gripper',
+    'EZG'    : 'EZGripper',
+  }
+
+#Convert an alias of gripper type to the formal name.
+def ExpandGripperType(gripper_type):
+  return GRIPPER_TYPE_ALIASES[gripper_type] if gripper_type in GRIPPER_TYPE_ALIASES else gripper_type
+
 class TDxlGripperDriver(object):
   def __init__(self, dev='/dev/ttyUSB0', gripper_type='DxlGripper', finger_type=None, is_sim=False):
     self.dev= dev
@@ -195,13 +210,8 @@ class TDxlGripperDriver(object):
 
 if __name__=='__main__':
   rospy.init_node('gripper_driver')
-  #dev= sys.argv[1] if len(sys.argv)>1 else '/dev/ttyUSB0'
-  #gripper_type= sys.argv[2] if len(sys.argv)>2 else 'DxlGripper'
-  #finger_type= sys.argv[3] if len(sys.argv)>3 else None
-  #is_sim= bool(sys.argv[4]) if len(sys.argv)>4 else False
-  #print 'args=',sys.argv
   dxldev= rospy.get_param('~dxldev', '/dev/ttyUSB0')
-  gripper_type= rospy.get_param('~gripper_type', 'DxlGripper')
+  gripper_type= ExpandGripperType(rospy.get_param('~gripper_type', 'DxlGripper'))
   finger_type= rospy.get_param('~finger_type', '')
   is_sim= rospy.get_param('~is_sim', False)
   print '''Parameters:

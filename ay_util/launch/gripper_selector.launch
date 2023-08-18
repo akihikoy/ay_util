@@ -7,67 +7,26 @@ Choosing a launcher of gripper from the gripper type.
   <arg name="dxldev" default="/dev/ttyUSB0" />
   <arg name="is_sim" default="false" />
 
+  <!--Decompose gripper_type into gripper_type and finger_type.-->
+  <arg unless="$(eval '_' in gripper_type)" name="gripper_type2" value="$(arg gripper_type)" />
+  <arg unless="$(eval '_' in gripper_type)" name="finger_type"   value="''" />
+  <arg     if="$(eval '_' in gripper_type)" name="gripper_type2" value="$(eval gripper_type.split('_')[0] )" />
+  <arg     if="$(eval '_' in gripper_type)" name="finger_type"   value="$(eval gripper_type.split('_')[1] )" />
+
   <!--Uploading the parameters to the server-->
   <rosparam subst_value="True">
-    gripper_type: $(arg gripper_type)
+    gripper_type: $(arg gripper_type2)
     dxldev: $(arg dxldev)
     is_sim: $(arg is_sim)
-    finger_type: ""
+    finger_type: $(arg finger_type)
   </rosparam>
 
-  <group if="$(eval gripper_type in ('DxlGripper','DxlG') )">
-    <node pkg="ay_util" type="dxlg_driver.py" name="gripper_driver" output="screen">
-      <param name="dxldev" value="$(arg dxldev)"/>
-      <param name="gripper_type" value="DxlGripper"/>
-      <param name="finger_type" value=""/>
-      <param name="is_sim" value="$(arg is_sim)"/>
-    </node>
-  </group>
-
-  <group if="$(eval gripper_type in ('RHP12RNGripper','ThG') )">
-    <node pkg="ay_util" type="dxlg_driver.py" name="gripper_driver" output="screen">
-      <param name="dxldev" value="$(arg dxldev)"/>
-      <param name="gripper_type" value="RHP12RNGripper"/>
-      <param name="finger_type" value=""/>
-      <param name="is_sim" value="$(arg is_sim)"/>
-    </node>
-  </group>
-
-  <group if="$(eval gripper_type in ('RHP12RNAGripper','ThGA') )">
-    <node pkg="ay_util" type="dxlg_driver.py" name="gripper_driver" output="screen">
-      <param name="dxldev" value="$(arg dxldev)"/>
-      <param name="gripper_type" value="RHP12RNAGripper"/>
-      <param name="finger_type" value=""/>
-      <param name="is_sim" value="$(arg is_sim)"/>
-    </node>
-  </group>
-
-  <group if="$(eval gripper_type in ('DxlpO2Gripper_Straight1','DxlpO2Gripper_SRound1','DxlpO2Gripper_Fork1', 'DxlpO2_Straight1','DxlpO2_SRound1','DxlpO2_Fork1') )">
-    <arg name="finger_type" value="$(eval gripper_type.split('_')[1] )" />
-    <node pkg="ay_util" type="dxlg_driver.py" name="gripper_driver" output="screen">
-      <param name="dxldev" value="$(arg dxldev)"/>
-      <param name="gripper_type" value="DxlpO2Gripper"/>
-      <param name="finger_type" value="$(arg finger_type)"/>
-      <param name="is_sim" value="$(arg is_sim)"/>
-    </node>
-  </group>
-
-  <group if="$(eval gripper_type in ('DxlpY1Gripper','DxlpY1') )">
-    <node pkg="ay_util" type="dxlg_driver.py" name="gripper_driver" output="screen">
-      <param name="dxldev" value="$(arg dxldev)"/>
-      <param name="gripper_type" value="DxlpY1Gripper"/>
-      <param name="finger_type" value=""/>
-      <param name="is_sim" value="$(arg is_sim)"/>
-    </node>
-  </group>
-
-  <group if="$(eval gripper_type in ('EZGripper','EZG') )">
-    <node pkg="ay_util" type="dxlg_driver.py" name="gripper_driver" output="screen">
-      <param name="dxldev" value="$(arg dxldev)"/>
-      <param name="gripper_type" value="EZGripper"/>
-      <param name="finger_type" value=""/>
-      <param name="is_sim" value="$(arg is_sim)"/>
-    </node>
-  </group>
+  <!--Launch the gripper driver node-->
+  <node pkg="ay_util" type="dxlg_driver.py" name="gripper_driver" output="screen">
+    <param name="dxldev" value="$(arg dxldev)"/>
+    <param name="gripper_type" value="$(arg gripper_type2)"/>
+    <param name="finger_type" value="$(arg finger_type)"/>
+    <param name="is_sim" value="$(arg is_sim)"/>
+  </node>
 
 </launch>

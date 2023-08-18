@@ -6,38 +6,23 @@ Since this uses eval in if, it works with Kinetic+.
 
   <arg name="robot_code" default="" />
   <arg name="dxldev" default="/dev/ttyUSB0" />
+  <arg name="is_sim" default="false" />
 
-  <group if="$(eval robot_code in ('UR3DxlG','UR3eDxlG','UR3e125hzDxlG') )">
-    <node pkg="ay_util" type="dxlg_driver.py" name="gripper_driver" output="screen"
-          args="$(arg dxldev) DxlGripper" />
-  </group>
-
-  <group if="$(eval robot_code in ('UR3ThG','UR3eThG','UR3e125hzThG','UR5eThG','Gen3ThG') )">
-    <node pkg="ay_util" type="dxlg_driver.py" name="gripper_driver" output="screen"
-          args="$(arg dxldev) RHP12RNAGripper" />
+  <arg if="$(eval robot_code.endswith('DxlG'))"   name="gripper_type" value="DxlG" />
+  <arg if="$(eval robot_code.endswith('ThG'))"    name="gripper_type" value="ThGA" />
     <!--NOTE:Changed to use the gripper with the newer protocol (A) even for an older robot_code.
         In case we want to use both versions, replace this by RHP12RNGripper. -->
-  </group>
+  <arg if="$(eval robot_code.endswith('ThGA'))"   name="gripper_type" value="ThGA" />
+  <arg if="$(eval robot_code.endswith('DxlpO2_Straight1'))" name="gripper_type" value="DxlpO2_Straight1" />
+  <arg if="$(eval robot_code.endswith('DxlpO2_SRound1'))"   name="gripper_type" value="DxlpO2_SRound1" />
+  <arg if="$(eval robot_code.endswith('DxlpO2_Fork1'))"     name="gripper_type" value="DxlpO2_Fork1" />
+  <arg if="$(eval robot_code.endswith('DxlpY1'))" name="gripper_type" value="DxlpY1" />
+  <arg if="$(eval robot_code.endswith('DxlO3'))"  name="gripper_type" value="DxlO3" />
 
-  <group if="$(eval robot_code in ('UR3ThGA','UR3eThGA','UR3e125hzThGA','UR5eThGA','Gen3ThGA') )">
-    <node pkg="ay_util" type="dxlg_driver.py" name="gripper_driver" output="screen"
-          args="$(arg dxldev) RHP12RNAGripper" />
-  </group>
-
-  <group if="$(eval robot_code in ('UR3DxlpO2_Straight1','UR3DxlpO2_SRound1','UR3DxlpO2_Fork1', 'UR3eDxlpO2_Straight1','UR3eDxlpO2_SRound1','UR3eDxlpO2_Fork1', 'UR3e125hzDxlpO2_Straight1','UR3e125hzDxlpO2_SRound1','UR3e125hzDxlpO2_Fork1') )">
-    <arg name="finger_type" value="$(eval robot_code.split('_')[1] )" />
-    <node pkg="ay_util" type="dxlg_driver.py" name="gripper_driver" output="screen"
-          args="$(arg dxldev) DxlpO2Gripper $(arg finger_type)" />
-  </group>
-
-  <group if="$(eval robot_code in ('UR3DxlpY1','UR3eDxlpY1','UR3e125hzDxlpY1','UR5eDxlpY1') )">
-    <node pkg="ay_util" type="dxlg_driver.py" name="gripper_driver" output="screen"
-          args="$(arg dxldev) DxlpY1Gripper" />
-  </group>
-
-  <group if="$(eval robot_code in ('Gen3DxlO3',) )">
-    <node pkg="ay_util" type="dxlg_driver.py" name="gripper_driver" output="screen"
-          args="$(arg dxldev) DxlO3Gripper" />
-  </group>
+  <include file="$(find ay_util)/launch/gripper_selector.launch">
+    <arg name="gripper_type" value="$(arg gripper_type)" />
+    <arg name="dxldev" value="$(arg dxldev)" />
+    <arg name="is_sim" value="$(arg is_sim)" />
+  </include>
 
 </launch>
