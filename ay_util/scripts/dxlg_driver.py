@@ -15,9 +15,10 @@ import ay_util_msgs.srv
 from ay_py.misc.dxl_util import DxlPortHandler
 
 class TDxlGripperDriver(object):
-  def __init__(self, dev='/dev/ttyUSB0', gripper_type='DxlGripper', finger_type=None):
+  def __init__(self, dev='/dev/ttyUSB0', gripper_type='DxlGripper', finger_type=None, is_sim=False):
     self.dev= dev
     self.gripper_type= gripper_type
+    self.is_sim= is_sim
     if self.gripper_type=='DxlGripper':
       mod= __import__('ay_py.misc.dxl_gripper',globals(),None,('TDynamixelGripper',))
       self.gripper= mod.TDynamixelGripper(dev=self.dev)
@@ -52,15 +53,23 @@ class TDxlGripperDriver(object):
       raise Exception('Invalid gripper type: {gripper_type}'.format(gripper_type=gripper_type))
 
     #Set callback to exit when Ctrl+C is pressed.
-    DxlPortHandler.ReopenCallback= lambda: not rospy.is_shutdown()
+    if not self.is_sim:
+      DxlPortHandler.ReopenCallback= lambda: not rospy.is_shutdown()
 
     self.pub_js= rospy.Publisher('~joint_states', sensor_msgs.msg.JointState, queue_size=1)
 
     self.js= None
 
-    print 'Initializing and activating {gripper_type}({finger_type}) gripper...'.format(gripper_type=self.gripper_type,finger_type=finger_type)
+    #In the simulation mode, the driver object is switched:
+    if self.is_sim:
+      mod= __import__('ay_py.misc.dxl_gripper_sim',globals(),None,('TDxlGripperSim',))
+      dxlg_ref= self.gripper
+      self.gripper= mod.TDxlGripperSim(dxlg_ref)
+
+    print 'Initializing and activating {}({}){} gripper...'.format(self.gripper_type,finger_type,'(sim)' if self.is_sim else '')
     if not self.gripper.Init():
-      raise Exception('Failed to setup {gripper_type}({finger_type}) gripper.'.format(gripper_type=self.gripper_type,finger_type=finger_type))
+      raise Exception('Failed to setup {}({}){} gripper.'.format(self.gripper_type,finger_type,'(sim)' if self.is_sim else ''))
+
     self.gripper.StartStateObs(self.JointStatesCallback)
     self.gripper.StartMoveTh()
 
@@ -136,45 +145,71 @@ class TDxlGripperDriver(object):
     res= ay_util_msgs.srv.DxlIOResponse()
     joint_names= self.joint_names if len(req.joint_names)==0 else req.joint_names
     if req.command=='Read':  #Read from Dynamixel. input: joint_names, data_s (address name).  return: res_ia.
-      with self.gripper.port_locker:
-        res.res_ia= [self.dxl[j].Read(req.data_s) for j in joint_names]
+      if not self.is_sim:
+        with self.gripper.port_locker:
+          res.res_ia= [self.dxl[j].Read(req.data_s) for j in joint_names]
     elif req.command=='Write':  #Write to Dynamixel. input: joint_names, data_s (address name), data_ia (values).
-      with self.gripper.port_locker:
-        for j,value in zip(joint_names,req.data_ia):
-          self.dxl[j].Write(req.data_s, value)
+      if not self.is_sim:
+        with self.gripper.port_locker:
+          for j,value in zip(joint_names,req.data_ia):
+            self.dxl[j].Write(req.data_s, value)
     elif req.command=='EnableTorque':  #Enable joint_names (joint_names is [], all joints are enabled).
-      with self.gripper.port_locker:
-        for j in joint_names:  self.dxl[j].EnableTorque()
+      if not self.is_sim:
+        with self.gripper.port_locker:
+          for j in joint_names:  self.dxl[j].EnableTorque()
+      else:
+        self.gripper.Activate()
     elif req.command=='DisableTorque':  #Disable joint_names (joint_names is [], all joints are disabled).
-      with self.gripper.port_locker:
-        for j in joint_names:  self.dxl[j].DisableTorque()
+      if not self.is_sim:
+        with self.gripper.port_locker:
+          for j in joint_names:  self.dxl[j].DisableTorque()
+      else:
+        self.gripper.Deactivate()
     elif req.command=='Reboot':  #Reboot joint_names (joint_names is [], all joints are rebooted).
-      with self.gripper.port_locker:
-        for j in joint_names:  self.dxl[j].Reboot()
+      if not self.is_sim:
+        with self.gripper.port_locker:
+          for j in joint_names:  self.dxl[j].Reboot()
     elif req.command=='SetCurrentLimit':  #Set the current limit of joint_names (joint_names is [], all joints are rebooted).
-      cl_list= [req.data_fa[0]]*len(joint_names) if len(req.data_fa)==1 else req.data_fa
-      with self.gripper.port_locker:
-        for j,cl in zip(joint_names,cl_list):
-          cl_cmd= self.dxl[j].InvConvCurr(cl)
-          print req,'cl_cmd=',cl_cmd
-          self.dxl[j].DisableTorque()
-          self.dxl[j].CurrentLimit= cl_cmd
-          self.dxl[j].MAX_CURRENT= cl_cmd
-          self.dxl[j].Write('CURRENT_LIMIT', cl_cmd)
-        rospy.sleep(0.1)
-        for j in joint_names:
-          self.dxl[j].EnableTorque()
+      if not self.is_sim:
+        cl_list= [req.data_fa[0]]*len(joint_names) if len(req.data_fa)==1 else req.data_fa
+        with self.gripper.port_locker:
+          for j,cl in zip(joint_names,cl_list):
+            cl_cmd= self.dxl[j].InvConvCurr(cl)
+            print req,'cl_cmd=',cl_cmd
+            self.dxl[j].DisableTorque()
+            self.dxl[j].CurrentLimit= cl_cmd
+            self.dxl[j].MAX_CURRENT= cl_cmd
+            self.dxl[j].Write('CURRENT_LIMIT', cl_cmd)
+          rospy.sleep(0.1)
+          for j in joint_names:
+            self.dxl[j].EnableTorque()
 
-    j= joint_names[-1]
-    res.result= self.dxl[j].dxl_result  #dynamixel.getLastTxRxResult
-    res.error= self.dxl[j].dxl_err  #dynamixel.getLastRxPacketError
+    if not self.is_sim:
+      j= joint_names[-1]
+      res.result= self.dxl[j].dxl_result  #dynamixel.getLastTxRxResult
+      res.error= self.dxl[j].dxl_err  #dynamixel.getLastRxPacketError
+    else:
+      res.result= 0
+      res.error= 0
     return res
 
 if __name__=='__main__':
   rospy.init_node('gripper_driver')
-  dev= sys.argv[1] if len(sys.argv)>1 else '/dev/ttyUSB0'
-  gripper_type= sys.argv[2] if len(sys.argv)>2 else 'DxlGripper'
-  finger_type= sys.argv[3] if len(sys.argv)>3 else None
-  print 'args=',sys.argv
-  robot= TDxlGripperDriver(dev, gripper_type, finger_type)
+  #dev= sys.argv[1] if len(sys.argv)>1 else '/dev/ttyUSB0'
+  #gripper_type= sys.argv[2] if len(sys.argv)>2 else 'DxlGripper'
+  #finger_type= sys.argv[3] if len(sys.argv)>3 else None
+  #is_sim= bool(sys.argv[4]) if len(sys.argv)>4 else False
+  #print 'args=',sys.argv
+  dxldev= rospy.get_param('~dxldev', '/dev/ttyUSB0')
+  gripper_type= rospy.get_param('~gripper_type', 'DxlGripper')
+  finger_type= rospy.get_param('~finger_type', '')
+  is_sim= rospy.get_param('~is_sim', False)
+  print '''Parameters:
+    dxldev: {dxldev}
+    gripper_type: {gripper_type}
+    finger_type: {finger_type}
+    is_sim: {is_sim}
+  '''.format(dxldev=dxldev, gripper_type=gripper_type, finger_type=finger_type, is_sim=is_sim)
+
+  robot= TDxlGripperDriver(dxldev, gripper_type, finger_type, is_sim)
   #rospy.spin()
