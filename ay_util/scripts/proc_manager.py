@@ -38,17 +38,23 @@ class TSubProcManager(object):
   #A string command is split into a list according to the split_cmd mode (cf. SplitCommand).
   def RunFGProcess(self, command, shell=False, split_cmd='auto'):
     command= self.SplitCommand(command, split_cmd)
-    p= subprocess.Popen(command, shell=shell)
-    p.wait()
+    try:
+      p= subprocess.Popen(command, shell=shell)
+      p.wait()
+    except OSError as e:
+      print 'RunFGProcess failed: {}'.format(e)
 
   #command: command string or list of command and arguments.
   #A string command is split into a list according to the split_cmd mode (cf. SplitCommand).
   def RunBGProcess(self, name, command, shell=False, split_cmd='auto'):
     self.TerminateBGProcess(name)
     command= self.SplitCommand(command, split_cmd)
-    p= subprocess.Popen(command, shell=shell)
-    self.procs[name]= p
-    self.DumpPS()
+    try:
+      p= subprocess.Popen(command, shell=shell)
+      self.procs[name]= p
+      self.DumpPS()
+    except OSError as e:
+      print 'RunBGProcess failed: {}'.format(e)
 
   def TerminateBGProcess(self, name):
     if name not in self.procs:
