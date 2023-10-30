@@ -1,0 +1,31 @@
+<!--
+Choose a proper launcher of robot from a robot code.
+-->
+<launch>
+
+  <arg name="robot_code" default="" />
+  <arg name="jsdev" default="/dev/input/js1" />
+  <arg name="dxldev" default="/dev/ttyUSB0" />
+  <arg name="with_gripper" default="true" />
+
+  <!--Include a robot launcher-->
+
+  <group if="$(eval robot_code.startswith('UR'))">
+    <include file="$(find ay_util)/launch/ur/ur_selector.launch">
+      <arg name="robot_code" value="$(arg robot_code)" />
+      <arg name="jsdev" value="$(arg jsdev)" />
+      <arg name="dxldev" value="$(arg dxldev)" />
+      <arg name="with_gripper" value="$(arg with_gripper)" />
+    </include>
+  </group>
+
+  <group if="$(eval robot_code.startswith('Motoman'))">
+    <include file="$(find ay_util)/launch/motoman/motoman_selector.launch">
+      <arg name="robot_code" value="$(arg robot_code)" />
+      <arg name="jsdev" value="$(arg jsdev)" />
+      <arg name="dxldev" value="$(arg dxldev)" />
+      <arg name="with_gripper" value="$(arg with_gripper)" />
+    </include>
+  </group>
+
+</launch>
