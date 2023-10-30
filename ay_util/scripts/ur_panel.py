@@ -70,7 +70,7 @@ if __name__=='__main__':
     'roscore': ['roscore','bg'],
     'fix_usb': ['sudo /sbin/fix_usb_latency.sh tty{DxlUSB}','fg'],
     'ur_ros': ['roslaunch ay_util ur_selector.launch robot_code:={URType} jsdev:=/dev/input/{JoyUSB} dxldev:=/dev/tty{DxlUSB} with_gripper:=false','bg'],
-    'ur_gripper': ['roslaunch ay_util ur_gripper_selector.launch robot_code:={URType} dxldev:=/dev/tty{DxlUSB}','bg'],
+    'ur_gripper': ['roslaunch ay_util robot_gripper_selector.launch robot_code:={URType} dxldev:=/dev/tty{DxlUSB}','bg'],
     'ur_calib': ['roslaunch ay_util ur_calib.launch robot_code:={URType}','fg'],
     'ur_pui_server': ['rosrun ay_util ur_pui_server.py','bg'],
     'fvp': ['roslaunch fingervision fvp_general.launch pkg_dir:={FV_BASE_DIR} config1:={FV_L_CONFIG} config2:={FV_R_CONFIG}','bg'],

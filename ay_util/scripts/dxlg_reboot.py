@@ -9,6 +9,7 @@ roslib.load_manifest('ay_py')
 roslib.load_manifest('ay_util_msgs')
 import rospy
 from ay_py.misc.dxl_util import TDynamixel1,DxlPortHandler
+from dxlg_driver import ExpandGripperType
 import sys
 
 def OperateDxlGripper(dev='/dev/ttyUSB0', gripper_type='DxlGripper', finger_type=None, command='Reboot'):
@@ -60,12 +61,17 @@ def OperateDxlGripper(dev='/dev/ttyUSB0', gripper_type='DxlGripper', finger_type
     for d in dxl:
       d.FactoryReset()
 
-
 if __name__=='__main__':
-  dev= sys.argv[1] if len(sys.argv)>1 else '/dev/ttyUSB0'
-  gripper_type= sys.argv[2] if len(sys.argv)>2 else 'DxlGripper'
-  finger_type= sys.argv[3] if len(sys.argv)>3 else None
-  command= sys.argv[4] if len(sys.argv)>4 else 'Reboot'
-  print 'args=',sys.argv
-  OperateDxlGripper(dev, gripper_type, finger_type, command)
+  rospy.init_node('gripper_reboot')
+  dxldev= rospy.get_param('~dxldev', '/dev/ttyUSB0')
+  gripper_type= ExpandGripperType(rospy.get_param('~gripper_type', 'DxlGripper'))
+  finger_type= rospy.get_param('~finger_type', '')
+  command= rospy.get_param('~command', 'Reboot')
+  print '''Parameters:
+    dxldev: {dxldev}
+    gripper_type: {gripper_type}
+    finger_type: {finger_type}
+    command: {command}
+  '''.format(dxldev=dxldev, gripper_type=gripper_type, finger_type=finger_type, command=command)
 
+  OperateDxlGripper(dxldev, gripper_type, finger_type, command)

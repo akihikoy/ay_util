@@ -1,0 +1,28 @@
+<!--
+Choose a launcher of gripper for a robot from the robot code.
+Since this uses eval in if, it works with Kinetic+.
+-->
+<launch>
+
+  <arg name="robot_code" default="" />
+  <arg name="dxldev" default="/dev/ttyUSB0" />
+  <arg name="is_sim" default="false" />
+
+  <arg if="$(eval robot_code.endswith('DxlG'))"   name="gripper_type" value="DxlG" />
+  <arg if="$(eval robot_code.endswith('ThG'))"    name="gripper_type" value="ThGA" />
+    <!--NOTE:Changed to use the gripper with the newer protocol (A) even for an older robot_code.
+        In case we want to use both versions, replace this by RHP12RNGripper. -->
+  <arg if="$(eval robot_code.endswith('ThGA'))"   name="gripper_type" value="ThGA" />
+  <arg if="$(eval robot_code.endswith('DxlpO2_Straight1'))" name="gripper_type" value="DxlpO2_Straight1" />
+  <arg if="$(eval robot_code.endswith('DxlpO2_SRound1'))"   name="gripper_type" value="DxlpO2_SRound1" />
+  <arg if="$(eval robot_code.endswith('DxlpO2_Fork1'))"     name="gripper_type" value="DxlpO2_Fork1" />
+  <arg if="$(eval robot_code.endswith('DxlpY1'))" name="gripper_type" value="DxlpY1" />
+  <arg if="$(eval robot_code.endswith('DxlO3'))"  name="gripper_type" value="DxlO3" />
+
+  <include file="$(find ay_util)/launch/gripper_selector.launch">
+    <arg name="gripper_type" value="$(arg gripper_type)" />
+    <arg name="dxldev" value="$(arg dxldev)" />
+    <arg name="is_sim" value="$(arg is_sim)" />
+  </include>
+
+</launch>

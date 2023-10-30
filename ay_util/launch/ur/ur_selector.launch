@@ -67,7 +67,7 @@ Since this uses eval in if, it works with Kinetic+.
 
   <!--Launch a gripper controller-->
   <group if="$(arg with_gripper)">
-    <include file="$(find ay_util)/launch/ur/ur_gripper_selector.launch">
+    <include file="$(find ay_util)/launch/robot_gripper_selector.launch">
       <arg name="robot_code" value="$(eval robot_code.replace('_SIM',''))" />
       <arg name="dxldev" value="$(arg dxldev)" />
       <arg name="is_sim" value="$(arg is_sim)" />
