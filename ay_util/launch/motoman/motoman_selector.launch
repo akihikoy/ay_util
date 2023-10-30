@@ -1,0 +1,53 @@
+<!--
+Choose a launcher of Motoman from the robot code.
+-->
+<launch>
+
+  <arg name="robot_code" default="" />
+  <arg name="jsdev" default="/dev/input/js0" />
+  <arg name="dxldev" default="/dev/ttyUSB0" />
+  <arg name="with_gripper" default="true" />
+
+  <arg     if="$(eval robot_code.endswith('_SIM'))" name="is_sim" value="true" />
+  <arg unless="$(eval robot_code.endswith('_SIM'))" name="is_sim" value="false" />
+
+  <!--Uploading the parameters to the server-->
+  <rosparam subst_value="True">
+    robot_code: $(arg robot_code)
+    jsdev: $(arg jsdev)
+    dxldev: $(arg dxldev)
+    with_gripper: $(arg with_gripper)
+    is_sim: $(arg is_sim)
+  </rosparam>
+
+  <!--Launch a robot arm controller-->
+
+  <group if="$(eval robot_code.startswith('Motoman_MotoMINI'))">
+    <include file="$(find ay_util)/launch/motoman/motoman_motomini_real.launch" unless="$(arg is_sim)">
+      <arg name="jsdev" value="$(arg jsdev)" />
+    </include>
+    <include file="$(find ay_util)/launch/motoman/motoman_motomini_ksim.launch" if="$(arg is_sim)">
+      <arg name="jsdev" value="$(arg jsdev)" />
+    </include>
+  </group>
+
+  <group if="$(eval robot_code.startswith('Motoman_SIA10F'))">
+    <include file="$(find ay_util)/launch/motoman/motomansia10f_real.launch" unless="$(arg is_sim)">
+      <arg name="jsdev" value="$(arg jsdev)" />
+    </include>
+    <include file="$(find ay_util)/launch/motoman/motomansia10f_ksim.launch" if="$(arg is_sim)">
+      <arg name="jsdev" value="$(arg jsdev)" />
+    </include>
+  </group>
+
+
+  <!--Launch a gripper controller-->
+  <group if="$(arg with_gripper)">
+    <include file="$(find ay_util)/launch/robot_gripper_selector.launch">
+      <arg name="robot_code" value="$(eval robot_code.replace('_SIM',''))" />
+      <arg name="dxldev" value="$(arg dxldev)" />
+      <arg name="is_sim" value="$(arg is_sim)" />
+    </include>
+  </group>
+
+</launch>

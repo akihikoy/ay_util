@@ -1,6 +1,5 @@
 <!--
 Setup real robot of Motoman SIA10f.
-This needs to be executed on the Motoman control PC.
 -->
 
 <launch>
@@ -10,12 +9,8 @@ This needs to be executed on the Motoman control PC.
     <arg name="jsdev"  value="$(arg jsdev)" />
   </include>
 
-  <include file="$(find motoman_driver)/launch/robot_interface_streaming_fs100.launch">
-    <arg name="robot_ip"  value="192.168.12.31" />
+  <include file="$(find motoman_driver)/launch/robot_interface_streaming_$(optenv MOTOMAN_CTRL fs100).launch">
+    <arg name="robot_ip"   value="$(optenv MOTOMAN_IP 192.168.12.31)" />
   </include>
-
-  <node pkg="ay_util" type="robotiq_rtu_ctrl.py"
-        name="rq1" output="screen" respawn="true"
-        args="/dev/ttyUSB1 rq1 0.01" />
 
 </launch>

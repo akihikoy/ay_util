@@ -1,11 +1,11 @@
 <!--
-Setup kinematics simulation of Motoman SIA10f.
+Setup kinematics simulation of Motoman MotoMINI.
 -->
 
 <launch>
 
   <arg name="jsdev" default="/dev/input/js0" />
-  <include file="$(find ay_util)/launch/motoman/motomansia10f_cmn.launch">
+  <include file="$(find ay_util)/launch/motoman/motoman_motomini_cmn.launch">
     <arg name="jsdev"  value="$(arg jsdev)" />
   </include>
 

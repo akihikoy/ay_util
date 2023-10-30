@@ -1,0 +1,16 @@
+<!--
+Setup real robot of Motoman MotoMINI/YRC1000micro.
+-->
+
+<launch>
+
+  <arg name="jsdev" default="/dev/input/js0" />
+  <include file="$(find ay_util)/launch/motoman/motoman_motomini_cmn.launch">
+    <arg name="jsdev"  value="$(arg jsdev)" />
+  </include>
+
+  <include file="$(find motoman_driver)/launch/robot_interface_streaming_$(optenv MOTOMAN_CTRL yrc1000).launch">
+    <arg name="robot_ip"   value="$(optenv MOTOMAN_IP 10.10.6.204)" />
+  </include>
+
+</launch>
