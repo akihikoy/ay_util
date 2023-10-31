@@ -124,4 +124,4 @@ if __name__=='__main__':
                 #('kill',['C-c']) )  ]),
     ]
   exit_command= [E,'C-c']
-  RunTerminalTab('UR Launcher',widgets,exit_command,size=(1000,400))
+  RunTerminalTab('UR Launcher',widgets,exit_command,size=(850,600))
