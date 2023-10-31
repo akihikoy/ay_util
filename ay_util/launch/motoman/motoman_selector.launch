@@ -22,7 +22,7 @@ Choose a launcher of Motoman from the robot code.
 
   <!--Launch a robot arm controller-->
 
-  <group if="$(eval robot_code.startswith('Motoman_MotoMINI'))">
+  <group if="$(eval robot_code.startswith('MotomanMotoMINI'))">
     <include file="$(find ay_util)/launch/motoman/motoman_motomini_real.launch" unless="$(arg is_sim)">
       <arg name="jsdev" value="$(arg jsdev)" />
     </include>
@@ -31,7 +31,7 @@ Choose a launcher of Motoman from the robot code.
     </include>
   </group>
 
-  <group if="$(eval robot_code.startswith('Motoman_SIA10F'))">
+  <group if="$(eval robot_code.startswith('MotomanSIA10F'))">
     <include file="$(find ay_util)/launch/motoman/motomansia10f_real.launch" unless="$(arg is_sim)">
       <arg name="jsdev" value="$(arg jsdev)" />
     </include>
