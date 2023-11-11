@@ -31,6 +31,15 @@ Choose a launcher of Motoman from the robot code.
     </include>
   </group>
 
+  <group if="$(eval robot_code.startswith('MotomanSG650'))">
+    <include file="$(find ay_util)/launch/motoman/motoman_sg650_real.launch" unless="$(arg is_sim)">
+      <arg name="jsdev" value="$(arg jsdev)" />
+    </include>
+    <include file="$(find ay_util)/launch/motoman/motoman_sg650_ksim.launch" if="$(arg is_sim)">
+      <arg name="jsdev" value="$(arg jsdev)" />
+    </include>
+  </group>
+
   <group if="$(eval robot_code.startswith('MotomanSIA10F'))">
     <include file="$(find ay_util)/launch/motoman/motomansia10f_real.launch" unless="$(arg is_sim)">
       <arg name="jsdev" value="$(arg jsdev)" />
