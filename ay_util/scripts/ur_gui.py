@@ -11,12 +11,14 @@ import roslib; roslib.load_manifest('ay_py')
 from ay_py.tool.py_gui import RunTerminalTab
 
 if __name__=='__main__':
-  robot_list= [
-    'UR3', 'UR3DxlG', 'UR3ThG', 'UR3DxlpY1', 'UR3_SIM', 'UR3DxlG_SIM', 'UR3ThG_SIM', 'UR3DxlpY1_SIM',
-    'UR3e','UR3eDxlG','UR3eThG','UR3eDxlpY1','UR3e_SIM','UR3eDxlG_SIM','UR3eThG_SIM','UR3eDxlpY1_SIM',
-    'UR5e','UR5eDxlG','UR5eThG','UR5eDxlpY1','UR5e_SIM','UR5eDxlG_SIM','UR5eThG_SIM','UR5eDxlpY1_SIM',
-    'Gen3','Gen3ThG','Gen3DxlO3',
-    ]
+  #robot_list= [
+    #'UR3', 'UR3DxlG', 'UR3ThG', 'UR3DxlpY1', 'UR3_SIM', 'UR3DxlG_SIM', 'UR3ThG_SIM', 'UR3DxlpY1_SIM',
+    #'UR3e','UR3eDxlG','UR3eThG','UR3eDxlpY1','UR3e_SIM','UR3eDxlG_SIM','UR3eThG_SIM','UR3eDxlpY1_SIM',
+    #'UR5e','UR5eDxlG','UR5eThG','UR5eDxlpY1','UR5e_SIM','UR5eDxlG_SIM','UR5eThG_SIM','UR5eDxlpY1_SIM',
+    #'Gen3','Gen3ThG','Gen3DxlO3',
+    #]
+  arm_list= ['UR3', 'UR3e', 'UR3e125hz', 'UR5e', 'Gen3', 'MotomanMotoMINI', 'MotomanSG650']
+  gripper_list= ['', 'DxlG', 'ThG', 'DxlpY1']
   E= 'Enter'
   widgets= [
     ('main',[
@@ -25,17 +27,20 @@ if __name__=='__main__':
     ('roscore',[
       (':pair', ('roscore',['roscore',E]),
                 ('kill',['C-c']) )  ]),
-    ('URType',':cmb',robot_list),
+    ('ArmType',':cmb',arm_list),
+    ('GripperType',':cmb',gripper_list),
+    ('IsSim',':cmb',['','_SIM']),
     ('JoyUSB',':radio',['js0','js1']),
     ('DxlUSB',':radio',['USB0','USB1','USB2','USB3']),
     ('Dynamixel',[
       ('fix_usb',['rosrun ay_util fix_usb_latency.sh tty{DxlUSB}',E]),
       ]),
     ('System',[
-      (':pair', ('run',['roslaunch ay_util ur_selector.launch robot_code:={URType} jsdev:=/dev/input/{JoyUSB} dxldev:=/dev/tty{DxlUSB}',E]),
+      (':pair', ('run',['roslaunch ay_util robot_selector.launch robot_code:={ArmType}{GripperType}{IsSim} jsdev:=/dev/input/{JoyUSB} dxldev:=/dev/tty{DxlUSB} with_gripper:=true',E]),
                 ('kill',['C-c']) ),
-      ('UR calib',['roslaunch ay_util ur_calib.launch robot_code:={URType}',E]),
-      ('Rboot dxlg',['roslaunch ay_util ur_gripper_reboot.launch robot_code:={URType} dxldev:=/dev/tty{DxlUSB}',E]),
+      ('UR calib',['roslaunch ay_util ur_calib.launch robot_code:={ArmType}{GripperType}{IsSim}',E]),
+      ('Reboot dxlg',['roslaunch ay_util robot_gripper_reboot.launch robot_code:={ArmType}{GripperType}{IsSim} dxldev:=/dev/tty{DxlUSB} command:=Reboot',E]),
+      ('FactoryReset dxlg',['roslaunch ay_util robot_gripper_reboot.launch robot_code:={ArmType}{GripperType}{IsSim} dxldev:=/dev/tty{DxlUSB} command:=FactoryReset',E]),
       ]),
     ('UR',[
       (':pair', ('dashboard_gui',['roslaunch ay_util ur_dashboard_gui.launch',E]),
@@ -44,9 +49,11 @@ if __name__=='__main__':
     #('Mikata',[
       #('survo-off',['rosrun ay_py mikata_off.py',E]),
       #('reboot',['rosrun ay_py mikata_reboot.py',E])  ]),
-    ('Monitor-joy',[
+    ('Joystick',[
       (':pair', ('echo-joy',['rostopic echo /joy',E]),
-                ('kill',['C-c']) )  ]),
+                ('kill',['C-c']) ),
+      ('virtual_joy',['rosrun ay_util joy_fv_panel.py',E]),
+      ]),
     ('rviz',[
       (':pair', ('rviz',['rviz',E]),
                 ('kill',['C-c']) )  ]),
@@ -108,7 +115,7 @@ if __name__=='__main__':
       #(':pair', ('start',['roslaunch ay_fv_extra fv_pi10.launch',E]),
                 #('kill',['C-c']) )  ]),
     ('JoyStickDemo',[
-      (':pair', ('start(real)',['rosrun ay_trick direct_run.py "robot \'{URType}\'" "fv.fv \'on\'" "viz \'\'" j',E]),
+      (':pair', ('start(real)',['rosrun ay_trick direct_run.py "robot" "fv.fv \'on\'" "viz \'\'" j',E]),
                 ('quit',['q',E]) ),
       (':pair', ('start(k-sim)',['rosrun ay_trick direct_run.py "robot \'urs\'" j',E]),
                 ('quit',['q',E]) )  ]),
@@ -124,4 +131,4 @@ if __name__=='__main__':
                 #('kill',['C-c']) )  ]),
     ]
   exit_command= [E,'C-c']
-  RunTerminalTab('UR Launcher',widgets,exit_command,size=(850,600))
+  RunTerminalTab('UR Launcher',widgets,exit_command,size=(1100,600))
