@@ -17,7 +17,7 @@ if __name__=='__main__':
     #'UR5e','UR5eDxlG','UR5eThG','UR5eDxlpY1','UR5e_SIM','UR5eDxlG_SIM','UR5eThG_SIM','UR5eDxlpY1_SIM',
     #'Gen3','Gen3ThG','Gen3DxlO3',
     #]
-  arm_list= ['UR3', 'UR3e', 'UR3e125hz', 'UR5e', 'Gen3', 'MotomanMotoMINI', 'MotomanSG650']
+  arm_list= ['UR3', 'UR3e', 'UR3e125hz', 'UR5e', 'Gen3', 'MotomanMotoMINI', 'MotomanSG650', 'MotomanGP7', 'MotomanHC10SDTP']
   gripper_list= ['', 'DxlG', 'ThG', 'DxlpY1']
   E= 'Enter'
   widgets= [
@@ -42,9 +42,11 @@ if __name__=='__main__':
       ('Reboot dxlg',['roslaunch ay_util robot_gripper_reboot.launch robot_code:={ArmType}{GripperType}{IsSim} dxldev:=/dev/tty{DxlUSB} command:=Reboot',E]),
       ('FactoryReset dxlg',['roslaunch ay_util robot_gripper_reboot.launch robot_code:={ArmType}{GripperType}{IsSim} dxldev:=/dev/tty{DxlUSB} command:=FactoryReset',E]),
       ]),
-    ('UR',[
-      (':pair', ('dashboard_gui',['roslaunch ay_util ur_dashboard_gui.launch',E]),
+    ('Robot',[
+      (':pair', ('UR dashboard',['roslaunch ay_util ur_dashboard_gui.launch',E]),
                 ('kill',['C-c']) ),
+      (':pair', ('Motoman enable',['rosservice call /robot_enable',E]),
+                ('Motoman disable',['rosservice call /robot_disable',E]) ),
       ]),
     #('Mikata',[
       #('survo-off',['rosrun ay_py mikata_off.py',E]),

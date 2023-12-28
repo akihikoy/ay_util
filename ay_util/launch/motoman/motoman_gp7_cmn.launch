@@ -1,0 +1,26 @@
+<!--
+Common setup for Motoman GP7/YRC1000micro.
+-->
+
+<launch>
+
+  <include file="$(find motoman_gp7_support)/launch/load_gp7.launch" />
+
+  <rosparam command="load" file="$(find motoman_gp7_support)/config/joint_names_gp7.yaml" />
+
+  <node pkg="robot_state_publisher" type="robot_state_publisher"
+        name="robot_state_publisher" output="screen" />
+  <!--<node pkg="tf2_ros" type="static_transform_publisher"
+        name="tf_base_base_link" output="screen"
+        args="0 0 0 0 0 0 1 base base_link" />-->
+
+  <!--State validity checker:-->
+  <include file="$(find ay_util)/launch/motoman/motoman_state_validity_checker.launch"/>
+
+  <!--Joy stick-->
+  <arg name="jsdev" default="/dev/input/js1" />
+  <node pkg="joy" type="joy_node" name="joy_node" >
+    <param name="dev" type="string" value="$(arg jsdev)" />
+  </node>
+
+</launch>
