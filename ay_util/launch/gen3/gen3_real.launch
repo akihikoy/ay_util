@@ -5,9 +5,32 @@ Gen3 should be powered on before running this.
 
 <launch>
 
+  <arg name="robot_code" default="Gen3" />
+  <arg name="jsdev" default="/dev/input/js1" />
+  <arg name="dxldev" default="/dev/ttyUSB0" />
+  <arg name="with_gripper" default="true" />
+
+  <!-- NOT_IMPLEMENTED: The kinematic simulation mode is not implemented yet. -->
+  <arg     if="$(eval robot_code.endswith('_SIM'))" name="is_sim" value="true" />
+  <arg unless="$(eval robot_code.endswith('_SIM'))" name="is_sim" value="false" />
+
+  <!--Gen3-specific configuration-->
   <arg name="robot_ip" default="gen3a" />
   <arg name="robot_name" default="gen3a" />
   <arg name="state_rate" default="500" />
+
+  <!--Uploading the parameters to the server-->
+  <rosparam subst_value="True">
+    robot_code: $(arg robot_code)
+    jsdev: $(arg jsdev)
+    dxldev: $(arg dxldev)
+    with_gripper: $(arg with_gripper)
+    is_sim: $(arg is_sim)
+    robot_ip: $(arg robot_ip)
+    robot_name: $(arg robot_name)
+    state_rate: $(arg state_rate)
+  </rosparam>
+
   <include file="$(find kortex_driver)/launch/kortex_driver.launch">
     <arg name="ip_address" value="$(arg robot_ip)" />
     <arg name="robot_name" value="$(arg robot_name)" />
@@ -20,9 +43,18 @@ Gen3 should be powered on before running this.
   <include file="$(find ay_util)/launch/gen3/gen3_state_validity_checker.launch"/>
 
   <!--Joy stick-->
-  <arg name="jsdev" default="/dev/input/js0" />
+  <!--<arg name="jsdev" default="/dev/input/js0" />-->
   <node pkg="joy" type="joy_node" name="joy_node" >
     <param name="dev" type="string" value="$(arg jsdev)" />
   </node>
+
+  <!--Launch a gripper controller-->
+  <group if="$(arg with_gripper)">
+    <include file="$(find ay_util)/launch/robot_gripper_selector.launch">
+      <arg name="robot_code" value="$(eval robot_code.replace('_SIM',''))" />
+      <arg name="dxldev" value="$(arg dxldev)" />
+      <arg name="is_sim" value="$(arg is_sim)" />
+    </include>
+  </group>
 
 </launch>

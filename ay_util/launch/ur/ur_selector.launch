@@ -58,13 +58,6 @@ Since this uses eval in if, it works with Kinetic+.
     </include>
   </group>
 
-  <group if="$(eval robot_code.startswith('Gen3'))">
-    <include file="$(find ay_util)/launch/gen3/gen3_real.launch" unless="$(arg is_sim)">
-      <arg name="jsdev" value="$(arg jsdev)" />
-    </include>
-  </group>
-
-
   <!--Launch a gripper controller-->
   <group if="$(arg with_gripper)">
     <include file="$(find ay_util)/launch/robot_gripper_selector.launch">

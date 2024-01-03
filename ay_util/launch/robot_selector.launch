@@ -28,4 +28,13 @@ Choose a proper launcher of robot from a robot code.
     </include>
   </group>
 
+  <group if="$(eval robot_code.startswith('Gen3'))">
+    <include file="$(find ay_util)/launch/gen3/gen3_real.launch">
+      <arg name="robot_code" value="$(arg robot_code)" />
+      <arg name="jsdev" value="$(arg jsdev)" />
+      <arg name="dxldev" value="$(arg dxldev)" />
+      <arg name="with_gripper" value="$(arg with_gripper)" />
+    </include>
+  </group>
+
 </launch>
