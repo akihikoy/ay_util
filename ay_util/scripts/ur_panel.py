@@ -13,18 +13,190 @@ import rospkg
 import ay_trick_msgs.msg
 import ay_trick_msgs.srv
 from ur_dashboard_gui import *
+from proc_manager import TSubProcManager
+from topic_monitor import TTopicMonitor
+from script_node_client import *
 from joy_fv import TJoyEmulator
 from ay_py.core import InsertDict, LoadYAML, SaveYAML
 
-class TProcessManagerJoy(TProcessManagerUR, TJoyEmulator):
+class TProcessManagerJoyUR(TProcessManagerUR, TJoyEmulator):
   def __init__(self, node_name='ur_panel'):  #, ur_status_pins=None
     TProcessManagerUR.__init__(self, node_name=node_name)  #, config=ur_status_pins
     TJoyEmulator.__init__(self)
+
+
+class TProcessManagerJoyGen3(QtCore.QObject, TSubProcManager, TScriptNodeClient, TTopicMonitor, TJoyEmulator):
+  #Definition of states:
+  UNDEFINED= -10
+  NO_CORE_PROGRAM= 0
+  #IDLE= 3
+  TORQUE_ENABLED= 4
+  ROBOT_READY= 5
+  WAIT_REQUEST= 6
+  PROGRAM_RUNNING= 7
+
+  onstatuschanged= QtCore.pyqtSignal(int)
+  ontopicshzupdated= QtCore.pyqtSignal()
+
+  def UpdateStatus(self):
+    t_now= rospy.Time.now()
+    self.gen3_ros_running= self.IsActive('Robot')
+    self.script_node_running= ((t_now-self.script_node_status_stamp).to_sec() < 0.4) if self.script_node_status_stamp is not None else False
+
+    status= self.UNDEFINED
+    if not self.gen3_ros_running:
+      status= self.NO_CORE_PROGRAM
+    else:
+      status= self.TORQUE_ENABLED
+      if not self.script_node_running:
+        status= self.ROBOT_READY
+      elif self.script_node_status == ay_trick_msgs.msg.ROSNodeMode.READY:
+        status= self.WAIT_REQUEST
+      elif self.script_node_status == ay_trick_msgs.msg.ROSNodeMode.PROGRAM_RUNNING:
+        status= self.PROGRAM_RUNNING
+
+    #NOTE: Do not use yellow as it is used by other modules.
+    if status in (self.UNDEFINED,):
+      self.status_color= ['red']
+    elif status in (self.WAIT_REQUEST,):
+      self.status_color= ['green']
+    elif status in (self.PROGRAM_RUNNING,):
+      self.status_color= ['green']
+    else:
+      self.status_color= []
+
+    if self.status != status:
+      self.status= status
+      self.OnStatusChanged()
+
+  def OnStatusChanged(self):
+    self.onstatuschanged.emit(self.status)
+
+    self.TurnOffLEDAll()
+    for color in self.status_color:  self.SetLEDLight(color, True)
+
+    if self.status in (self.PROGRAM_RUNNING,):
+      self.SetStartStopLEDs(True, True)
+
+  def UpdateStatusThread(self):
+    rate= rospy.Rate(20)
+    while self.thread_status_update_running and not rospy.is_shutdown():
+      self.UpdateStatus()
+      rate.sleep()
+
+  def StartUpdateStatusThread(self):
+    self.StartTopicMonitorThread()
+    self.thread_status_update_running= True
+    self.thread_status_update= threading.Thread(name='status_update', target=self.UpdateStatusThread)
+    self.thread_status_update.start()
+
+  def StopUpdateStatusThread(self):
+    self.thread_status_update_running= False
+    if self.thread_status_update is not None:
+      self.thread_status_update.join()
+    self.StopTopicMonitorThread()
+
+  def __init__(self, node_name='ur_dashboard', topics_to_monitor=None, is_sim=False):
+    #config_base= {
+        #'PIN_STATE_LED_RED': 0,
+        #'PIN_STATE_LED_YELLOW': 1,
+        #'PIN_STATE_LED_GREEN': 2,
+        #'PIN_STATE_BEEP': 3,
+        #'PIN_START_BTN_LED': 4,
+        #'PIN_STOP_BTN_LED': 5,
+      #}
+    #if config is not None:  InsertDict(config_base, config)
+    #self.config= config_base
+
+    topics_to_monitor_base= {
+      'Robot': '/gen3a/joint_states',
+      'Gripper': '/gripper_driver/joint_states',
+      }
+    if topics_to_monitor is not None:  InsertDict(topics_to_monitor_base, topics_to_monitor)
+    TTopicMonitor.__init__(self, topics_to_monitor_base)
+    self.thread_topics_hz_callback= lambda: self.ontopicshzupdated.emit()
+
+    QtCore.QObject.__init__(self)
+    TSubProcManager.__init__(self)
+    TScriptNodeClient.__init__(self)
+    self.node_name= node_name
+    self.is_sim= is_sim
+
+    self.status_names= {
+      self.UNDEFINED:           'UNDEFINED'           ,
+      self.NO_CORE_PROGRAM:     'NO_CORE_PROGRAM'     ,
+      #self.IDLE:                'IDLE'                ,
+      self.TORQUE_ENABLED:      'TORQUE_ENABLED'      ,
+      self.ROBOT_READY:         'ROBOT_READY'         ,
+      self.WAIT_REQUEST:        'WAIT_REQUEST'        ,
+      self.PROGRAM_RUNNING:     'PROGRAM_RUNNING'     ,
+      }
+
+    #self.panel= None
+    self.srvp_set_pui= None
+    self.status= self.UNDEFINED
+    self.status_color= []  #List of 'red','green' (yellow is used by the other modules).
+
+    self.thread_status_update= None
+    self.thread_status_update_running= False
+
+  def InitNode(self):
+    rospy.init_node(self.node_name)
+    rospy.sleep(0.1)
+
+  def TurnOffLEDAll(self):
+    self.SetLEDLight('red', False)
+    self.SetLEDLight('green', False)
+    #self.SetLEDLight('yellow', False)
+    #self.SetBeep(False)
+    self.SetStartStopLEDs(False, False)
+
+  #color: 'red','yellow','green'
+  def SetLEDLight(self, color, is_on):
+    if self.is_sim:  return
+    if self.srvp_set_pui is None:  return
+    config_name= {'red':'STATE_LED_RED',
+                  'yellow':'STATE_LED_YELLOW',
+                  'green':'STATE_LED_GREEN'}[color]
+    req= ay_util_msgs.srv.SetPUIRequest()
+    req.name= config_name
+    req.action= req.ON if is_on else req.OFF
+    return self.srvp_set_pui(req)
+
+  def SetStartStopLEDs(self, is_start_on, is_stop_on):
+    if self.is_sim:  return
+    if self.srvp_set_pui is None:  return
+    req= ay_util_msgs.srv.SetPUIRequest()
+    req.name= 'START_BTN_LED'
+    req.action= req.ON if is_start_on else req.OFF
+    self.srvp_set_pui(req)
+    req= ay_util_msgs.srv.SetPUIRequest()
+    req.name= 'STOP_BTN_LED'
+    req.action= req.ON if is_stop_on else req.OFF
+    self.srvp_set_pui(req)
+
+  def Disconnect(self):
+    if self.is_sim:  return
+    self.TurnOffLEDAll()
+
+  #gen3_ros_running: True or False
+  def WaitForGen3ROSRunning(self, gen3_ros_running, timeout=20):
+    if self.is_sim:  return True
+    t_start= rospy.Time.now()
+    rate= rospy.Rate(20)
+    while self.gen3_ros_running != gen3_ros_running:
+      rate.sleep()
+      if (rospy.Time.now()-t_start).to_sec()>timeout:
+        print 'WaitForGen3ROSRunning timeout.'
+        return False
+    return True
+
 
 def UpdateProcList(pm,combobox):
   combobox.clear()
   for name,proc in pm.procs.iteritems():
     combobox.addItem('{0}/{1}'.format(name,proc.pid))
+
 
 if __name__=='__main__':
   def get_arg(opt_name, default):
@@ -38,11 +210,13 @@ if __name__=='__main__':
   fullscreen= True if '-fullscreen' in sys.argv or '--fullscreen' in sys.argv else False
   is_sim= True if '-sim' in sys.argv or '--sim' in sys.argv else False
 
+  robot_mode= 'ur' if robot_code.startswith('UR') else 'gen3' if robot_code.startswith('Gen3') else None
+
   RVIZ_CONFIG= os.environ['HOME']+'/.rviz/default.rviz'
   #Parameters:
   config={
-    'URType': robot_code,
-    'URType_SIM': sim_robot_code,
+    'RobotCode': robot_code,
+    'RobotCode_SIM': sim_robot_code,
     'JoyUSB': joy_dev,
     'DxlUSB': dxl_dev,
     'FV_L_DEV': '/media/video_fv1',
@@ -52,16 +226,10 @@ if __name__=='__main__':
     'FV_R_CONFIG': 'config/fvp_3_r.yaml',
     'FV_CTRL_CONFIG': '{}/data/config/fv_ctrl.yaml'.format(os.environ['HOME']),
     #'ShutdownRobotAfterUse': False,
-    #'Q_INIT': [0.03572946786880493, -2.027292076741354, 1.6515636444091797, -1.1894968191729944, -1.5706136862384241, -3.1061676184283655],
-    'Q_INIT': [0.03572946786880493, -2.027292076741354, 1.6515636444091797, -1.1894968191729944, -1.5706136862384241, 0.0],
+    'Q_INIT': [0.0357, -2.0273, 1.6516, -1.1895, -1.571, 0.0]
+              if robot_mode=='ur' else
+              [0, 0, 0, 2.1, -3.1415, -0.6, 1.5708] if robot_mode=='gen3' else None,
     #'Q_PARK': [0.03572946786880493, -2.027292076741354, 1.6515636444091797, -1.1894968191729944, -1.5706136862384241, -3.1061676184283655],
-    #'UR_STATUS_PINS':{
-      #'STATE_LED_RED': 0,
-      #'STATE_LED_YELLOW': 1,
-      #'STATE_LED_GREEN': 2,
-      #'STATE_BEEP': 3,
-      #'START_BTN_LED': 4,
-      #'STOP_BTN_LED': 5,}
     }
   print config
 
@@ -69,9 +237,9 @@ if __name__=='__main__':
   cmds= {
     'roscore': ['roscore','bg'],
     'fix_usb': ['sudo /sbin/fix_usb_latency.sh tty{DxlUSB}','fg'],
-    'ur_ros': ['roslaunch ay_util ur_selector.launch robot_code:={URType} jsdev:=/dev/input/{JoyUSB} dxldev:=/dev/tty{DxlUSB} with_gripper:=false','bg'],
-    'ur_gripper': ['roslaunch ay_util robot_gripper_selector.launch robot_code:={URType} dxldev:=/dev/tty{DxlUSB}','bg'],
-    'ur_calib': ['roslaunch ay_util ur_calib.launch robot_code:={URType}','fg'],
+    'robot_ros': ['roslaunch ay_util robot_selector.launch robot_code:={RobotCode} jsdev:=/dev/input/{JoyUSB} dxldev:=/dev/tty{DxlUSB} with_gripper:=false','bg'],
+    'robot_gripper': ['roslaunch ay_util robot_gripper_selector.launch robot_code:={RobotCode} dxldev:=/dev/tty{DxlUSB}','bg'],
+    'ur_calib': ['roslaunch ay_util ur_calib.launch robot_code:={RobotCode}','fg'],
     'ur_pui_server': ['rosrun ay_util ur_pui_server.py','bg'],
     'fvp': ['roslaunch fingervision fvp_general.launch pkg_dir:={FV_BASE_DIR} config1:={FV_L_CONFIG} config2:={FV_R_CONFIG}','bg'],
     'fvp_file': ['roslaunch ay_fv_extra fvp_file1.launch','bg'],
@@ -80,11 +248,14 @@ if __name__=='__main__':
     'realsense': ['roslaunch realsense2_camera rs_camera.launch align_depth:=true enable_pointcloud:=true depth_fps:=15 color_fps:=30 depth_width:=640 depth_height:=480 color_width:=640 color_height:=480','bg'],
     'ay_trick_ros': ['rosrun ay_trick ros_node.py','bg'],
     'rviz': ['rosrun rviz rviz -d {0}'.format(RVIZ_CONFIG),'bg'],
-    'reboot_dxlg': ['roslaunch ay_util ur_gripper_reboot.launch robot_code:={URType} dxldev:=/dev/tty{DxlUSB} command:=Reboot','fg'],
-    'factory_reset_dxlg': ['roslaunch ay_util ur_gripper_reboot.launch robot_code:={URType} dxldev:=/dev/tty{DxlUSB} command:=FactoryReset','fg'],
+    'reboot_dxlg': ['roslaunch ay_util gripper_reboot.launch robot_code:={RobotCode} dxldev:=/dev/tty{DxlUSB} command:=Reboot','fg'],
+    'factory_reset_dxlg': ['roslaunch ay_util gripper_reboot.launch robot_code:={RobotCode} dxldev:=/dev/tty{DxlUSB} command:=FactoryReset','fg'],
     }
+  if robot_mode!='ur':
+    cmds['ur_calib'][1]= None
+    cmds['ur_pui_server'][1]= None
   if is_sim:
-    config['URType']= config['URType_SIM']
+    config['RobotCode']= config['RobotCode_SIM']
     cmds['fvp']= cmds['fvp_file']
     for c in ('fix_usb','ur_calib','config_fv_l','config_fv_r','realsense'):
       cmds[c][1]= None
@@ -92,7 +263,9 @@ if __name__=='__main__':
     if isinstance(cmds[key][0],str):
       cmds[key][0]= cmds[key][0].format(**config).split(' ')
 
-  pm= TProcessManagerJoy()  #ur_status_pins=config['UR_STATUS_PINS']
+  pm= (TProcessManagerJoyUR() if robot_mode=='ur'
+        else TProcessManagerJoyGen3() if robot_mode=='gen3'
+        else None)
   run_cmd= lambda name: pm.RunBGProcess(name,cmds[name][0]) if cmds[name][1]=='bg' else\
                         pm.RunFGProcess(cmds[name][0]) if cmds[name][1]=='fg' else\
                         None
@@ -100,7 +273,9 @@ if __name__=='__main__':
 
   #List of script commands (name: [[script/args],'fg'/'bg']).
   scripts= {
-    'setup': ['ur.setup "{URType}",True','fg'],
+    'setup': ['ur.setup None,True','fg'] if robot_mode=='ur'
+             else ['gen3.setup None,True','fg'] if robot_mode=='gen3'
+             else None,
     'joy': ['j','bg'],
     #'stop_joy': ['q','fg'],
     'move_to_init': ['ct.robot.MoveToQ({Q_INIT},dt=5.0,blocking=True)','fg'],
@@ -145,9 +320,10 @@ RobotMode: {robot_mode}
 URProgram: {program_running}
 MainProgram: {script_status}'''.format(
       status=pm.status_names[pm.status],
-      safety_mode=pm.ur_safety_mode_names[pm.ur_safety_mode] if pm.ur_ros_running and pm.ur_safety_mode in pm.ur_safety_mode_names else 'UNRECOGNIZED',
-      robot_mode=pm.ur_robot_mode_names[pm.ur_robot_mode] if pm.ur_ros_running and pm.ur_robot_mode in pm.ur_robot_mode_names else 'UNRECOGNIZED',
-      program_running=pm.ur_ros_running and pm.ur_program_running,
+      safety_mode=(pm.ur_safety_mode_names[pm.ur_safety_mode] if pm.ur_ros_running and pm.ur_safety_mode in pm.ur_safety_mode_names else 'UNRECOGNIZED') if robot_mode=='ur' else 'N/A',
+      robot_mode=(pm.ur_robot_mode_names[pm.ur_robot_mode] if pm.ur_ros_running and pm.ur_robot_mode in pm.ur_robot_mode_names else 'UNRECOGNIZED') if robot_mode=='ur' else 'N/A',
+      program_running=(pm.ur_ros_running and pm.ur_program_running) if robot_mode=='ur'
+                      else (pm.gen3_ros_running)  if robot_mode=='gen3' else 'N/A',
       script_status=pm.script_node_status_names[pm.script_node_status] if pm.script_node_running and pm.script_node_status in pm.script_node_status_names else 'UNRECOGNIZED' ))
 
 
@@ -245,28 +421,31 @@ MainProgram: {script_status}'''.format(
       'buttonchk',{
         'text':('(1)Robot core program','[3]Stop core program'),
         'onstatuschanged':lambda w,obj,status:(
-                      obj.setEnabled(status in (pm.NO_CORE_PROGRAM,pm.POWER_OFF)),
+                      obj.setEnabled((status in (pm.NO_CORE_PROGRAM,pm.POWER_OFF)) if robot_mode=='ur'
+                                     else (status in (pm.NO_CORE_PROGRAM,pm.ROBOT_READY)) ),
                       obj.setChecked(status not in (pm.NO_CORE_PROGRAM,) ),
                       ),
         'onclick':(lambda w,obj:(
                       #run_cmd('roscore'),
                       #rospy.wait_for_service('/rosout/get_loggers', timeout=5.0),
                       run_cmd('fix_usb'),
-                      run_cmd('ur_ros'),
-                      run_cmd('ur_pui_server'),
+                      run_cmd('robot_ros'),
+                      run_cmd('ur_pui_server') if robot_mode=='ur' else None,
                       #pm.InitNode(),//
                       #pm.StartUpdateStatusThread(),
-                      pm.ConnectToURDashboard(),
-                      pm.WaitForURROSRunning(True),  #Should be done after ConnectToURDashboard
+                      pm.ConnectToURDashboard() if robot_mode=='ur' else None,
+                      pm.WaitForURROSRunning(True) if robot_mode=='ur'  #Should be done after ConnectToURDashboard
+                          else pm.WaitForGen3ROSRunning(True) if robot_mode=='gen3'
+                          else None,
                       w.widgets['rviz'].setup(),
-                      pm.WaitForRobotMode(ur_dashboard_msgs.msg.RobotMode.POWER_OFF),
+                      pm.WaitForRobotMode(ur_dashboard_msgs.msg.RobotMode.POWER_OFF)  if robot_mode=='ur' else None,
                      ),
                    lambda w,obj:(
                       #pm.RunURDashboard('shutdown') if config['ShutdownRobotAfterUse'] else None,
-                      pm.DisconnectUR(),  #NOTE: This should be done after shutdown.
+                      pm.DisconnectUR() if robot_mode=='ur' else None,  #NOTE: This should be done after shutdown.
                       #pm.StopUpdateStatusThread(),
-                      stop_cmd('ur_pui_server'),
-                      stop_cmd('ur_ros'),
+                      stop_cmd('ur_pui_server')  if robot_mode=='ur' else None,
+                      stop_cmd('robot_ros'),
                       #stop_cmd('roscore'),
                      ) )}),
     'btn_init2': (
@@ -274,17 +453,19 @@ MainProgram: {script_status}'''.format(
         'text':('(2)Power on robot','[2]Power off robot'),
         'enabled': not is_sim,
         'onstatuschanged':lambda w,obj,status:(
-                      obj.setEnabled(status in (pm.POWER_OFF,pm.TORQUE_ENABLED,pm.ROBOT_READY)),
-                      obj.setChecked(status in (pm.TORQUE_ENABLED,pm.ROBOT_READY,pm.WAIT_REQUEST,pm.PROGRAM_RUNNING,pm.PROTECTIVE_STOP) ),
-                      status==pm.ROBOT_EMERGENCY_STOP and (
-                        stop_cmd('ur_gripper'),
-                        pm.RunURDashboard('stop'),
-                        pm.WaitForProgramRunning(False),
-                        pm.RunURDashboard('power_off'),
+                      obj.setEnabled((status in (pm.POWER_OFF,pm.TORQUE_ENABLED,pm.ROBOT_READY)) if robot_mode=='ur'
+                                     else False),
+                      obj.setChecked((status in (pm.TORQUE_ENABLED,pm.ROBOT_READY,pm.WAIT_REQUEST,pm.PROGRAM_RUNNING,pm.PROTECTIVE_STOP)) if robot_mode=='ur'
+                                     else False),
+                      status==pm.ROBOT_EMERGENCY_STOP if robot_mode=='ur' else False and (
+                        stop_cmd('robot_gripper'),
+                        pm.RunURDashboard('stop')  if robot_mode=='ur' else None,
+                        pm.WaitForProgramRunning(False)  if robot_mode=='ur' else None,
+                        pm.RunURDashboard('power_off')  if robot_mode=='ur' else None,
                         ),
                       ),
         'onclick':(lambda w,obj:(
-                      run_cmd('ur_gripper'),
+                      #run_cmd('robot_gripper'),
                       pm.WaitForRobotMode(ur_dashboard_msgs.msg.RobotMode.POWER_OFF),
                       pm.RunURDashboard('power_on'),
                       pm.WaitForRobotMode(ur_dashboard_msgs.msg.RobotMode.IDLE),
@@ -295,7 +476,7 @@ MainProgram: {script_status}'''.format(
                       pm.WaitForProgramRunning(True),
                      ),
                    lambda w,obj:(
-                      stop_cmd('ur_gripper'),
+                      #stop_cmd('robot_gripper'),
                       pm.RunURDashboard('stop'),
                       pm.WaitForProgramRunning(False),
                       pm.RunURDashboard('power_off'),
@@ -304,15 +485,17 @@ MainProgram: {script_status}'''.format(
       'buttonchk',{
         'text':('(3)Start program','[1]Stop program'),
         'onstatuschanged':lambda w,obj,status:(
-                      obj.setEnabled(status in (pm.ROBOT_READY,pm.WAIT_REQUEST,pm.PROGRAM_RUNNING,pm.PROTECTIVE_STOP)),
-                      obj.setChecked(status in (pm.WAIT_REQUEST,pm.PROGRAM_RUNNING,pm.PROTECTIVE_STOP) ),
-                      status==pm.ROBOT_EMERGENCY_STOP and (
+                      obj.setEnabled((status in (pm.ROBOT_READY,pm.WAIT_REQUEST,pm.PROGRAM_RUNNING,pm.PROTECTIVE_STOP)) if robot_mode=='ur'
+                                     else (status in (pm.ROBOT_READY,pm.WAIT_REQUEST,pm.PROGRAM_RUNNING))),
+                      obj.setChecked(status in (pm.WAIT_REQUEST,pm.PROGRAM_RUNNING) ),
+                      status==pm.ROBOT_EMERGENCY_STOP if robot_mode=='ur' else False and (
                         #stop_cmd('rviz'),
                         stop_cmd('ay_trick_ros'),
                         stop_cmd('fvp'),
                         ),
                       ),
         'onclick':(lambda w,obj:(
+                      run_cmd('robot_gripper'),
                       run_cmd('fvp'),
                       rospy.sleep(0.2),
                       run_cmd('config_fv_l'),
@@ -328,13 +511,14 @@ MainProgram: {script_status}'''.format(
                       #stop_cmd('rviz'),
                       stop_cmd('ay_trick_ros'),
                       stop_cmd('fvp'),
+                      stop_cmd('robot_gripper'),
                      ) )}),
     'btn_reset_estop': (
       'button',{
         'text': 'Reset E-Stop',
-        'enabled': not is_sim,
+        'enabled': not is_sim and robot_mode=='ur',
         'onstatuschanged':lambda w,obj,status:(
-                      obj.setEnabled(status in (pm.FAULT,)) ),
+                      obj.setEnabled((status in (pm.FAULT,)) if robot_mode=='ur' else False) ),
         'size_policy': ('expanding', 'fixed'),
         'onclick': lambda w,obj: (
                       pm.RunURDashboard('close_safety_popup'),
@@ -343,16 +527,17 @@ MainProgram: {script_status}'''.format(
     'btn_shutdown_ur': (
       'button',{
         'text': 'Shutdown robot',
-        'enabled': not is_sim,
+        'enabled': not is_sim and robot_mode=='ur',
         'onstatuschanged':lambda w,obj,status:(
-                      obj.setEnabled(status in (pm.ROBOT_EMERGENCY_STOP,pm.POWER_OFF)) ),
+                      obj.setEnabled((status in (pm.ROBOT_EMERGENCY_STOP,pm.POWER_OFF)) if robot_mode=='ur' else False) ),
         'size_policy': ('expanding', 'fixed'),
         'onclick': lambda w,obj: pm.RunURDashboard('shutdown'), }),
     'btn_exit': (
       'button',{
         'text': 'Exit',
         'onstatuschanged':lambda w,obj,status:(
-                      obj.setEnabled(status in (pm.NO_CORE_PROGRAM,pm.ROBOT_EMERGENCY_STOP)) ),
+                      obj.setEnabled((status in (pm.NO_CORE_PROGRAM,pm.ROBOT_EMERGENCY_STOP)) if robot_mode=='ur'
+                                     else (status in (pm.NO_CORE_PROGRAM,))) ),
         'size_policy': ('expanding', 'fixed'),
         'onclick': lambda w,obj: w.close(), }),
     #'btn_shutdown_pc': (
@@ -403,6 +588,20 @@ MainProgram: {script_status}'''.format(
         'size_policy': ('expanding', 'fixed'),
         'onclick':(lambda w,obj:set_joy('hold_on',is_active=w.widgets['btn_activate'].isChecked()),
                    lambda w,obj:set_joy('hold_off') )}),
+    'btn_grasp': (
+      'buttonchk',{
+        'text':('Grasp','Stop'),
+        'enabled': not is_sim,
+        'size_policy': ('expanding', 'fixed'),
+        'onclick':(lambda w,obj:set_joy('grasp_on',is_active=w.widgets['btn_activate'].isChecked()),
+                   lambda w,obj:set_joy('grasp_off') )}),
+    'btn_openif': (
+      'buttonchk',{
+        'text':('OpenIf','Stop'),
+        'enabled': not is_sim,
+        'size_policy': ('expanding', 'fixed'),
+        'onclick':(lambda w,obj:set_joy('openif_on',is_active=w.widgets['btn_activate'].isChecked()),
+                   lambda w,obj:set_joy('openif_off') )}),
     'btn_pick': (
       'buttonchk',{
         'text':('Pick','Stop'),
@@ -479,7 +678,7 @@ MainProgram: {script_status}'''.format(
         (('boxh',None,('label_grip','joy_grip','btn_grip_open')),4,0,1,3),
         )),
       ('boxh',None, ('btn_init_pose',)),
-      ('boxh',None, ('btn_push','btn_hold','btn_pick')),
+      ('boxh',None, ('btn_push','btn_hold','btn_grasp','btn_openif','btn_pick')),
       ))
 
   widgets_ctrl_config= {
@@ -529,7 +728,7 @@ MainProgram: {script_status}'''.format(
     'chkbx_safety_to_recover': (
       'checkbox',{
         'text': 'Please check the safety of\nthe robot and environment',
-        'onstatuschanged':lambda w,obj,status:(obj.setEnabled(status in (pm.PROTECTIVE_STOP,)) ),
+        'onstatuschanged':lambda w,obj,status:(obj.setEnabled((status in (pm.PROTECTIVE_STOP,)) if robot_mode=='ur' else False) ),
         'onclick': lambda w,obj: w.widgets['btn_revoery'].setEnabled(obj.isChecked()) }),
     'btn_revoery': (
       'button',{
@@ -570,51 +769,61 @@ MainProgram: {script_status}'''.format(
     'label_ur': (
       'label',{
         'text': 'UR: ',
+        'enabled': not is_sim and robot_mode=='ur',
         'font_size_range': (8,24),
         'size_policy': ('minimum', 'minimum')}),
     'btn_ur_power_on': (
       'button',{
         'text': 'PowerOn',
+        'enabled': not is_sim and robot_mode=='ur',
         'font_size_range': (8,24),
         'onclick': lambda w,obj: pm.RunURDashboard('power_on'), }),
     'btn_ur_brake_release': (
       'button',{
         'text': 'BrakeRelease',
+        'enabled': not is_sim and robot_mode=='ur',
         'font_size_range': (8,24),
         'onclick': lambda w,obj: pm.RunURDashboard('brake_release'), }),
     'btn_ur_power_off': (
       'button',{
         'text': 'PowerOff',
+        'enabled': not is_sim and robot_mode=='ur',
         'font_size_range': (8,24),
         'onclick': lambda w,obj: pm.RunURDashboard('power_off'), }),
     'btn_ur_play': (
       'button',{
         'text': 'Play',
+        'enabled': not is_sim and robot_mode=='ur',
         'font_size_range': (8,24),
         'onclick': lambda w,obj: pm.RunURDashboard('play'), }),
     'btn_ur_stop': (
       'button',{
         'text': 'Stop',
+        'enabled': not is_sim and robot_mode=='ur',
         'font_size_range': (8,24),
         'onclick': lambda w,obj: pm.RunURDashboard('stop'), }),
     'btn_ur_shutdown': (
       'button',{
         'text': 'Shutdown',
+        'enabled': not is_sim and robot_mode=='ur',
         'font_size_range': (8,24),
         'onclick': lambda w,obj: pm.RunURDashboard('shutdown'), }),
     'btn_ur_unlock_protective_stop': (
       'button',{
         'text': 'UnlockProtectiveStop',
+        'enabled': not is_sim and robot_mode=='ur',
         'font_size_range': (8,24),
         'onclick': lambda w,obj: pm.RunURDashboard('unlock_protective_stop'), }),
     'btn_ur_restart_safety': (
       'button',{
         'text': 'RestartSafety',
+        'enabled': not is_sim and robot_mode=='ur',
         'font_size_range': (8,24),
         'onclick': lambda w,obj: pm.RunURDashboard('restart_safety'), }),
     'btn_ur_close_safety_popup': (
       'button',{
         'text': 'CloseSafetyPopup',
+        'enabled': not is_sim and robot_mode=='ur',
         'font_size_range': (8,24),
         'onclick': lambda w,obj: pm.RunURDashboard('close_safety_popup'), }),
     'label_dxlg': (
