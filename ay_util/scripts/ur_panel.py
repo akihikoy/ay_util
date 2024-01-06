@@ -278,7 +278,7 @@ if __name__=='__main__':
              else None,
     'joy': ['j','bg'],
     #'stop_joy': ['q','fg'],
-    'move_to_init': ['ct.robot.MoveToQ({Q_INIT},dt=5.0,blocking=True)','fg'],
+    'move_to_init': ['ct.robot.MoveToQ({Q_INIT},dt=10.0,blocking=True)','fg'],
     #'move_to_park': ['ct.robot.MoveToQ({Q_PARK},dt=5.0,blocking=True)','fg'],
     'grip_plus':  ['fv.open ct.robot.Arm, ct.robot.GripperPos()+0.015, True','fg'],
     }
