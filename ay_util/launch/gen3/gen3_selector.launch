@@ -1,0 +1,55 @@
+<!--
+Choose a proper launcher of Gen3 from the robot code.
+Since this uses eval in if, it works with Kinetic+.
+-->
+<launch>
+
+  <arg name="robot_code" default="Gen3" />
+  <arg name="jsdev" default="/dev/input/js1" />
+  <arg name="dxldev" default="/dev/ttyUSB0" />
+  <arg name="with_gripper" default="true" />
+
+  <!--Gen3-specific configuration-->
+  <arg name="robot_ip" default="gen3a" />
+  <arg name="robot_name" default="gen3a" />
+  <arg name="state_rate" default="500" />
+
+  <arg     if="$(eval robot_code.endswith('_SIM'))" name="is_sim" value="true" />
+  <arg unless="$(eval robot_code.endswith('_SIM'))" name="is_sim" value="false" />
+
+  <!--Uploading the parameters to the server-->
+  <rosparam subst_value="True">
+    robot_code: $(arg robot_code)
+    jsdev: $(arg jsdev)
+    dxldev: $(arg dxldev)
+    with_gripper: $(arg with_gripper)
+    is_sim: $(arg is_sim)
+    robot_ip: $(arg robot_ip)
+    robot_name: $(arg robot_name)
+    state_rate: $(arg state_rate)
+  </rosparam>
+
+  <!--Launch a robot arm controller-->
+  <group if="$(eval robot_code.startswith('Gen3'))">
+    <include file="$(find ay_util)/launch/gen3/gen3_real.launch" unless="$(arg is_sim)">
+      <arg name="jsdev" value="$(arg jsdev)" />
+      <arg name="robot_ip" value="$(arg robot_ip)" />
+      <arg name="robot_name" value="$(arg robot_name)" />
+      <arg name="state_rate" value="$(arg state_rate)" />
+    </include>
+    <include file="$(find ay_util)/launch/gen3/gen3_ksim.launch" if="$(arg is_sim)">
+      <arg name="jsdev" value="$(arg jsdev)" />
+      <arg name="robot_name" value="$(arg robot_name)" />
+    </include>
+  </group>
+
+  <!--Launch a gripper controller-->
+  <group if="$(arg with_gripper)">
+    <include file="$(find ay_util)/launch/robot_gripper_selector.launch">
+      <arg name="robot_code" value="$(eval robot_code.replace('_SIM',''))" />
+      <arg name="dxldev" value="$(arg dxldev)" />
+      <arg name="is_sim" value="$(arg is_sim)" />
+    </include>
+  </group>
+
+</launch>

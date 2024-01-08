@@ -8,18 +8,20 @@ Since this uses eval in if, it works with Kinetic+.
   <arg name="dxldev" default="/dev/ttyUSB0" />
   <arg name="is_sim" default="false" />
 
+  <arg name="robot_code_nosim" value="$(eval robot_code.replace('_SIM','') if robot_code.endswith('_SIM') else robot_code)" />
+
   <!--NOTE:Changed to use the gripper ThGA with the newer protocol (A) even for
       an older robot_code ending with ThG.
       In case we want to use both versions, replace this by RHP12RNGripper. -->
   <arg name="gripper_type" value="$(eval
-        'DxlG' if robot_code.endswith('DxlG') else
-        'ThGA' if robot_code.endswith('ThG') else
-        'ThGA' if robot_code.endswith('ThGA') else
-        'DxlpO2_Straight1' if robot_code.endswith('DxlpO2_Straight1') else
-        'DxlpO2_SRound1'   if robot_code.endswith('DxlpO2_SRound1')   else
-        'DxlpO2_Fork1'     if robot_code.endswith('DxlpO2_Fork1')     else
-        'DxlpY1'           if robot_code.endswith('DxlpY1')           else
-        'DxlO3'            if robot_code.endswith('DxlO3')            else
+        'DxlG' if robot_code_nosim.endswith('DxlG') else
+        'ThGA' if robot_code_nosim.endswith('ThG') else
+        'ThGA' if robot_code_nosim.endswith('ThGA') else
+        'DxlpO2_Straight1' if robot_code_nosim.endswith('DxlpO2_Straight1') else
+        'DxlpO2_SRound1'   if robot_code_nosim.endswith('DxlpO2_SRound1')   else
+        'DxlpO2_Fork1'     if robot_code_nosim.endswith('DxlpO2_Fork1')     else
+        'DxlpY1'           if robot_code_nosim.endswith('DxlpY1')           else
+        'DxlO3'            if robot_code_nosim.endswith('DxlO3')            else
         ''  )" />
 
   <group if="$(eval gripper_type!='')">

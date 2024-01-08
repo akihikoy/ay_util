@@ -30,9 +30,9 @@ class TDummyRobot(object):
   def __init__(self, rate=100):
     self.rate= rate  #/joint_states is published at rate Hz
 
-    self.pub_js= rospy.Publisher('/joint_states', sensor_msgs.msg.JointState, queue_size=1)
-    self.sub_jpc= rospy.Subscriber('/joint_path_command', trajectory_msgs.msg.JointTrajectory, self.PathCmdCallback)
-    self.sub_jsc= rospy.Subscriber('/joint_speed_command', trajectory_msgs.msg.JointTrajectory, self.SpeedCmdCallback, queue_size=1)
+    self.pub_js= rospy.Publisher('joint_states', sensor_msgs.msg.JointState, queue_size=1)
+    self.sub_jpc= rospy.Subscriber('joint_path_command', trajectory_msgs.msg.JointTrajectory, self.PathCmdCallback)
+    self.sub_jsc= rospy.Subscriber('joint_speed_command', trajectory_msgs.msg.JointTrajectory, self.SpeedCmdCallback, queue_size=1)
 
     self.js= sensor_msgs.msg.JointState()
     self.js.name= rospy.get_param('controller_joint_names')
@@ -53,7 +53,7 @@ class TDummyRobot(object):
 
     self.ftaction_feedback= control_msgs.msg.FollowJointTrajectoryFeedback()
     self.ftaction_result= control_msgs.msg.FollowJointTrajectoryResult()
-    self.ftaction_name= '/follow_joint_trajectory'
+    self.ftaction_name= 'follow_joint_trajectory'
     self.ftaction_actsrv= actionlib.SimpleActionServer(self.ftaction_name, control_msgs.msg.FollowJointTrajectoryAction, execute_cb=self.FollowTrajActionCallback, auto_start=False)
     self.ftaction_actsrv.start()
 
