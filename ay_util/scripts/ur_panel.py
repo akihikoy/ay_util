@@ -136,6 +136,7 @@ class TProcessManagerJoyGen3(QtCore.QObject, TSubProcManager, TScriptNodeClient,
     self.srvp_set_pui= None
     self.status= self.UNDEFINED
     self.status_color= []  #List of 'red','green' (yellow is used by the other modules).
+    self.gen3_ros_running= None
 
     self.thread_status_update= None
     self.thread_status_update_running= False
@@ -219,6 +220,7 @@ if __name__=='__main__':
     'RobotCode_SIM': sim_robot_code,
     'JoyUSB': joy_dev,
     'DxlUSB': dxl_dev,
+    'IS_SIM': is_sim,
     'FV_L_DEV': '/media/video_fv1',
     'FV_R_DEV': '/media/video_fv2',
     'FV_BASE_DIR': subprocess.check_output('rospack find ay_fv_extra'.split(' ')).strip(),
@@ -238,7 +240,7 @@ if __name__=='__main__':
     'roscore': ['roscore','bg'],
     'fix_usb': ['sudo /sbin/fix_usb_latency.sh tty{DxlUSB}','fg'],
     'robot_ros': ['roslaunch ay_util robot_selector.launch robot_code:={RobotCode} jsdev:=/dev/input/{JoyUSB} dxldev:=/dev/tty{DxlUSB} with_gripper:=false','bg'],
-    'robot_gripper': ['roslaunch ay_util robot_gripper_selector.launch robot_code:={RobotCode} dxldev:=/dev/tty{DxlUSB}','bg'],
+    'robot_gripper': ['roslaunch ay_util robot_gripper_selector.launch robot_code:={RobotCode} dxldev:=/dev/tty{DxlUSB} is_sim:={IS_SIM}','bg'],
     'ur_calib': ['roslaunch ay_util ur_calib.launch robot_code:={RobotCode}','fg'],
     'ur_pui_server': ['rosrun ay_util ur_pui_server.py','bg'],
     'fvp': ['roslaunch fingervision fvp_general.launch pkg_dir:={FV_BASE_DIR} config1:={FV_L_CONFIG} config2:={FV_R_CONFIG}','bg'],
@@ -577,35 +579,35 @@ MainProgram: {script_status}'''.format(
     'btn_push': (
       'buttonchk',{
         'text':('Push','Stop'),
-        'enabled': not is_sim,
+        'enabled': True,
         'size_policy': ('expanding', 'fixed'),
         'onclick':(lambda w,obj:set_joy('trackf_on',is_active=w.widgets['btn_activate'].isChecked()),
                    lambda w,obj:set_joy('trackf_off') )}),
     'btn_hold': (
       'buttonchk',{
         'text':('Hold','Stop'),
-        'enabled': not is_sim,
+        'enabled': True,
         'size_policy': ('expanding', 'fixed'),
         'onclick':(lambda w,obj:set_joy('hold_on',is_active=w.widgets['btn_activate'].isChecked()),
                    lambda w,obj:set_joy('hold_off') )}),
     'btn_grasp': (
       'buttonchk',{
         'text':('Grasp','Stop'),
-        'enabled': not is_sim,
+        'enabled': True,
         'size_policy': ('expanding', 'fixed'),
         'onclick':(lambda w,obj:set_joy('grasp_on',is_active=w.widgets['btn_activate'].isChecked()),
                    lambda w,obj:set_joy('grasp_off') )}),
     'btn_openif': (
       'buttonchk',{
         'text':('OpenIf','Stop'),
-        'enabled': not is_sim,
+        'enabled': True,
         'size_policy': ('expanding', 'fixed'),
         'onclick':(lambda w,obj:set_joy('openif_on',is_active=w.widgets['btn_activate'].isChecked()),
                    lambda w,obj:set_joy('openif_off') )}),
     'btn_pick': (
       'buttonchk',{
         'text':('Pick','Stop'),
-        'enabled': not is_sim,
+        'enabled': True,
         'size_policy': ('expanding', 'fixed'),
         'onclick':(lambda w,obj:set_joy('pickup_on',is_active=w.widgets['btn_activate'].isChecked()),
                    lambda w,obj:set_joy('pickup_off') )}),
