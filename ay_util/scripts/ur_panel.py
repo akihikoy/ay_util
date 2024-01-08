@@ -281,6 +281,7 @@ if __name__=='__main__':
     'joy': ['j','bg'],
     #'stop_joy': ['q','fg'],
     'move_to_init': ['ct.robot.MoveToQ({Q_INIT},dt=10.0,blocking=True)','fg'],
+    'move_pick_demo': ['fv.move_pick_demo','fg'],
     #'move_to_park': ['ct.robot.MoveToQ({Q_PARK},dt=5.0,blocking=True)','fg'],
     'grip_plus':  ['fv.open ct.robot.Arm, ct.robot.GripperPos()+0.015, True','fg'],
     }
@@ -611,6 +612,11 @@ MainProgram: {script_status}'''.format(
         'size_policy': ('expanding', 'fixed'),
         'onclick':(lambda w,obj:set_joy('pickup_on',is_active=w.widgets['btn_activate'].isChecked()),
                    lambda w,obj:set_joy('pickup_off') )}),
+    'btn_move_pick_demo': (
+      'button',{
+        'text': 'Move/Pick/Demo',
+        'size_policy': ('expanding', 'fixed'),
+        'onclick': lambda w,obj:run_script_during_joy('move_pick_demo'), }),
     'label_pitch': (
       'label',{
         'text': 'Pitch',
@@ -680,7 +686,8 @@ MainProgram: {script_status}'''.format(
         (('boxh',None,('label_grip','joy_grip','btn_grip_open')),4,0,1,3),
         )),
       ('boxh',None, ('btn_init_pose',)),
-      ('boxh',None, ('btn_push','btn_hold','btn_grasp','btn_openif','btn_pick')),
+      ('boxh',None, ('btn_push','btn_hold','btn_grasp','btn_openif')),
+      ('boxh',None, ('btn_pick','btn_move_pick_demo')),
       ))
 
   widgets_ctrl_config= {
