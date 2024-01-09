@@ -230,7 +230,11 @@ if __name__=='__main__':
     #'ShutdownRobotAfterUse': False,
     'Q_INIT': [0.0357, -2.0273, 1.6516, -1.1895, -1.571, 0.0]
               if robot_mode=='ur' else
-              [0, 0, 0, 2.1, -3.1415, -0.6, 1.5708] if robot_mode=='gen3' else None,
+              [0.16, 0.0, 0.17, 2.0, 2.9, -0.7, 2.0] if robot_mode=='gen3'
+              else None,
+    'X_INIT': None if robot_mode=='ur' else
+              [0.3418398342045766, -0.11518828661688434, 0.4262027524524184, 0.7042117631586926, 0.6690845996953141, 0.1738926582036271, 0.16178051335795401] if robot_mode=='gen3'
+              else None,
     #'Q_PARK': [0.03572946786880493, -2.027292076741354, 1.6515636444091797, -1.1894968191729944, -1.5706136862384241, -3.1061676184283655],
     }
   print config
@@ -280,8 +284,12 @@ if __name__=='__main__':
              else None,
     'joy': ['j','bg'],
     #'stop_joy': ['q','fg'],
-    'move_to_init': ['ct.robot.MoveToQ({Q_INIT},dt=10.0,blocking=True)','fg'],
+    'move_to_init': ['ct.robot.MoveToQ({Q_INIT},dt=10.0,blocking=True)','fg'] if robot_mode=='ur'
+                    else ['ct.robot.MoveToX({X_INIT},dt=10.0,blocking=True)','fg'] if robot_mode=='gen3'
+                    else None,
     'move_pick_demo': ['fv.move_pick_demo','fg'],
+    'repeat_p_p_demo_on': ['fv.repeat_p_p_demo "on"','fg'],
+    'repeat_p_p_demo_off': ['fv.repeat_p_p_demo "off"','fg'],
     #'move_to_park': ['ct.robot.MoveToQ({Q_PARK},dt=5.0,blocking=True)','fg'],
     'grip_plus':  ['fv.open ct.robot.Arm, ct.robot.GripperPos()+0.015, True','fg'],
     }
@@ -617,6 +625,14 @@ MainProgram: {script_status}'''.format(
         'text': 'Move/Pick/Demo',
         'size_policy': ('expanding', 'fixed'),
         'onclick': lambda w,obj:run_script_during_joy('move_pick_demo'), }),
+    'btn_repeat_p_p_demo': (
+      'buttonchk',{
+        'text':('Repeat/PP/Demo','Stop'),
+        'enabled': True,
+        'size_policy': ('expanding', 'fixed'),
+        'onclick':(lambda w,obj:((stop_joy(), w.widgets['btn_activate'].setChecked(False)) if pm.joy_script_active else None,
+                                 run_script('repeat_p_p_demo_on')),
+                   lambda w,obj:run_script('repeat_p_p_demo_off') )}),
     'label_pitch': (
       'label',{
         'text': 'Pitch',
@@ -687,7 +703,7 @@ MainProgram: {script_status}'''.format(
         )),
       ('boxh',None, ('btn_init_pose',)),
       ('boxh',None, ('btn_push','btn_hold','btn_grasp','btn_openif')),
-      ('boxh',None, ('btn_pick','btn_move_pick_demo')),
+      ('boxh',None, ('btn_pick','btn_move_pick_demo','btn_repeat_p_p_demo')),
       ))
 
   widgets_ctrl_config= {
