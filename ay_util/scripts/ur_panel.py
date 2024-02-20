@@ -12,185 +12,21 @@ import rospy
 import rospkg
 import ay_trick_msgs.msg
 import ay_trick_msgs.srv
-from ur_dashboard_gui import *
-from proc_manager import TSubProcManager
-from topic_monitor import TTopicMonitor
-from script_node_client import *
+from proc_manager_ur import TProcessManagerUR, ur_dashboard_msgs
+from proc_manager_gen3 import TProcessManagerGen3
 from joy_fv import TJoyEmulator
 from ay_py.core import InsertDict, LoadYAML, SaveYAML
+from ay_py.tool.py_panel import TSimplePanel, InitPanelApp, RunPanelApp, AskYesNoDialog, QtCore, QtGui
 
 class TProcessManagerJoyUR(TProcessManagerUR, TJoyEmulator):
   def __init__(self, node_name='ur_panel'):  #, ur_status_pins=None
     TProcessManagerUR.__init__(self, node_name=node_name)  #, config=ur_status_pins
     TJoyEmulator.__init__(self)
 
-
-class TProcessManagerJoyGen3(QtCore.QObject, TSubProcManager, TScriptNodeClient, TTopicMonitor, TJoyEmulator):
-  #Definition of states:
-  UNDEFINED= -10
-  NO_CORE_PROGRAM= 0
-  #IDLE= 3
-  TORQUE_ENABLED= 4
-  ROBOT_READY= 5
-  WAIT_REQUEST= 6
-  PROGRAM_RUNNING= 7
-
-  onstatuschanged= QtCore.pyqtSignal(int)
-  ontopicshzupdated= QtCore.pyqtSignal()
-
-  def UpdateStatus(self):
-    t_now= rospy.Time.now()
-    self.gen3_ros_running= self.IsActive('Robot')
-    self.script_node_running= ((t_now-self.script_node_status_stamp).to_sec() < 0.4) if self.script_node_status_stamp is not None else False
-
-    status= self.UNDEFINED
-    if not self.gen3_ros_running:
-      status= self.NO_CORE_PROGRAM
-    else:
-      status= self.TORQUE_ENABLED
-      if not self.script_node_running:
-        status= self.ROBOT_READY
-      elif self.script_node_status == ay_trick_msgs.msg.ROSNodeMode.READY:
-        status= self.WAIT_REQUEST
-      elif self.script_node_status == ay_trick_msgs.msg.ROSNodeMode.PROGRAM_RUNNING:
-        status= self.PROGRAM_RUNNING
-
-    #NOTE: Do not use yellow as it is used by other modules.
-    if status in (self.UNDEFINED,):
-      self.status_color= ['red']
-    elif status in (self.WAIT_REQUEST,):
-      self.status_color= ['green']
-    elif status in (self.PROGRAM_RUNNING,):
-      self.status_color= ['green']
-    else:
-      self.status_color= []
-
-    if self.status != status:
-      self.status= status
-      self.OnStatusChanged()
-
-  def OnStatusChanged(self):
-    self.onstatuschanged.emit(self.status)
-
-    self.TurnOffLEDAll()
-    for color in self.status_color:  self.SetLEDLight(color, True)
-
-    if self.status in (self.PROGRAM_RUNNING,):
-      self.SetStartStopLEDs(True, True)
-
-  def UpdateStatusThread(self):
-    rate= rospy.Rate(20)
-    while self.thread_status_update_running and not rospy.is_shutdown():
-      self.UpdateStatus()
-      rate.sleep()
-
-  def StartUpdateStatusThread(self):
-    self.StartTopicMonitorThread()
-    self.thread_status_update_running= True
-    self.thread_status_update= threading.Thread(name='status_update', target=self.UpdateStatusThread)
-    self.thread_status_update.start()
-
-  def StopUpdateStatusThread(self):
-    self.thread_status_update_running= False
-    if self.thread_status_update is not None:
-      self.thread_status_update.join()
-    self.StopTopicMonitorThread()
-
-  def __init__(self, node_name='ur_dashboard', topics_to_monitor=None, is_sim=False):
-    #config_base= {
-        #'PIN_STATE_LED_RED': 0,
-        #'PIN_STATE_LED_YELLOW': 1,
-        #'PIN_STATE_LED_GREEN': 2,
-        #'PIN_STATE_BEEP': 3,
-        #'PIN_START_BTN_LED': 4,
-        #'PIN_STOP_BTN_LED': 5,
-      #}
-    #if config is not None:  InsertDict(config_base, config)
-    #self.config= config_base
-
-    topics_to_monitor_base= {
-      'Robot': '/gen3a/joint_states',
-      'Gripper': '/gripper_driver/joint_states',
-      }
-    if topics_to_monitor is not None:  InsertDict(topics_to_monitor_base, topics_to_monitor)
-    TTopicMonitor.__init__(self, topics_to_monitor_base)
-    self.thread_topics_hz_callback= lambda: self.ontopicshzupdated.emit()
-
-    QtCore.QObject.__init__(self)
-    TSubProcManager.__init__(self)
-    TScriptNodeClient.__init__(self)
-    self.node_name= node_name
-    self.is_sim= is_sim
-
-    self.status_names= {
-      self.UNDEFINED:           'UNDEFINED'           ,
-      self.NO_CORE_PROGRAM:     'NO_CORE_PROGRAM'     ,
-      #self.IDLE:                'IDLE'                ,
-      self.TORQUE_ENABLED:      'TORQUE_ENABLED'      ,
-      self.ROBOT_READY:         'ROBOT_READY'         ,
-      self.WAIT_REQUEST:        'WAIT_REQUEST'        ,
-      self.PROGRAM_RUNNING:     'PROGRAM_RUNNING'     ,
-      }
-
-    #self.panel= None
-    self.srvp_set_pui= None
-    self.status= self.UNDEFINED
-    self.status_color= []  #List of 'red','green' (yellow is used by the other modules).
-    self.gen3_ros_running= None
-
-    self.thread_status_update= None
-    self.thread_status_update_running= False
-
-  def InitNode(self):
-    rospy.init_node(self.node_name)
-    rospy.sleep(0.1)
-
-  def TurnOffLEDAll(self):
-    self.SetLEDLight('red', False)
-    self.SetLEDLight('green', False)
-    #self.SetLEDLight('yellow', False)
-    #self.SetBeep(False)
-    self.SetStartStopLEDs(False, False)
-
-  #color: 'red','yellow','green'
-  def SetLEDLight(self, color, is_on):
-    if self.is_sim:  return
-    if self.srvp_set_pui is None:  return
-    config_name= {'red':'STATE_LED_RED',
-                  'yellow':'STATE_LED_YELLOW',
-                  'green':'STATE_LED_GREEN'}[color]
-    req= ay_util_msgs.srv.SetPUIRequest()
-    req.name= config_name
-    req.action= req.ON if is_on else req.OFF
-    return self.srvp_set_pui(req)
-
-  def SetStartStopLEDs(self, is_start_on, is_stop_on):
-    if self.is_sim:  return
-    if self.srvp_set_pui is None:  return
-    req= ay_util_msgs.srv.SetPUIRequest()
-    req.name= 'START_BTN_LED'
-    req.action= req.ON if is_start_on else req.OFF
-    self.srvp_set_pui(req)
-    req= ay_util_msgs.srv.SetPUIRequest()
-    req.name= 'STOP_BTN_LED'
-    req.action= req.ON if is_stop_on else req.OFF
-    self.srvp_set_pui(req)
-
-  def Disconnect(self):
-    if self.is_sim:  return
-    self.TurnOffLEDAll()
-
-  #gen3_ros_running: True or False
-  def WaitForGen3ROSRunning(self, gen3_ros_running, timeout=20):
-    if self.is_sim:  return True
-    t_start= rospy.Time.now()
-    rate= rospy.Rate(20)
-    while self.gen3_ros_running != gen3_ros_running:
-      rate.sleep()
-      if (rospy.Time.now()-t_start).to_sec()>timeout:
-        print 'WaitForGen3ROSRunning timeout.'
-        return False
-    return True
+class TProcessManagerJoyGen3(TProcessManagerGen3, TJoyEmulator):
+  def __init__(self, node_name='gen3_panel'):  #, ur_status_pins=None
+    TProcessManagerGen3.__init__(self, node_name=node_name)  #, config=ur_status_pins
+    TJoyEmulator.__init__(self)
 
 
 def UpdateProcList(pm,combobox):
@@ -331,9 +167,9 @@ RobotMode: {robot_mode}
 URProgram: {program_running}
 MainProgram: {script_status}'''.format(
       status=pm.status_names[pm.status],
-      safety_mode=(pm.ur_safety_mode_names[pm.ur_safety_mode] if pm.ur_ros_running and pm.ur_safety_mode in pm.ur_safety_mode_names else 'UNRECOGNIZED') if robot_mode=='ur' else 'N/A',
-      robot_mode=(pm.ur_robot_mode_names[pm.ur_robot_mode] if pm.ur_ros_running and pm.ur_robot_mode in pm.ur_robot_mode_names else 'UNRECOGNIZED') if robot_mode=='ur' else 'N/A',
-      program_running=(pm.ur_ros_running and pm.ur_program_running) if robot_mode=='ur'
+      safety_mode=(pm.ur_safety_mode_names[pm.ur_safety_mode] if pm.robot_ros_running and pm.ur_safety_mode in pm.ur_safety_mode_names else 'UNRECOGNIZED') if robot_mode=='ur' else 'N/A',
+      robot_mode=(pm.ur_robot_mode_names[pm.ur_robot_mode] if pm.robot_ros_running and pm.ur_robot_mode in pm.ur_robot_mode_names else 'UNRECOGNIZED') if robot_mode=='ur' else 'N/A',
+      program_running=(pm.robot_ros_running and pm.ur_program_running) if robot_mode=='ur'
                       else (pm.gen3_ros_running)  if robot_mode=='gen3' else 'N/A',
       script_status=pm.script_node_status_names[pm.script_node_status] if pm.script_node_running and pm.script_node_status in pm.script_node_status_names else 'UNRECOGNIZED' ))
 
@@ -445,15 +281,15 @@ MainProgram: {script_status}'''.format(
                       #pm.InitNode(),//
                       #pm.StartUpdateStatusThread(),
                       pm.ConnectToURDashboard() if robot_mode=='ur' else None,
-                      pm.WaitForURROSRunning(True) if robot_mode=='ur'  #Should be done after ConnectToURDashboard
-                          else pm.WaitForGen3ROSRunning(True) if robot_mode=='gen3'
-                          else None,
+                      pm.WaitForRobotROSRunning(True),
                       w.widgets['rviz'].setup(),
                       pm.WaitForRobotMode(ur_dashboard_msgs.msg.RobotMode.POWER_OFF)  if robot_mode=='ur' else None,
                      ),
                    lambda w,obj:(
                       #pm.RunURDashboard('shutdown') if config['ShutdownRobotAfterUse'] else None,
-                      pm.DisconnectUR() if robot_mode=='ur' else None,  #NOTE: This should be done after shutdown.
+                      pm.DisconnectUR() if robot_mode=='ur' else   #NOTE: This should be done after shutdown.
+                          pm.Disconnect() if robot_mode=='gen3'
+                          else None,
                       #pm.StopUpdateStatusThread(),
                       stop_cmd('ur_pui_server')  if robot_mode=='ur' else None,
                       stop_cmd('robot_ros'),
