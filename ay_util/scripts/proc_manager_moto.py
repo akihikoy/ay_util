@@ -38,18 +38,22 @@ class TProcessManagerMotoman(TProcessManagerGUIBase):
         status= self.FAULT
       elif self.moto_robot_status.e_stopped.val==industrial_msgs.msg.TriState.TRUE:
         status= self.ROBOT_EMERGENCY_STOP
-      elif self.moto_robot_status.drives_powered.val==industrial_msgs.msg.TriState.FALSE:
-        status= self.POWER_OFF
       else:
-        status= self.TORQUE_ENABLED
-        if self.moto_robot_status.motion_possible.val==industrial_msgs.msg.TriState.TRUE:
-          status= self.ROBOT_READY
-          if not self.script_node_running:
+        if not self.script_node_running:
+          if self.moto_robot_status.motion_possible.val==industrial_msgs.msg.TriState.FALSE:
+            if self.moto_robot_status.drives_powered.val==industrial_msgs.msg.TriState.FALSE:
+              status= self.POWER_OFF
+            else:
+              status= self.TORQUE_ENABLED
+          else:
             status= self.ROBOT_READY
-          elif self.script_node_status == ay_trick_msgs.msg.ROSNodeMode.READY:
+        else:
+          if self.script_node_status == ay_trick_msgs.msg.ROSNodeMode.READY:
             status= self.WAIT_REQUEST
           elif self.script_node_status == ay_trick_msgs.msg.ROSNodeMode.PROGRAM_RUNNING:
             status= self.PROGRAM_RUNNING
+          else:
+            status= self.ROBOT_READY
     return status
 
   def __init__(self, node_name='motoman_dashboard', topics_to_monitor=None, is_sim=False):
@@ -84,6 +88,8 @@ class TProcessManagerMotoman(TProcessManagerGUIBase):
 
   def EnableTorque(self):
     if self.srvp_robot_enable is not None:
+      self.DisableTorque()
+      rospy.sleep(0.1)
       self.srvp_robot_enable()
 
   def DisableTorque(self):
