@@ -7,7 +7,7 @@
 import roslib
 roslib.load_manifest('ay_py')
 from ay_py.core.util import InsertDict, LoadYAML, SaveYAML
-import sys
+import sys,os
 
 #Merge dictionaries in_dict_base, loaded from in_file_names YAML files, and in_dict_priority in this order.
 #NOTE: in_dict_base is overwritten by the merged dictionary.
@@ -30,6 +30,15 @@ if __name__=='__main__':
 
   out_file_name= in_file_names[-1]
   in_file_names= in_file_names[:-1]
-  print 'Input files: {}\nOutput file: {}'.format(in_file_names, out_file_name)
+  tmp_in_files,in_file_names= in_file_names,[]
+  for file_name in tmp_in_files:
+    if not os.path.exists(file_name):
+      print 'Input file does not exist (ignored to proceed): {}'.format(file_name)
+    elif os.path.isdir(file_name):
+      print 'Input file is a directory (ignored to proceed): {}'.format(file_name)
+    else:
+      in_file_names.append(file_name)
+  print 'Input files: {}'.format(in_file_names)
+  print 'Output file: {}'.format(out_file_name)
 
   MergeYAML({}, in_file_names, {}, out_file_name)
