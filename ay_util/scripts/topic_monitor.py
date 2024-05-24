@@ -38,7 +38,7 @@ class TTopicMonitor(object):
       self.thread_topics_hz.join()
     self.DisconnectStatusTopics()
 
-  def ConnectToStatusTopics(self, window_size=3):
+  def ConnectToStatusTopics(self, window_size=20):
     self.topic_hz= rostopic.ROSTopicHz(window_size)
     self.DisconnectStatusTopics()
     self.sub_status_topics= dict()
@@ -51,7 +51,7 @@ class TTopicMonitor(object):
     self.topics_hz= dict()
 
   def UpdateTopicsHzThread(self):
-    rate= rospy.Rate(2)
+    rate= rospy.Rate(0.5)
     while self.thread_topics_hz_running and not rospy.is_shutdown():
       for key,topic in self.topics_to_monitor.iteritems():
         hz= self.topic_hz.get_hz(topic)
