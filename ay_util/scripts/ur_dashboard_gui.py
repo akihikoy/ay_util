@@ -10,6 +10,11 @@ from ay_py.core import CPrint
 from ay_py.tool.py_panel import TSimplePanel, InitPanelApp, RunPanelApp, AskYesNoDialog, QtCore, QtGui
 import sys
 import rospy
+try:
+  roslib.load_manifest('ur_dashboard_msgs')
+  import ur_dashboard_msgs.msg
+except Exception as e:
+  print e
 from proc_manager_ur import TProcessManagerUR
 
 
