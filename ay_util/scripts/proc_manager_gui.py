@@ -48,7 +48,6 @@ class TProcessManagerGUIBase(QtCore.QObject, TSubProcManager, TScriptNodeClient,
   def UpdateStatus(self):
     t_now= rospy.Time.now()
     self.robot_ros_running= self.IsActive('Robot')
-    self.script_node_running= ((t_now-self.script_node_status_stamp).to_sec() < 0.4) if self.script_node_status_stamp is not None else False
 
     status= self.GetStatus()
 

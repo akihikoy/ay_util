@@ -7,6 +7,7 @@
 #         Separated from ur_dashboard_gui.py
 import roslib
 roslib.load_manifest('ay_py')
+roslib.load_manifest('ay_trick_msgs')
 from ay_py.core import CPrint, InsertDict
 from ay_py.ros.base import SetupServiceProxy
 import threading
@@ -14,6 +15,8 @@ import copy
 import rospy
 import std_msgs.msg
 import std_srvs.srv
+import ay_trick_msgs.msg
+import ay_trick_msgs.srv
 import ay_util_msgs.srv
 try:
   roslib.load_manifest('ur_dashboard_msgs')

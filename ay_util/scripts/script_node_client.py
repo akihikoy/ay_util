@@ -25,9 +25,25 @@ class TScriptNodeClient(object):
       ay_trick_msgs.msg.ROSNodeMode.READY: 'READY',
       ay_trick_msgs.msg.ROSNodeMode.PROGRAM_RUNNING: 'PROGRAM_RUNNING' }
 
-    self.script_node_running= None
+    self.connected_to_script_node= False
+    #self.script_node_running= None  #NOTE: This is provided as a @property
     self.script_node_status= None
     self.script_node_status_stamp= None
+
+  @property
+  def script_node_running(self):
+    if not self.connected_to_script_node:
+      CPrint(4,'ScriptNodeClient: Not connected to the script node.')
+      return False
+    t_now= rospy.Time.now()
+    if self.script_node_status_stamp is None:
+      CPrint(4,'ScriptNodeClient: No message obtained from the script node.')
+      return False
+    latency= (t_now-self.script_node_status_stamp).to_sec()
+    if latency < 0.4:
+      return True
+    CPrint(4,'ScriptNodeClient: Last message from the script node is too old: {}s before.'.format(latency))
+    return False
 
   def ConnectToScriptNode(self, timeout=20):
     self.connected_to_script_node= False
@@ -54,7 +70,7 @@ class TScriptNodeClient(object):
     self.sub_script_node_status= rospy.Subscriber('/ros_node/node_status', ay_trick_msgs.msg.ROSNodeMode, self.ScriptNodeStatusCallback)
 
   def RunFGScript(self, cmd):
-    if not hasattr(self,'connected_to_script_node'):
+    if not self.connected_to_script_node:
       CPrint(4,'Not connected to the script node.')
       return
     self.srvp_wait_finish()  #Wait for previously executed scripts.
@@ -63,7 +79,7 @@ class TScriptNodeClient(object):
     self.srvp_wait_finish()
 
   def RunBGScript(self, cmd):
-    if not hasattr(self,'connected_to_script_node'):
+    if not self.connected_to_script_node:
       CPrint(4,'Not connected to the script node.')
       return
     self.srvp_wait_finish()  #Wait for previously executed scripts.
@@ -71,19 +87,19 @@ class TScriptNodeClient(object):
     print '###INFO/RunBGScript###',cmd
 
   def SendString(self, key):
-    if not hasattr(self,'connected_to_script_node'):
+    if not self.connected_to_script_node:
       CPrint(4,'Not connected to the script node.')
       return
     self.pub_key.publish(std_msgs.msg.String(key))
 
   def WaitForBGScript(self):
-    if not hasattr(self,'connected_to_script_node'):
+    if not self.connected_to_script_node:
       CPrint(4,'Not connected to the script node.')
       return
     self.srvp_wait_finish()
 
   def GetScriptResult(self):
-    if not hasattr(self,'connected_to_script_node'):
+    if not self.connected_to_script_node:
       CPrint(4,'Not connected to the script node.')
       return
     res= self.srvp_get_result_as_yaml()
