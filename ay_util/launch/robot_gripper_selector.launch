@@ -22,6 +22,7 @@ Since this uses eval in if, it works with Kinetic+.
         'DxlpO2_Fork1'     if robot_code_nosim.endswith('DxlpO2_Fork1')     else
         'DxlpY1'           if robot_code_nosim.endswith('DxlpY1')           else
         'DxlO3'            if robot_code_nosim.endswith('DxlO3')            else
+        ''.join(['GEH60']+robot_code_nosim.split('GEH60')[1:]) if 'GEH60' in robot_code_nosim else
         ''  )" />
 
   <group if="$(eval gripper_type!='')">

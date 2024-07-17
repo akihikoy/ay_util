@@ -8,17 +8,27 @@ Choosing a launcher of gripper from the gripper type and run a command.
   <arg name="command" default="Reboot" />  <!--Options: EnableTorque, DisableTorque, Reboot, FactoryReset.-->
 
   <!--Decompose gripper_type into gripper_type and finger_type.-->
+  <!--
   <arg unless="$(eval '_' in gripper_type)" name="gripper_type2" value="$(arg gripper_type)" />
   <arg unless="$(eval '_' in gripper_type)" name="finger_type"   value="''" />
   <arg     if="$(eval '_' in gripper_type)" name="gripper_type2" value="$(eval gripper_type.split('_')[0] )" />
   <arg     if="$(eval '_' in gripper_type)" name="finger_type"   value="$(eval gripper_type.split('_')[1] )" />
+  -->
+  <arg name="gripper_type2" value="$(eval
+        gripper_type.split('_')[0]   if '_' in gripper_type else
+        gripper_type )" />
+  <arg name="finger_type" value="$(eval
+        gripper_type.split('_')[1]   if '_' in gripper_type else
+        '' )" />
 
   <!--Launch the gripper reboot node-->
-  <node pkg="ay_util" type="dxlg_reboot.py" name="gripper_rebooter" output="screen">
-    <param name="dxldev" value="$(arg dxldev)"/>
-    <param name="gripper_type" value="$(arg gripper_type2)"/>
-    <param name="finger_type" value="$(arg finger_type)"/>
-    <param name="command" value="$(arg command)"/>
-  </node>
+  <group if="$(eval gripper_type2.startswith('Dxl') or gripper_type2.startswith('ThG'))">
+    <node pkg="ay_util" type="dxlg_reboot.py" name="gripper_rebooter" output="screen">
+      <param name="dxldev" value="$(arg dxldev)"/>
+      <param name="gripper_type" value="$(arg gripper_type2)"/>
+      <param name="finger_type" value="$(arg finger_type)"/>
+      <param name="command" value="$(arg command)"/>
+    </node>
+  </group>
 
 </launch>

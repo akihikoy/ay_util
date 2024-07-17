@@ -6,27 +6,49 @@ Choosing a launcher of gripper from the gripper type.
   <arg name="gripper_type" default="" />
   <arg name="dxldev" default="/dev/ttyUSB0" />
   <arg name="is_sim" default="false" />
+  <arg name="modbus_uri" default="10.10.6.207" />
 
   <!--Decompose gripper_type into gripper_type and finger_type.-->
+  <!--
   <arg unless="$(eval '_' in gripper_type)" name="gripper_type2" value="$(arg gripper_type)" />
   <arg unless="$(eval '_' in gripper_type)" name="finger_type"   value="''" />
   <arg     if="$(eval '_' in gripper_type)" name="gripper_type2" value="$(eval gripper_type.split('_')[0] )" />
   <arg     if="$(eval '_' in gripper_type)" name="finger_type"   value="$(eval gripper_type.split('_')[1] )" />
+  -->
+  <arg name="gripper_type2" value="$(eval
+        gripper_type.split('_')[0]   if '_' in gripper_type else
+        gripper_type )" />
+  <arg name="finger_type" value="$(eval
+        gripper_type.split('_')[1]   if '_' in gripper_type else
+        '' )" />
 
   <!--Uploading the parameters to the server-->
   <rosparam subst_value="True">
-    gripper_type: $(arg gripper_type2)
-    dxldev: $(arg dxldev)
-    is_sim: $(arg is_sim)
-    finger_type: $(arg finger_type)
+    gripper_type: "$(arg gripper_type2)"
+    dxldev: "$(arg dxldev)"
+    is_sim: "$(arg is_sim)"
+    finger_type: "$(arg finger_type)"
   </rosparam>
 
   <!--Launch the gripper driver node-->
-  <node pkg="ay_util" type="dxlg_driver.py" name="gripper_driver" output="screen">
-    <param name="dxldev" value="$(arg dxldev)"/>
-    <param name="gripper_type" value="$(arg gripper_type2)"/>
-    <param name="finger_type" value="$(arg finger_type)"/>
-    <param name="is_sim" value="$(arg is_sim)"/>
-  </node>
+  <group if="$(eval gripper_type2.startswith('Dxl') or gripper_type2.startswith('ThG'))">
+    <node pkg="ay_util" type="dxlg_driver.py" name="gripper_driver" output="screen">
+      <param name="dxldev" value="$(arg dxldev)"/>
+      <param name="gripper_type" value="$(arg gripper_type2)"/>
+      <param name="finger_type" value="$(arg finger_type)"/>
+      <param name="is_sim" value="$(arg is_sim)"/>
+    </node>
+  </group>
+
+  <group if="$(eval gripper_type2.startswith('GEH60'))">
+    <arg name="gripper_type2geh" value="$(eval
+          '-'.join([gripper_type2[:9],gripper_type2[9:11],gripper_type2[11:]])  )" />
+    <node pkg="fvindustrial" type="geh6000il_cpsl08p1en_driver.py" name="gripper_driver" output="screen">
+      <param name="gripper_type" value="$(arg gripper_type2geh)"/>
+      <param name="modbus_uri" value="$(arg modbus_uri)"/>
+      <param name="is_sim" value="$(arg is_sim)"/>
+      <param name="is_test" value="False"/>
+    </node>
+  </group>
 
 </launch>
