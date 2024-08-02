@@ -22,7 +22,7 @@ Choosing a launcher of gripper from the gripper type and run a command.
         '' )" />
 
   <!--Launch the gripper reboot node-->
-  <group if="$(eval gripper_type2.startswith('Dxl') or gripper_type2.startswith('ThG'))">
+  <group if="$(eval gripper_type2.startswith('Dxl') or gripper_type2.startswith('ThG') or gripper_type2.startswith('RHP12RN'))">
     <node pkg="ay_util" type="dxlg_reboot.py" name="gripper_rebooter" output="screen">
       <param name="dxldev" value="$(arg dxldev)"/>
       <param name="gripper_type" value="$(arg gripper_type2)"/>
