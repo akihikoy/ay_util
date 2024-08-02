@@ -31,7 +31,7 @@ Choosing a launcher of gripper from the gripper type.
   </rosparam>
 
   <!--Launch the gripper driver node-->
-  <group if="$(eval gripper_type2.startswith('Dxl') or gripper_type2.startswith('ThG'))">
+  <group if="$(eval gripper_type2.startswith('Dxl') or gripper_type2.startswith('ThG') or gripper_type2.startswith('RHP12RN'))">
     <node pkg="ay_util" type="dxlg_driver.py" name="gripper_driver" output="screen">
       <param name="dxldev" value="$(arg dxldev)"/>
       <param name="gripper_type" value="$(arg gripper_type2)"/>
