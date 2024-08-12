@@ -6,16 +6,43 @@ A node tf_static_forwarder is executed to forward tf_static in the bag.
 
   <arg name="bag" default="" />
   <arg name="opts" default="-l" />
+  <arg name="rename_tf" default="/tf:=/tf_bag /tf_static:=/tf_static_bag" />
+  <arg name="rename_js" default="/joint_states:=/joint_states_bag" />
+  <arg name="rename_trobj" default="/conv_track_ls_node/tracked_objects:=/conv_track_ls_node/tracked_objects_bag" />
+  <arg name="rename_iost" default="/ur_hardware_interface/io_states:=/ur_hardware_interface/io_states_bag" />
+  <arg name="rename_depth" default="/camera/aligned_depth_to_color/image_raw:=/camera/aligned_depth_to_color/image_raw_bag" />
+  <arg name="rename_rgb" default="/camera/color/image_raw:=/camera/color/image_raw_bag" />
+  <arg name="rename_pc" default="/camera/depth/color/points:=/camera/depth/color/points_bag" />
   <arg name="play_start_delay" default="2.0" />
+  <arg name="play_start_delay2" default="3.0" />
 
-  <node pkg="ay_util" type="tf_static_forwarder.py" name="tf_static_forwarder" output="screen">
-    <param name="src" value="/tf_static_bone"/>
-    <param name="once" value="False"/>
-  </node>
+  <node pkg="ay_util" type="tf_static_forwarder.py" name="tf_static_forwarder" output="screen"
+        args="-src=/tf_static_bag " />
 
   <node pkg="rosbag" type="play" name="player" output="screen"
-        args="$(arg bag) $(arg opts) /tf:=/tf_bone /tf_static:=/tf_static_bone"
+        args="$(arg bag) $(arg opts) $(arg rename_tf) $(arg rename_js) $(arg rename_trobj) $(arg rename_iost) $(arg rename_depth) $(arg rename_rgb) $(arg rename_pc)"
         launch-prefix="bash -c 'sleep $(arg play_start_delay); $0 $@' " />
   <!-- NOTE: Wait play_start_delay before play starts so that tf_static_forwarder is ready to forward.-->
 
+  <!--Time stamp updater:-->
+  <node pkg="ay_util" type="stamp_updater.py" name="stamp_updater_depth" output="screen"
+        launch-prefix="bash -c 'sleep $(arg play_start_delay2); $0 $@' " >
+    <param name="in" value="/camera/aligned_depth_to_color/image_raw_bag"/>
+    <param name="out" value="/camera/aligned_depth_to_color/image_raw"/>
+  </node>
+  <node pkg="ay_util" type="stamp_updater.py" name="stamp_updater_rgb" output="screen"
+        launch-prefix="bash -c 'sleep $(arg play_start_delay2); $0 $@' " >
+    <param name="in" value="/camera/color/image_raw_bag"/>
+    <param name="out" value="/camera/color/image_raw"/>
+  </node>
+  <node pkg="ay_util" type="stamp_updater.py" name="stamp_updater_pc" output="screen"
+        launch-prefix="bash -c 'sleep $(arg play_start_delay2); $0 $@' " >
+    <param name="in" value="/camera/depth/color/points_bag"/>
+    <param name="out" value="/camera/depth/color/points"/>
+  </node>
+
 </launch>
+
+
+
+
