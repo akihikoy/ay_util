@@ -1,0 +1,21 @@
+<!--
+Play a rosbag file of RealSense.
+A node tf_static_forwarder is executed to forward tf_static in the bag.
+-->
+<launch>
+
+  <arg name="bag" default="" />
+  <arg name="opts" default="-l" />
+  <arg name="play_start_delay" default="2.0" />
+
+  <node pkg="ay_util" type="tf_static_forwarder.py" name="tf_static_forwarder" output="screen">
+    <param name="src" value="/tf_static_bone"/>
+    <param name="once" value="False"/>
+  </node>
+
+  <node pkg="rosbag" type="play" name="player" output="screen"
+        args="$(arg bag) $(arg opts) /tf:=/tf_bone /tf_static:=/tf_static_bone"
+        launch-prefix="bash -c 'sleep $(arg play_start_delay); $0 $@' " />
+  <!-- NOTE: Wait play_start_delay before play starts so that tf_static_forwarder is ready to forward.-->
+
+</launch>
