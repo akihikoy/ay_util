@@ -6,6 +6,8 @@ Choose a proper launcher of robot from a robot code.
   <arg name="robot_code" default="" />
   <arg name="jsdev" default="/dev/input/js1" />
   <arg name="dxldev" default="/dev/ttyUSB0" />
+  <arg name="gripper_modbus_uri" default="10.10.6.207" />
+  <arg name="geh_auto_mode_sw" default="true" />
   <arg name="with_gripper" default="true" />
 
   <!--Include a robot launcher-->
@@ -15,6 +17,8 @@ Choose a proper launcher of robot from a robot code.
       <arg name="robot_code" value="$(arg robot_code)" />
       <arg name="jsdev" value="$(arg jsdev)" />
       <arg name="dxldev" value="$(arg dxldev)" />
+      <arg name="gripper_modbus_uri" value="$(arg gripper_modbus_uri)" />
+      <arg name="geh_auto_mode_sw" value="$(arg geh_auto_mode_sw)" />
       <arg name="with_gripper" value="$(arg with_gripper)" />
     </include>
   </group>
@@ -24,6 +28,8 @@ Choose a proper launcher of robot from a robot code.
       <arg name="robot_code" value="$(arg robot_code)" />
       <arg name="jsdev" value="$(arg jsdev)" />
       <arg name="dxldev" value="$(arg dxldev)" />
+      <arg name="gripper_modbus_uri" value="$(arg gripper_modbus_uri)" />
+      <arg name="geh_auto_mode_sw" value="$(arg geh_auto_mode_sw)" />
       <arg name="with_gripper" value="$(arg with_gripper)" />
     </include>
   </group>
@@ -33,6 +39,8 @@ Choose a proper launcher of robot from a robot code.
       <arg name="robot_code" value="$(arg robot_code)" />
       <arg name="jsdev" value="$(arg jsdev)" />
       <arg name="dxldev" value="$(arg dxldev)" />
+      <arg name="gripper_modbus_uri" value="$(arg gripper_modbus_uri)" />
+      <arg name="geh_auto_mode_sw" value="$(arg geh_auto_mode_sw)" />
       <arg name="with_gripper" value="$(arg with_gripper)" />
     </include>
   </group>

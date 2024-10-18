@@ -7,6 +7,8 @@ Since this uses eval in if, it works with Kinetic+.
   <arg name="robot_code" default="" />
   <arg name="dxldev" default="/dev/ttyUSB0" />
   <arg name="is_sim" default="false" />
+  <arg name="gripper_modbus_uri" default="10.10.6.207" />
+  <arg name="geh_auto_mode_sw" default="true" />
 
   <arg name="robot_code_nosim" value="$(eval robot_code.replace('_SIM','') if robot_code.endswith('_SIM') else robot_code)" />
 
@@ -30,6 +32,8 @@ Since this uses eval in if, it works with Kinetic+.
       <arg name="gripper_type" value="$(arg gripper_type)" />
       <arg name="dxldev" value="$(arg dxldev)" />
       <arg name="is_sim" value="$(arg is_sim)" />
+      <arg name="modbus_uri" value="$(arg gripper_modbus_uri)" />
+      <arg name="geh_auto_mode_sw" value="$(arg geh_auto_mode_sw)" />
     </include>
   </group>
 

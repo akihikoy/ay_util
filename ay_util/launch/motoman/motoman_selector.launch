@@ -6,6 +6,8 @@ Choose a launcher of Motoman from the robot code.
   <arg name="robot_code" default="" />
   <arg name="jsdev" default="/dev/input/js0" />
   <arg name="dxldev" default="/dev/ttyUSB0" />
+  <arg name="gripper_modbus_uri" default="10.10.6.207" />
+  <arg name="geh_auto_mode_sw" default="true" />
   <arg name="with_gripper" default="true" />
 
   <arg     if="$(eval robot_code.endswith('_SIM'))" name="is_sim" value="true" />
@@ -17,6 +19,8 @@ Choose a launcher of Motoman from the robot code.
     jsdev: $(arg jsdev)
     dxldev: $(arg dxldev)
     with_gripper: $(arg with_gripper)
+    gripper_modbus_uri: $(arg gripper_modbus_uri)
+    geh_auto_mode_sw: $(arg geh_auto_mode_sw)
     is_sim: $(arg is_sim)
   </rosparam>
 
@@ -83,6 +87,8 @@ Choose a launcher of Motoman from the robot code.
       <arg name="robot_code" value="$(eval robot_code.replace('_SIM',''))" />
       <arg name="dxldev" value="$(arg dxldev)" />
       <arg name="is_sim" value="$(arg is_sim)" />
+      <arg name="gripper_modbus_uri" value="$(arg gripper_modbus_uri)" />
+      <arg name="geh_auto_mode_sw" value="$(arg geh_auto_mode_sw)" />
     </include>
   </group>
 

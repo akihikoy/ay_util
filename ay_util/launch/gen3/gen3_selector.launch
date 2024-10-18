@@ -7,6 +7,8 @@ Since this uses eval in if, it works with Kinetic+.
   <arg name="robot_code" default="Gen3" />
   <arg name="jsdev" default="/dev/input/js1" />
   <arg name="dxldev" default="/dev/ttyUSB0" />
+  <arg name="gripper_modbus_uri" default="10.10.6.207" />
+  <arg name="geh_auto_mode_sw" default="true" />
   <arg name="with_gripper" default="true" />
 
   <!--Gen3-specific configuration-->
@@ -23,6 +25,8 @@ Since this uses eval in if, it works with Kinetic+.
     jsdev: $(arg jsdev)
     dxldev: $(arg dxldev)
     with_gripper: $(arg with_gripper)
+    gripper_modbus_uri: $(arg gripper_modbus_uri)
+    geh_auto_mode_sw: $(arg geh_auto_mode_sw)
     is_sim: $(arg is_sim)
     robot_ip: $(arg robot_ip)
     robot_name: $(arg robot_name)
@@ -43,12 +47,15 @@ Since this uses eval in if, it works with Kinetic+.
     </include>
   </group>
 
+
   <!--Launch a gripper controller-->
   <group if="$(arg with_gripper)">
     <include file="$(find ay_util)/launch/robot_gripper_selector.launch">
       <arg name="robot_code" value="$(eval robot_code.replace('_SIM',''))" />
       <arg name="dxldev" value="$(arg dxldev)" />
       <arg name="is_sim" value="$(arg is_sim)" />
+      <arg name="gripper_modbus_uri" value="$(arg gripper_modbus_uri)" />
+      <arg name="geh_auto_mode_sw" value="$(arg geh_auto_mode_sw)" />
     </include>
   </group>
 

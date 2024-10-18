@@ -7,6 +7,7 @@ Choosing a launcher of gripper from the gripper type.
   <arg name="dxldev" default="/dev/ttyUSB0" />
   <arg name="is_sim" default="false" />
   <arg name="modbus_uri" default="10.10.6.207" />
+  <arg name="geh_auto_mode_sw" default="true" />
 
   <!--Decompose gripper_type into gripper_type and finger_type.-->
   <!--
@@ -48,6 +49,7 @@ Choosing a launcher of gripper from the gripper type.
       <param name="modbus_uri" value="$(arg modbus_uri)"/>
       <param name="is_sim" value="$(arg is_sim)"/>
       <param name="is_test" value="False"/>
+      <param name="auto_mode_sw" value="$(arg geh_auto_mode_sw)"/>
     </node>
   </group>
 
