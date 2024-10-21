@@ -13,11 +13,20 @@ import sys,os
 #NOTE: in_dict_base is overwritten by the merged dictionary.
 #The merged dictionary is saved into out_file_name if it is not None.
 #The merged dictionary is also returned.
-def MergeYAML(in_dict_base, in_file_names, in_dict_priority, out_file_name=None):
+def MergeYAML(in_dict_base, in_file_names, in_dict_priority, out_file_name=None, abort_at_err=True):
   for in_f in in_file_names:
-    in_d= LoadYAML(in_f)
-    if in_d is not None:
-      InsertDict(in_dict_base, in_d)
+    if not os.path.exists(in_f):
+      msg= 'Input file does not exist: {}'.format(in_f)
+      if abort_at_err:  raise Exception(msg)
+      else: print msg
+    elif os.path.isdir(in_f):
+      msg= 'Input file is a directory: {}'.format(in_f)
+      if abort_at_err:  raise Exception(msg)
+      else: print msg
+    else:
+      in_d= LoadYAML(in_f)
+      if in_d is not None:
+        InsertDict(in_dict_base, in_d)
   InsertDict(in_dict_base, in_dict_priority)
   if out_file_name is not None:
     SaveYAML(in_dict_base, out_file_name, interactive=False, directive='%YAML:1.0')
