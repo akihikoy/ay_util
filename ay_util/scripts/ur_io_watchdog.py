@@ -144,13 +144,13 @@ class TURIOWatchDog(TROSUtil):
   def CallbackIOStates(self, msg):
     in_states= [bool(in_st.state) for in_st in msg.digital_in_states]
     active_conditions= self.active_conditions
-    print 'active_conditions= {}'.format(active_conditions)
+    #print 'active_conditions= {}'.format(active_conditions)
 
     with self.set_io_locker:
       for name in active_conditions:
         cond= self.conditions[name]
         is_valid= in_states[cond['INPUT_IDX']]==cond['INPUT_VALID_VALUE']
-        print '{}: {}'.format(name, 'valid' if is_valid else 'invalid')
+        #print '{}: {}'.format(name, 'valid' if is_valid else 'invalid')
         self.SetOutputs(cond, is_valid)
 
 
