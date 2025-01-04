@@ -1,0 +1,21 @@
+<?xml version="1.0"?>
+<package format="2">
+  <name>ay_util</name>
+  <version>0.0.0</version>
+  <description>The ay_util package</description>
+
+  <author email="info@akihikoy.net">Akihiko Yamaguchi</author>
+  <maintainer email="info@akihikoy.net">Akihiko Yamaguchi</maintainer>
+  <license>Described in LICENSE</license>
+  <buildtool_depend>catkin</buildtool_depend>
+  <depend>ay_util_msgs</depend>
+  <depend>roscpp</depend>
+  <depend>eigen_conversions</depend>
+  <depend>moveit_core</depend>
+  <depend>moveit_ros_planning_interface</depend>
+
+  <export>
+    <cpp cflags="-I${prefix}/include" lflags="-L${prefix}/lib"/>
+  </export>
+
+</package>

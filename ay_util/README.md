@@ -12,7 +12,7 @@ Akihiko Yamaguchi, http://akihikoy.net/
 
 Requirements
 ==================
-See `manifest.xml`.
+See `package.xml`.
 
 
 Directories
@@ -25,15 +25,14 @@ ROS-dependent source files (C++).  Mainly, programs of ROS nodes are contained.
 
 Build
 ==================
-The repository directory should be in ROS workspace (e.g. ~/ros_ws/).
-Build `ay_util` with `rosmake`.
+The repository directory should be in Catkin workspace (e.g. ~/catkin_ws/).
+Build `ay_util` with `catkin_make`.
 
 ```
-$ rosmake ay_util
+$ catkin_make
 ```
 
-After `rosmake`, you will find some executables in `bin/` directory.
-There will be some directories made by `rosmake`.
+After `catkin_make`, you will find some executables in `devel/` directory.
 
 
 Usage
