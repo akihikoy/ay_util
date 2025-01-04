@@ -139,6 +139,9 @@ include_directories(
 add_executable(${PROJECT_NAME}_state_validity_checker_node
   src_ros/state_validity_checker_node.cpp
 )
+add_dependencies(${PROJECT_NAME}_state_validity_checker_node
+  ${ay_util_msgs_EXPORTED_TARGETS}
+)
 
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the

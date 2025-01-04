@@ -15,7 +15,6 @@
   <depend>moveit_ros_planning_interface</depend>
 
   <export>
-    <cpp cflags="-I${prefix}/include" lflags="-L${prefix}/lib"/>
   </export>
 
 </package>
