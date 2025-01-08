@@ -160,9 +160,13 @@ if __name__=='__main__':
   config_yaml_section= get_arg('-config_section=',get_arg('--config_section=','UR_STATUS_PINS'))
   config= None
   if config_yaml is not None and config_yaml!='':
-    config= LoadYAML(config_yaml)[config_yaml_section]
-    print 'Loaded config from YAML={}, section={}'.format(config_yaml,config_yaml_section)
-    print 'config=',config
+    try:
+      config= LoadYAML(config_yaml)[config_yaml_section]
+      print 'Loaded config from YAML={}, section={}'.format(config_yaml,config_yaml_section)
+      print 'config=',config
+    except Exception:
+      print 'Failed to load config from YAML={}, section={}'.format(config_yaml,config_yaml_section)
+      print 'Default config is used.'
   hz= get_arg('-hz=',get_arg('--hz=',50))
 
   server= TURPhysicalUIServer(node_name=node_name, config=config, hz=hz, is_sim=is_sim)
