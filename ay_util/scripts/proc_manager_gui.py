@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 #\file    proc_manager_gui.py
 #\brief   Define a base class of a process manager with GUI (currently Qt based).
 #\author  Akihiko Yamaguchi, info@akihikoy.net
@@ -187,7 +187,7 @@ class TProcessManagerGUIBase(QtCore.QObject, TSubProcManager, TScriptNodeClient,
     while self.robot_ros_running != robot_ros_running:
       rate.sleep()
       if (rospy.Time.now()-t_start).to_sec()>timeout:
-        print 'WaitForRobotROSRunning timeout.'
+        print('WaitForRobotROSRunning timeout.')
         return False
     return True
 

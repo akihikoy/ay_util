@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 #\file    joy_fv_panel.py
 #\brief   Virtual joystick controller.
 #\usage   This script does not control directly the robot.

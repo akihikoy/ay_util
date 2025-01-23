@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 #\file    ur_pui_server.py
 #\brief   Physical UI (LED light, beep, button) server for UR robots.
 #\author  Akihiko Yamaguchi, info@akihikoy.net
@@ -25,7 +25,7 @@ try:
   import ur_msgs.msg
   import ur_msgs.srv
 except Exception as e:
-  print e
+  print(e)
 
 
 class TURPhysicalUIServer(object):
@@ -48,8 +48,8 @@ class TURPhysicalUIServer(object):
 
     self.srvp_ur_set_io= None
 
-    self.state= {name:False for name in self.config.iterkeys()}
-    self.pattern_threads= {name:dict(thread=None,running=False) for name in self.config.iterkeys()}
+    self.state= {name:False for name in self.config.keys()}
+    self.pattern_threads= {name:dict(thread=None,running=False) for name in self.config.keys()}
     self.hz= hz
 
     #self.thread_topics_hz= None
@@ -89,7 +89,7 @@ class TURPhysicalUIServer(object):
 
   def TurnOffAll(self, update_state=True):
     self.StopAllPatternThreads()
-    for name in self.config.iterkeys():
+    for name in self.config.keys():
       self.SetByName(name, False, update_state=update_state)
 
   def StopPatternThread(self, name):
@@ -99,7 +99,7 @@ class TURPhysicalUIServer(object):
       self.pattern_threads[name]['thread']= None
 
   def StopAllPatternThreads(self):
-    for name in self.config.iterkeys():
+    for name in self.config.keys():
       self.StopPatternThread(name)
 
   def PatternLoop(self, th_info, name, t_start, on_off_traj, dt_traj, n_repeat):
@@ -126,11 +126,11 @@ class TURPhysicalUIServer(object):
 
   #req: ay_util_msgs.srv.SetPUIRequest
   def SetPUI(self, req):
-    print 'set_pui: received req=',req
+    print('set_pui: received req=',req)
     if req.action==req.OFF_ALL:  self.TurnOffAll()
     else:
       if req.name not in self.config:
-        print 'set_pui: Warning: req.name {} not in config'.format(req.name)
+        print('set_pui: Warning: req.name {} not in config'.format(req.name))
         return ay_util_msgs.srv.SetPUIResponse(False)
       self.StopPatternThread(req.name)
       if   req.action==req.ON :  self.SetByName(req.name, is_on=True)
@@ -152,7 +152,7 @@ if __name__=='__main__':
     is_sim_default= False
   is_sim= True if '-sim' in sys.argv or '--sim' in sys.argv else is_sim_default
   def get_arg(opt_name, default):
-    exists= map(lambda a:a.startswith(opt_name),sys.argv)
+    exists= [a.startswith(opt_name) for a in sys.argv]
     if any(exists):  return sys.argv[exists.index(True)].replace(opt_name,'')
     else:  return default
   node_name= get_arg('-node_name=',get_arg('--node_name=','ur_pui_server'))
@@ -162,11 +162,11 @@ if __name__=='__main__':
   if config_yaml is not None and config_yaml!='':
     try:
       config= LoadYAML(config_yaml)[config_yaml_section]
-      print 'Loaded config from YAML={}, section={}'.format(config_yaml,config_yaml_section)
-      print 'config=',config
+      print('Loaded config from YAML={}, section={}'.format(config_yaml,config_yaml_section))
+      print('config=',config)
     except Exception:
-      print 'Failed to load config from YAML={}, section={}'.format(config_yaml,config_yaml_section)
-      print 'Default config is used.'
+      print('Failed to load config from YAML={}, section={}'.format(config_yaml,config_yaml_section))
+      print('Default config is used.')
   hz= get_arg('-hz=',get_arg('--hz=',50))
 
   server= TURPhysicalUIServer(node_name=node_name, config=config, hz=hz, is_sim=is_sim)

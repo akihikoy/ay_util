@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 #\file    merge_yaml.py
 #\brief   Merge YAML files and save as a YAML file.
 #\author  Akihiko Yamaguchi, info@akihikoy.net
@@ -18,11 +18,11 @@ def MergeYAML(in_dict_base, in_file_names, in_dict_priority, out_file_name=None,
     if not os.path.exists(in_f):
       msg= 'Input file does not exist: {}'.format(in_f)
       if abort_at_err:  raise Exception(msg)
-      else: print msg
+      else: print(msg)
     elif os.path.isdir(in_f):
       msg= 'Input file is a directory: {}'.format(in_f)
       if abort_at_err:  raise Exception(msg)
-      else: print msg
+      else: print(msg)
     else:
       in_d= LoadYAML(in_f)
       if in_d is not None:
@@ -42,12 +42,12 @@ if __name__=='__main__':
   tmp_in_files,in_file_names= in_file_names,[]
   for file_name in tmp_in_files:
     if not os.path.exists(file_name):
-      print 'Input file does not exist (ignored to proceed): {}'.format(file_name)
+      print('Input file does not exist (ignored to proceed): {}'.format(file_name))
     elif os.path.isdir(file_name):
-      print 'Input file is a directory (ignored to proceed): {}'.format(file_name)
+      print('Input file is a directory (ignored to proceed): {}'.format(file_name))
     else:
       in_file_names.append(file_name)
-  print 'Input files: {}'.format(in_file_names)
-  print 'Output file: {}'.format(out_file_name)
+  print('Input files: {}'.format(in_file_names))
+  print('Output file: {}'.format(out_file_name))
 
   MergeYAML({}, in_file_names, {}, out_file_name)

@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 #\file    mikata_gui.py
 #\brief   Mikata Arm GUI control panel.
 #\author  Akihiko Yamaguchi, info@akihikoy.net

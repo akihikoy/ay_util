@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 #\file    AandDEW_weight.py
 #\brief   ROS node to read and publish data from the A and D EW weight.
 #\author  Akihiko Yamaguchi, info@akihikoy.net
@@ -33,10 +33,10 @@ if __name__=='__main__':
   t_start= rospy.Time.now()
   try:
     while not rospy.is_shutdown():
-      raw= ser.readline()
+      raw= ser.readline().decode('utf-8')
       header.stamp= rospy.Time.now()
       if (header.stamp-t_start).to_sec()<10.0:
-        print '(displayed only first 10sec) "{raw}" ({l})'.format(raw=repr(raw), l=len(raw))
+        print('(displayed only first 10sec) "{raw}" ({l})'.format(raw=repr(raw), l=len(raw)))
       if len(raw)!=17:  continue
       value= float(raw[3:12])
 

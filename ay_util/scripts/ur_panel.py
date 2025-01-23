@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 #\file    ur_panel.py
 #\brief   UR + FV demo panel.
 #\author  Akihiko Yamaguchi, info@akihikoy.net
@@ -31,13 +31,13 @@ class TProcessManagerJoyGen3(TProcessManagerGen3, TJoyEmulator):
 
 def UpdateProcList(pm,combobox):
   combobox.clear()
-  for name,proc in pm.procs.iteritems():
+  for name,proc in pm.procs.items():
     combobox.addItem('{0}/{1}'.format(name,proc.pid))
 
 
 if __name__=='__main__':
   def get_arg(opt_name, default):
-    exists= map(lambda a:a.startswith(opt_name),sys.argv)
+    exists= [a.startswith(opt_name) for a in sys.argv]
     if any(exists):  return sys.argv[exists.index(True)].replace(opt_name,'')
     else:  return default
   robot_code= get_arg('-robot_code=',get_arg('--robot_code=','UR3e125hzDxlpY1'))
@@ -59,7 +59,7 @@ if __name__=='__main__':
     'IS_SIM': is_sim,
     'FV_L_DEV': '/media/video_fv1',
     'FV_R_DEV': '/media/video_fv2',
-    'FV_BASE_DIR': subprocess.check_output('rospack find ay_fv_extra'.split(' ')).strip(),
+    'FV_BASE_DIR': subprocess.check_output('rospack find ay_fv_extra'.split(' ')).decode('utf-8').strip(),
     'FV_L_CONFIG': 'config/fvp_3_l.yaml',
     'FV_R_CONFIG': 'config/fvp_3_r.yaml',
     'FV_CTRL_CONFIG': '{}/data/config/fv_ctrl.yaml'.format(os.environ['HOME']),
@@ -73,7 +73,7 @@ if __name__=='__main__':
               else None,
     #'Q_PARK': [0.03572946786880493, -2.027292076741354, 1.6515636444091797, -1.1894968191729944, -1.5706136862384241, -3.1061676184283655],
     }
-  print config
+  print(config)
 
   #List of commands (name: [[command/args],'fg'/'bg']).
   cmds= {
@@ -101,7 +101,7 @@ if __name__=='__main__':
     cmds['fvp']= cmds['fvp_file']
     for c in ('fix_usb','ur_calib','config_fv_l','config_fv_r','realsense'):
       cmds[c][1]= None
-  for key in cmds.iterkeys():
+  for key in cmds.keys():
     if isinstance(cmds[key][0],str):
       cmds[key][0]= cmds[key][0].format(**config).split(' ')
 
@@ -129,7 +129,7 @@ if __name__=='__main__':
     #'move_to_park': ['ct.robot.MoveToQ({Q_PARK},dt=5.0,blocking=True)','fg'],
     'grip_plus':  ['fv.open ct.robot.Arm, ct.robot.GripperPos()+0.015, True','fg'],
     }
-  for key in scripts.iterkeys():
+  for key in scripts.keys():
     if isinstance(scripts[key],list) and isinstance(scripts[key][0],str):
       scripts[key][0]= scripts[key][0].format(**config)
 
@@ -790,7 +790,7 @@ MainProgram: {script_status}'''.format(
   app= InitPanelApp()
   win_size= (1000,800)
   if fullscreen:  #NOTE: fullscreen mode will work only with Qt5.
-    print 'Screen size:', app.screens()[0].size()
+    print('Screen size:', app.screens()[0].size())
     screen_size= app.screens()[0].size()
     win_size= (screen_size.width(),screen_size.height())
   panel= TSimplePanel('Robot Operation Panel', size=win_size, font_height_scale=300.0)
@@ -809,7 +809,7 @@ MainProgram: {script_status}'''.format(
 
   #Since the onstatuschanged signal is emitted from TProcessManager,
   #we connect the onstatuschanged slots of panel to it.
-  for w_name, (w_type, w_param) in panel.widgets_in.iteritems():
+  for w_name, (w_type, w_param) in panel.widgets_in.items():
     if 'onstatuschanged' in w_param and w_param['onstatuschanged'] is not None:
       pm.onstatuschanged.connect(lambda status,w_param=w_param,w_name=w_name: w_param['onstatuschanged'](panel,panel.widgets[w_name],status))
 

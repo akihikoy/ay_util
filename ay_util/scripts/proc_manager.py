@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 #\file    proc_manager.py
 #\brief   Sub-process manager;
 #\author  Akihiko Yamaguchi, info@akihikoy.net
@@ -18,7 +18,7 @@ class TSubProcManager(object):
     if file_name is None:  file_name= self.file_ps_dump
     if file_name is None:  return
     with open(file_name,'w') as fp:
-      for name,proc in self.procs.iteritems():
+      for name,proc in self.procs.items():
         fp.write('{} {}\n'.format(proc.pid, name))
 
   #Split a given string command into a list according to the mode.
@@ -42,7 +42,7 @@ class TSubProcManager(object):
       p= subprocess.Popen(command, shell=shell)
       p.wait()
     except OSError as e:
-      print 'RunFGProcess failed: {}'.format(e)
+      print('RunFGProcess failed: {}'.format(e))
 
   #command: command string or list of command and arguments.
   #A string command is split into a list according to the split_cmd mode (cf. SplitCommand).
@@ -54,11 +54,11 @@ class TSubProcManager(object):
       self.procs[name]= p
       self.DumpPS()
     except OSError as e:
-      print 'RunBGProcess failed: {}'.format(e)
+      print('RunBGProcess failed: {}'.format(e))
 
   def TerminateBGProcess(self, name):
     if name not in self.procs:
-      print 'No process named',name
+      print('No process named',name)
       return
     self.procs[name].terminate()
     self.procs[name].wait()
@@ -70,8 +70,8 @@ class TSubProcManager(object):
     self.DumpPS()
 
   def TerminateAllBGProcesses(self):
-    for name,p in self.procs.iteritems():
-      print 'Terminating',name
+    for name,p in self.procs.items():
+      print('Terminating',name)
       p.terminate()
       p.wait()
       #TODO: wait(): It is safer to have timeout.  For ver<3.3, implement like:
@@ -84,7 +84,7 @@ class TSubProcManager(object):
   #WARNING: This is not safe.  When killing roscore, rosmaster is still alive.
   def KillBGProcess(self, name):
     if name not in self.procs:
-      print 'No process named',name
+      print('No process named',name)
       return
     self.procs[name].kill()
     self.procs[name].wait()

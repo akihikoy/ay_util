@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 #\file    joy_fv.py
 #\brief   Joy emulator.
 #\author  Akihiko Yamaguchi, info@akihikoy.net

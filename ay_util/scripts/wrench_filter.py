@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 #\file    wrench_filter.py
 #\brief   Apply a moving average filter to a wrench topic.
 #\author  Akihiko Yamaguchi, info@akihikoy.net

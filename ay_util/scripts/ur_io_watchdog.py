@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 #\file    ur_io_watchdog.py
 #\brief   Watch digital inputs and send digital outputs conditionally.
 #\author  Akihiko Yamaguchi, info@akihikoy.net
@@ -19,7 +19,7 @@ try:
   import ur_msgs.msg
   import ur_msgs.srv
 except Exception as e:
-  print e
+  print(e)
 
 '''
 Example of conditions:
@@ -58,7 +58,7 @@ class TURIOWatchDog(TROSUtil):
   def __del__(self):
     self.Cleanup()
     if TURIOWatchDog is not None:  super(TURIOWatchDog,self).__del__()
-    print 'TURIOWatchDog: done',self
+    print('TURIOWatchDog: done',self)
 
   def Cleanup(self):
     if TURIOWatchDog is not None:  super(TURIOWatchDog,self).Cleanup()
@@ -80,7 +80,7 @@ class TURIOWatchDog(TROSUtil):
       self.SetOutputs(self.condition[self.CONDITION_NAME_INIT], is_valid=True)
 
     #Start PHASE_ANY conditions:
-    self.active_conditions= [name for name, cond in self.conditions.iteritems()
+    self.active_conditions= [name for name, cond in self.conditions.items()
                              if cond['PHASE_START']==self.PHASE_ANY]
 
   def Disconnect(self):
@@ -111,7 +111,7 @@ class TURIOWatchDog(TROSUtil):
 
   #Set invalid outputs of all conditions.
   def SetAllInvalidOutputs(self):
-    for name, cond in self.conditions.iteritems():
+    for name, cond in self.conditions.items():
       self.SetOutputs(cond, is_valid=False)
 
   def CallbackMotionPhase(self, msg):
@@ -119,7 +119,7 @@ class TURIOWatchDog(TROSUtil):
     active_conditions= self.active_conditions
 
     #Check conditions that are activated at this phase.
-    for name, cond in self.conditions.iteritems():
+    for name, cond in self.conditions.items():
       if cond['PHASE_START']==phase or cond['PHASE_START']==self.PHASE_ANY:
         if name not in active_conditions:
           active_conditions.append(name)
@@ -161,7 +161,7 @@ if __name__=='__main__':
     is_sim_default= False
   is_sim= True if '-sim' in sys.argv or '--sim' in sys.argv else is_sim_default
   def get_arg(opt_name, default):
-    exists= map(lambda a:a.startswith(opt_name),sys.argv)
+    exists= [a.startswith(opt_name) for a in sys.argv]
     if any(exists):  return sys.argv[exists.index(True)].replace(opt_name,'')
     else:  return default
   node_name= get_arg('-node_name=',get_arg('--node_name=','ur_io_watchdog'))
@@ -171,11 +171,11 @@ if __name__=='__main__':
   if config_yaml is not None and config_yaml!='':
     try:
       config= LoadYAML(config_yaml)[config_yaml_section]
-      print 'Loaded config from YAML={}, section={}'.format(config_yaml,config_yaml_section)
-      print 'config=',config
+      print('Loaded config from YAML={}, section={}'.format(config_yaml,config_yaml_section))
+      print('config=',config)
     except Exception:
-      print 'Failed to load config from YAML={}, section={}'.format(config_yaml,config_yaml_section)
-      print 'The program is terminated.'
+      print('Failed to load config from YAML={}, section={}'.format(config_yaml,config_yaml_section))
+      print('The program is terminated.')
       sys.exit(1)
 
   watchdog= TURIOWatchDog(node_name=node_name, conditions=config, is_sim=is_sim)

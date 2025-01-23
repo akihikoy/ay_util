@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 #\file    dxlg_gui.py
 #\brief   DxlGripper GUI control panel.
 #\author  Akihiko Yamaguchi, info@akihikoy.net

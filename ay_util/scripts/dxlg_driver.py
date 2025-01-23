@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 #\file    dxlg_driver.py
 #\brief   ROS driver of Dynamixel-based grippers.
 #\author  Akihiko Yamaguchi, info@akihikoy.net
@@ -11,6 +11,7 @@ roslib.load_manifest('ay_util_msgs')
 import rospy
 import sensor_msgs.msg
 import sys
+import importlib
 import ay_util_msgs.srv
 from ay_py.misc.dxl_util import DxlPortHandler
 
@@ -35,32 +36,32 @@ class TDxlGripperDriver(object):
     self.gripper_type= gripper_type
     self.is_sim= is_sim
     if self.gripper_type=='DxlGripper':
-      mod= __import__('ay_py.misc.dxl_gripper',globals(),None,('TDynamixelGripper',))
+      mod= importlib.import_module('ay_py.misc.dxl_gripper')
       self.gripper= mod.TDynamixelGripper(dev=self.dev)
       self.joint_names= ['joint0']
       self.dxl= {'joint0':self.gripper.dxl}
     elif self.gripper_type in ('RHP12RNGripper','RHP12RNAGripper'):
-      mod= __import__('ay_py.misc.dxl_rhp12rn',globals(),None,('TRHP12RN',))
+      mod= importlib.import_module('ay_py.misc.dxl_rhp12rn')
       self.gripper= mod.TRHP12RN(dev=self.dev,type={'RHP12RNGripper':'','RHP12RNAGripper':'(A)'}[self.gripper_type])
       self.joint_names= ['joint0']
       self.dxl= {'joint0':self.gripper.dxl}
     elif self.gripper_type=='EZGripper':
-      mod= __import__('ay_py.misc.dxl_ezg',globals(),None,('TEZG',))
+      mod= importlib.import_module('ay_py.misc.dxl_ezg')
       self.gripper= mod.TEZG(dev=self.dev)
       self.joint_names= ['joint0']
       self.dxl= {'joint0':self.gripper.dxl}
     elif self.gripper_type=='DxlpO2Gripper':
-      mod= __import__('ay_py.misc.dxl_dxlpo2',globals(),None,('TDxlpO2',))
+      mod= importlib.import_module('ay_py.misc.dxl_dxlpo2')
       self.gripper= mod.TDxlpO2(dev=self.dev, finger_type=finger_type)
       self.joint_names= ['joint0']
       self.dxl= {'joint0':self.gripper.dxl}
     elif self.gripper_type=='DxlpY1Gripper':
-      mod= __import__('ay_py.misc.dxl_dxlpy1',globals(),None,('TDxlpY1',))
+      mod= importlib.import_module('ay_py.misc.dxl_dxlpy1')
       self.gripper= mod.TDxlpY1(dev=self.dev)
       self.joint_names= ['joint0']
       self.dxl= {'joint0':self.gripper.dxl}
     elif self.gripper_type=='DxlO3Gripper':
-      mod= __import__('ay_py.misc.dxl_dxlo3',globals(),None,('TDxlO3',))
+      mod= importlib.import_module('ay_py.misc.dxl_dxlo3')
       self.gripper= mod.TDxlO3(dev=self.dev)
       self.joint_names= ['joint0','joint1']
       self.dxl= {'joint0':self.gripper.dxl[0], 'joint1':self.gripper.dxl[1]}
@@ -77,11 +78,11 @@ class TDxlGripperDriver(object):
 
     #In the simulation mode, the driver object is switched:
     if self.is_sim:
-      mod= __import__('ay_py.misc.dxl_gripper_sim',globals(),None,('TDxlGripperSim',))
+      mod= importlib.import_module('ay_py.misc.dxl_gripper_sim')
       dxlg_ref= self.gripper
       self.gripper= mod.TDxlGripperSim(dxlg_ref)
 
-    print 'Initializing and activating {}({}){} gripper...'.format(self.gripper_type,finger_type,'(sim)' if self.is_sim else '')
+    print('Initializing and activating {}({}){} gripper...'.format(self.gripper_type,finger_type,'(sim)' if self.is_sim else ''))
     if not self.gripper.Init():
       raise Exception('Failed to setup {}({}){} gripper.'.format(self.gripper_type,finger_type,'(sim)' if self.is_sim else ''))
 
@@ -99,7 +100,7 @@ class TDxlGripperDriver(object):
     self.Cleanup()
 
   def Cleanup(self):
-    print 'Cleanup'
+    print('Cleanup')
     self.gripper.StopMoveTh()
     self.gripper.StopStateObs()
     self.gripper.Cleanup()
@@ -152,7 +153,7 @@ class TDxlGripperDriver(object):
     else:
       res.success= False
       res.message= 'Unknown command: {cmd}'.format(cmd=req.command)
-      print res.message
+      print(res.message)
     return res
 
   # Handler of dxl_io service (ay_util_msgs/DxlIO).
@@ -190,7 +191,7 @@ class TDxlGripperDriver(object):
         with self.gripper.port_locker:
           for j,cl in zip(joint_names,cl_list):
             cl_cmd= self.dxl[j].InvConvCurr(cl)
-            print req,'cl_cmd=',cl_cmd
+            print(req,'cl_cmd=',cl_cmd)
             self.dxl[j].DisableTorque()
             self.dxl[j].CurrentLimit= cl_cmd
             self.dxl[j].MAX_CURRENT= cl_cmd
@@ -214,12 +215,12 @@ if __name__=='__main__':
   gripper_type= ExpandGripperType(rospy.get_param('~gripper_type', 'DxlGripper'))
   finger_type= rospy.get_param('~finger_type', '')
   is_sim= rospy.get_param('~is_sim', False)
-  print '''Parameters:
+  print('''Parameters:
     dxldev: {dxldev}
     gripper_type: {gripper_type}
     finger_type: {finger_type}
     is_sim: {is_sim}
-  '''.format(dxldev=dxldev, gripper_type=gripper_type, finger_type=finger_type, is_sim=is_sim)
+  '''.format(dxldev=dxldev, gripper_type=gripper_type, finger_type=finger_type, is_sim=is_sim))
 
   robot= TDxlGripperDriver(dxldev, gripper_type, finger_type, is_sim)
   #rospy.spin()

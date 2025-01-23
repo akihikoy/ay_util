@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 #\file    dummy_robot.py
 #\brief   Dummy robot ver.2.
 #         This subscribes joint_path_command topic, follow_joint_trajectory (actionlib) topic,
@@ -119,10 +119,10 @@ class TDummyRobot(object):
       q_traj= [self.js.position[i] for i in indexes]+q_traj
       dq_traj= [self.js.velocity[i] for i in indexes]+dq_traj
       t_traj= [rospy.Duration(0.0)]+t_traj
-    print 'Received trajectory command:'
-    print traj.joint_names
-    print [t.to_sec() for t in t_traj]
-    print q_traj
+    print('Received trajectory command:')
+    print(traj.joint_names)
+    print([t.to_sec() for t in t_traj])
+    print(q_traj)
 
     #Modeling the trajectory with spline.
     splines= [TCubicHermiteSpline() for d in range(dof)]
@@ -144,7 +144,7 @@ class TDummyRobot(object):
     t0= rospy.Time.now()
     while all(((rospy.Time.now()-t0)<T, self.follow_traj_active, not rospy.is_shutdown())):
       if self.ftaction_actsrv.is_preempt_requested():
-        print '%s: Preempted' % self.ftaction_name
+        print('%s: Preempted' % self.ftaction_name)
         self.ftaction_actsrv.set_preempted()
         success= False
         break
@@ -164,7 +164,7 @@ class TDummyRobot(object):
 
     if self.follow_traj_active and success:
       self.ftaction_result.error_code= self.ftaction_result.SUCCESSFUL
-      print '%s: Succeeded' % self.ftaction_name
+      print('%s: Succeeded' % self.ftaction_name)
       self.ftaction_actsrv.set_succeeded(self.ftaction_result)
     self.follow_traj_active= False
 

@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 #\file    stamp_updater.py
 #\brief   Convert the time stamp of header to the current time.
 #\author  Akihiko Yamaguchi, info@akihikoy.net

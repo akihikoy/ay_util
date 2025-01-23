@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 #\file    script_node_client.py
 #\brief   Client module for SCRIPT ROS Node of ay_trick.
 #\author  Akihiko Yamaguchi, info@akihikoy.net
@@ -75,7 +75,7 @@ class TScriptNodeClient(object):
       return
     self.srvp_wait_finish()  #Wait for previously executed scripts.
     self.pub_cmd.publish(std_msgs.msg.String(cmd))
-    print '###INFO/RunFGScript###',cmd
+    print('###INFO/RunFGScript###',cmd)
     self.srvp_wait_finish()
 
   def RunBGScript(self, cmd):
@@ -84,7 +84,7 @@ class TScriptNodeClient(object):
       return
     self.srvp_wait_finish()  #Wait for previously executed scripts.
     self.pub_cmd.publish(std_msgs.msg.String(cmd))
-    print '###INFO/RunBGScript###',cmd
+    print('###INFO/RunBGScript###',cmd)
 
   def SendString(self, key):
     if not self.connected_to_script_node:
@@ -127,7 +127,7 @@ class TScriptNodeClient(object):
     while self.script_node_status != status:
       rate.sleep()
       if (rospy.Time.now()-t_start).to_sec()>timeout:
-        print 'WaitForScriptNodeStatus timeout.'
+        print('WaitForScriptNodeStatus timeout.')
         return False
     return True
 

@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 #\file    topic_monitor.py
 #\brief   Utility to monitor frequency of arrivals of topics.
 #\author  Akihiko Yamaguchi, info@akihikoy.net
@@ -42,18 +42,18 @@ class TTopicMonitor(object):
     self.topic_hz= rostopic.ROSTopicHz(window_size)
     self.DisconnectStatusTopics()
     self.sub_status_topics= dict()
-    for key,topic in self.topics_to_monitor.iteritems():
+    for key,topic in self.topics_to_monitor.items():
       self.sub_status_topics[key]= rospy.Subscriber(topic, rospy.AnyMsg, self.topic_hz.callback_hz, callback_args=topic)
 
   def DisconnectStatusTopics(self):
-    for key,sub in self.sub_status_topics.iteritems():
+    for key,sub in self.sub_status_topics.items():
       sub.unregister()
     self.topics_hz= dict()
 
   def UpdateTopicsHzThread(self):
     rate= rospy.Rate(0.5)
     while self.thread_topics_hz_running and not rospy.is_shutdown():
-      for key,topic in self.topics_to_monitor.iteritems():
+      for key,topic in self.topics_to_monitor.items():
         hz= self.topic_hz.get_hz(topic)
         hz= hz[0] if hz is not None else None
         self.topics_hz[key]= hz
@@ -71,7 +71,7 @@ class TTopicMonitor(object):
 if __name__=='__main__':
   import sys
   def get_arg(opt_name, default):
-    exists= map(lambda a:a.startswith(opt_name),sys.argv)
+    exists= [a.startswith(opt_name) for a in sys.argv]
     if any(exists):  return sys.argv[exists.index(True)].replace(opt_name,'')
     else:  return default
   topics_to_monitor= get_arg('-topics=',get_arg('--topics=',''))
@@ -85,10 +85,10 @@ if __name__=='__main__':
     tm.StartTopicMonitorThread()
     rate_adjuster= rospy.Rate(1)
     while not rospy.is_shutdown():
-      state= {key:(tm.IsActive(key),tm.GetTopicHz(key)) for key,topic in topics_to_monitor.iteritems()}
+      state= {key:(tm.IsActive(key),tm.GetTopicHz(key)) for key,topic in topics_to_monitor.items()}
       rate_adjuster.sleep()
-      print state
+      print(state)
   except Exception as e:
-    print 'Exception:',e
+    print('Exception:',e)
   finally:
     tm.StopTopicMonitorThread()

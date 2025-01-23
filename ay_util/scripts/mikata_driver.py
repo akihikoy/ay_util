@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 #\file    mikata_driver.py
 #\brief   Mikata ROS node.
 #\author  Akihiko Yamaguchi, info@akihikoy.net
@@ -17,6 +17,7 @@ import trajectory_msgs.msg
 import actionlib
 import control_msgs.msg
 import sys
+import importlib
 import ay_util_msgs.srv
 from ay_py.misc.dxl_util import DxlPortHandler
 
@@ -25,13 +26,13 @@ class TMikataDriver(object):
     self.dev= dev
     self.robot_type= robot_type
     if self.robot_type=='Mikata':
-      mod= __import__('ay_py.misc.dxl_mikata',globals(),None,('TMikata',))
+      mod= importlib.import_module('ay_py.misc.dxl_mikata')
       self.mikata= mod.TMikata(dev=self.dev)
     elif self.robot_type=='CraneX7':
-      mod= __import__('ay_py.misc.dxl_cranex7',globals(),None,('TCraneX7',))
+      mod= importlib.import_module('ay_py.misc.dxl_cranex7')
       self.mikata= mod.TCraneX7(dev=self.dev)
     elif self.robot_type=='Mikata6':
-      mod= __import__('ay_py.misc.dxl_mikata6',globals(),None,('TMikata6',))
+      mod= importlib.import_module('ay_py.misc.dxl_mikata6')
       self.mikata= mod.TMikata6(dev=self.dev)
     else:
       raise Exception('Invalid robot type: {robot_type}'.format(robot_type=robot_type))
@@ -44,7 +45,7 @@ class TMikataDriver(object):
     self.js= None
     self.joint_names= self.mikata.JointNames()
 
-    print 'Initializing and activating {robot_type} arm...'.format(robot_type=self.robot_type)
+    print('Initializing and activating {robot_type} arm...'.format(robot_type=self.robot_type))
     if not self.mikata.Setup():
       raise Exception('Failed to setup {robot_type} arm.'.format(robot_type=self.robot_type))
     #self.mikata.EnableTorque()
@@ -65,7 +66,7 @@ class TMikataDriver(object):
     self.Cleanup()
 
   def Cleanup(self):
-    print 'Cleanup'
+    print('Cleanup')
     self.mikata.StopStateObs()
     self.mikata.Quit()
 
@@ -100,7 +101,7 @@ class TMikataDriver(object):
       if context=='loop_begin':
         if rospy.is_shutdown():  return False
         if self.ftaction_actsrv.is_preempt_requested():
-          print '%s: Preempted' % self.ftaction_name
+          print('%s: Preempted' % self.ftaction_name)
           self.ftaction_actsrv.set_preempted()
           self.ftaction_result.error_code= None
           return False
@@ -116,7 +117,7 @@ class TMikataDriver(object):
     self.mikata.FollowTrajectory(goal.trajectory.joint_names, q_traj, t_traj, blocking=True, callback=callback)
     if self.ftaction_result.error_code==self.ftaction_result.SUCCESSFUL:
       self.ftaction_result.error_code= self.ftaction_result.SUCCESSFUL
-      print '%s: Succeeded' % self.ftaction_name
+      print('%s: Succeeded' % self.ftaction_name)
       self.ftaction_actsrv.set_succeeded(self.ftaction_result)
 
   # Handler of robot_io service (ay_util_msgs/DxlIO).
@@ -140,14 +141,14 @@ class TMikataDriver(object):
       else:  self.mikata.Reboot(req.joint_names)
     elif req.command=='MoveTo':  #Move to target position.  input: joint_names, data_fa (joint positions in radian), data_b (blocking).
       #print 'MoveTo',dict(zip(req.joint_names,req.data_fa))
-      self.mikata.MoveTo(dict(zip(req.joint_names,req.data_fa)), blocking=req.data_b)
+      self.mikata.MoveTo(dict(list(zip(req.joint_names,req.data_fa))), blocking=req.data_b)
     elif req.command=='SetCurrent':  #Set current.  input: joint_names, data_fa (currents in mA).
-      self.mikata.SetCurrent(dict(zip(req.joint_names,req.data_fa)))
+      self.mikata.SetCurrent(dict(list(zip(req.joint_names,req.data_fa))))
     elif req.command=='SetVelocity':  #Set velocity.  input: joint_names, data_fa (velocities in rad/s).
-      self.mikata.SetVelocity(dict(zip(req.joint_names,req.data_fa)))
+      self.mikata.SetVelocity(dict(list(zip(req.joint_names,req.data_fa))))
     elif req.command=='SetPWM':  #Set PWM.  input: joint_names, data_fa (PWM values in percentage).
       #print 'SetPWM',dict(zip(req.joint_names,req.data_fa))
-      self.mikata.SetPWM(dict(zip(req.joint_names,req.data_fa)))
+      self.mikata.SetPWM(dict(list(zip(req.joint_names,req.data_fa))))
 
     j= req.joint_names[-1] if len(req.joint_names)>0 else self.joint_names[-1]
     res.result= self.mikata.dxl[j].dxl_result  #dynamixel.getLastTxRxResult
@@ -158,6 +159,6 @@ if __name__=='__main__':
   rospy.init_node('mikata_driver')
   dev= sys.argv[1] if len(sys.argv)>1 else '/dev/ttyUSB0'
   robot_type= sys.argv[2] if len(sys.argv)>2 else 'Mikata'
-  print 'args=',sys.argv
+  print('args=',sys.argv)
   robot= TMikataDriver(dev,robot_type)
   rospy.spin()

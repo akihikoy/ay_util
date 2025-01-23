@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 #\file    mikata_panel.py
 #\brief   Mikata Arm + FV demo panel.
 #\author  Akihiko Yamaguchi, info@akihikoy.net
@@ -119,7 +119,7 @@ if __name__=='__main__':
     cmds['mikata_driver']= ['roslaunch ay_util mikata_rot_ksim.launch','bg']
     for c in ('fix_usb','fv_l','config_fv_l'):
       cmds[c][1]= None
-  for key in cmds.iterkeys():
+  for key in cmds.keys():
     if isinstance(cmds[key][0],str):
       cmds[key][0]= cmds[key][0].format(**config).split(' ')
 
@@ -142,7 +142,7 @@ if __name__=='__main__':
     }
   if is_sim:
     scripts['setup']= ['mikata.setup "sim",True','fg']
-  for key in scripts.iterkeys():
+  for key in scripts.keys():
     if isinstance(scripts[key],list) and isinstance(scripts[key][0],str):
       scripts[key][0]= scripts[key][0].format(**config)
 
@@ -423,7 +423,7 @@ if __name__=='__main__':
   app= InitPanelApp()
   win_size= (800,500)
   if fullscreen:  #NOTE: fullscreen mode will work only with Qt5.
-    print 'Screen size:', app.screens()[0].size()
+    print('Screen size:', app.screens()[0].size())
     screen_size= app.screens()[0].size()
     win_size= (screen_size.width(),screen_size.height())
   panel= TSimplePanel('Mikata Operation Panel', size=win_size, font_height_scale=250.0)

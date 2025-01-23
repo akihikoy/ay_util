@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 #\file    bx_joint_states.py
 #\brief   Convert /robot/joint_states topic to /joint_states for MoveIt with Baxter.
 #\author  Akihiko Yamaguchi, info@akihikoy.net

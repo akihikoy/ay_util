@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 #\file    bx_gui.py
 #\brief   Baxter GUI control panel.
 #\author  Akihiko Yamaguchi, info@akihikoy.net

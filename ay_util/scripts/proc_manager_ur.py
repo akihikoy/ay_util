@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 #\file    proc_manager_ur.py
 #\brief   Provides TURManager, TProcessManagerUR.
 #\author  Akihiko Yamaguchi, info@akihikoy.net
@@ -25,7 +25,7 @@ try:
   import ur_msgs.msg
   import ur_msgs.srv
 except Exception as e:
-  print e
+  print(e)
 from proc_manager_gui import TProcessManagerGUIBase
 
 #Simple module to operate UR.
@@ -65,7 +65,7 @@ class TURManager(object):
         #threads['srvp_ur_set_io'].start()
         threads['srvp_ur_set_pui']= threading.Thread(name='srvp_ur_set_pui', target=lambda:(setattr(self,'srvp_ur_set_pui',SetupServiceProxy('/ur_pui_server/set_pui', ay_util_msgs.srv.SetPUI, persistent=False, time_out=timeout))))
         threads['srvp_ur_set_pui'].start()
-        for name,th in threads.iteritems():  th.join()
+        for name,th in threads.items():  th.join()
       else:
         for service in services:
           self.srvp_ur_dashboard[service]= SetupServiceProxy('/ur_hardware_interface/dashboard/{0}'.format(service), std_srvs.srv.Trigger, persistent=False, time_out=timeout)
@@ -142,7 +142,7 @@ class TURManager(object):
     while self.ur_robot_mode != mode:
       rate.sleep()
       if (rospy.Time.now()-t_start).to_sec()>timeout:
-        print 'WaitForRobotMode timeout.'
+        print('WaitForRobotMode timeout.')
         return False
     #print '  done.',mode,self.ur_robot_mode
     return True
@@ -155,7 +155,7 @@ class TURManager(object):
     while self.ur_safety_mode != mode:
       rate.sleep()
       if (rospy.Time.now()-t_start).to_sec()>timeout:
-        print 'WaitForSafetyMode timeout.'
+        print('WaitForSafetyMode timeout.')
         return False
     return True
 
@@ -167,7 +167,7 @@ class TURManager(object):
     while self.ur_program_running != program_running:
       rate.sleep()
       if (rospy.Time.now()-t_start).to_sec()>timeout:
-        print 'WaitForProgramRunning timeout.'
+        print('WaitForProgramRunning timeout.')
         return False
     return True
 

@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 #\file    ur_gui.py
 #\brief   UR GUI control panel.
 #\author  Akihiko Yamaguchi, info@akihikoy.net

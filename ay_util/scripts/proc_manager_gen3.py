@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 #\file    proc_manager_gen3.py
 #\brief   Provides TProcessManagerGen3.
 #\author  Akihiko Yamaguchi, info@akihikoy.net

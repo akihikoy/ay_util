@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 #\file    ur_dashboard_gui.py
 #\brief   Dashboard GUI for monitoring and controlling Universal Robots.
 #\author  Akihiko Yamaguchi, info@akihikoy.net
@@ -14,7 +14,7 @@ try:
   roslib.load_manifest('ur_dashboard_msgs')
   import ur_dashboard_msgs.msg
 except Exception as e:
-  print e
+  print(e)
 from proc_manager_ur import TProcessManagerUR
 
 
@@ -25,7 +25,7 @@ if __name__=='__main__':
     is_sim_default= False
   is_sim= True if '-sim' in sys.argv or '--sim' in sys.argv else is_sim_default
   def get_arg(opt_name, default):
-    exists= map(lambda a:a.startswith(opt_name),sys.argv)
+    exists= [a.startswith(opt_name) for a in sys.argv]
     if any(exists):  return sys.argv[exists.index(True)].replace(opt_name,'')
     else:  return default
   topics_to_monitor= get_arg('-topics=',get_arg('--topics=',''))
@@ -72,7 +72,7 @@ MainProgram: {script_status}'''.format(
       dict(label='RobotMode', type='color', state='red'),
       dict(label='URProgram', type='color', state='red'),
       dict(label='ScriptServer', type='color', state='red'),
-    ] + [dict(label=key, type='color', state='red') for key in sorted(pm.topics_to_monitor.iterkeys())]
+    ] + [dict(label=key, type='color', state='red') for key in sorted(pm.topics_to_monitor.keys())]
   def UpdateStatusGridText(w,obj,status=None):
     obj.UpdateStatus('Status', pm.status_names[pm.status])
     if pm.robot_ros_running:
@@ -88,7 +88,7 @@ MainProgram: {script_status}'''.format(
       obj.UpdateStatus('URProgram', 'green' if pm.ur_program_running else 'red')
     obj.UpdateStatus('ScriptServer', 'green' if pm.script_node_running else 'red')
     #obj= panel.widgets['status_grid1']
-    for key,topic in pm.topics_to_monitor.iteritems():
+    for key,topic in pm.topics_to_monitor.items():
       obj.UpdateStatus(key, 'green' if pm.IsActive(key) else 'red')
 
   widgets_common= {
@@ -328,11 +328,11 @@ MainProgram: {script_status}'''.format(
 
   #Since the onstatuschanged signal is emitted from TProcessManager,
   #we connect the onstatuschanged slots of panel to it.
-  for w_name, (w_type, w_param) in panel.widgets_in.iteritems():
+  for w_name, (w_type, w_param) in panel.widgets_in.items():
     if 'onstatuschanged' in w_param and w_param['onstatuschanged'] is not None:
       pm.onstatuschanged.connect(lambda status,w_param=w_param,w_name=w_name: w_param['onstatuschanged'](panel,panel.widgets[w_name],status))
   #Similarly, connect to ontopicshzupdated slots:
-  for w_name, (w_type, w_param) in panel.widgets_in.iteritems():
+  for w_name, (w_type, w_param) in panel.widgets_in.items():
     if 'ontopicshzupdated' in w_param and w_param['ontopicshzupdated'] is not None:
       pm.ontopicshzupdated.connect(lambda w_param=w_param,w_name=w_name: w_param['ontopicshzupdated'](panel,panel.widgets[w_name]))
 

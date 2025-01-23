@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 #\file    dxlg_gui_odroid.py
 #\brief   DxlGripper GUI control panel for demo with Odroid.
 #\author  Akihiko Yamaguchi, info@akihikoy.net

@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 #\file    bx_off_bodyavd.py
 #\brief   Disable self collision avoidance
 #\author  Akihiko Yamaguchi, info@akihikoy.net

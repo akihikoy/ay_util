@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 #\file    cranex7_gui.py
 #\brief   Crane-X7 Arm GUI control panel.
 #\author  Akihiko Yamaguchi, info@akihikoy.net

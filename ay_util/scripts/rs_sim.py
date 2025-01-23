@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 #\file    rs_sim.py
 #\brief   Simulate RealSense from a log directory.
 #\author  Akihiko Yamaguchi, info@akihikoy.net
@@ -17,7 +17,7 @@ import sensor_msgs.msg
 from cv_bridge import CvBridge, CvBridgeError
 #import multiprocessing as mp
 import threading
-import Queue
+import queue
 from ay_py.core import CPrint, TContainer, TContainerCore, TransformLeftInv
 from ay_py.ros.pointcloud import DepthRGBImgsToPointCloud, DepthImgToPointCloud
 from ay_py.ros.rs import ReconstructRS
@@ -32,7 +32,7 @@ def LoadLoop(files, queue_req, queue_res):
           req= queue_req.get(block=False)
           if req:  break
           if not req:  return
-        except Queue.Empty:
+        except queue.Empty:
           pass
         if rospy.is_shutdown():  return
         rospy.sleep(1e-2)
@@ -42,16 +42,16 @@ def LoadLoop(files, queue_req, queue_res):
 
       if filepath.endswith('.dat.gz'):
         with gzip.open(filepath,'rb') as fp:
-          data= pickle.load(fp)
+          data= pickle.load(fp, encoding='latin1')
       else:
         with open(filepath,'rb') as fp:
-          data= pickle.load(fp)
+          data= pickle.load(fp, encoding='latin1')
       CPrint(2,'Opened data file:',filepath)
       if isinstance(data,dict):
         if 'obs' in data and 'rs' in data['obs'] and isinstance(data['obs'].rs,TContainerCore):
           rs= data['obs'].rs
         else:
-          for k,v in data.iteritems():
+          for k,v in data.items():
             if 'rs' in v and isinstance(v.rs,TContainerCore):
               rs= v.rs
       elif isinstance(data,TContainerCore):
@@ -103,7 +103,7 @@ if __name__=='__main__':
 
   files= SearchDataFiles(datadir)
   #queue_load_req,queue_load_res= mp.Queue(),mp.Queue()
-  queue_load_req,queue_load_res= Queue.Queue(),Queue.Queue()
+  queue_load_req,queue_load_res= queue.Queue(),queue.Queue()
   #proc_load_loop= mp.Process(target=LoadLoop, args=(files,queue_load_req,queue_load_res))
   #proc_load_loop.start()
   th_load_loop= threading.Thread(name='LoadLoop', target=LoadLoop, args=(files,queue_load_req,queue_load_res))
@@ -128,7 +128,7 @@ if __name__=='__main__':
       while not rospy.is_shutdown():
         try:
           rs_new,pc_msg_new= queue_load_res.get(block=False)
-        except Queue.Empty:
+        except queue.Empty:
           rs_new,pc_msg_new= None,None
         if rs_new is not None or (rs_new is None and rs is not None):  break
         rospy.sleep(0.005)
@@ -163,8 +163,8 @@ if __name__=='__main__':
         lcam_x_colf= TransformLeftInv(rs.lw_x_camera_link,rs.lx)
 
         if verb:
-          for key,value in rs.iteritems():
-            print '{key}[{type}]= {value}'.format(key=key,type=type(value),value=value)
+          for key,value in rs.items():
+            print('{key}[{type}]= {value}'.format(key=key,type=type(value),value=value))
 
       t_latch_start= rospy.Time.now()
       while (rospy.Time.now()-t_latch_start).to_sec()<dt_latch and not rospy.is_shutdown():

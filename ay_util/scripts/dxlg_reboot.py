@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 #\file    dxlg_reboot.py
 #\brief   Reboot a dynamixel-based gripper.
 #\author  Akihiko Yamaguchi, info@akihikoy.net
@@ -47,7 +47,7 @@ def OperateDxlGripper(dev='/dev/ttyUSB0', gripper_type='DxlGripper', finger_type
   #Set callback to exit when Ctrl+C is pressed.
   DxlPortHandler.ReopenCallback= lambda: not rospy.is_shutdown()
 
-  print 'Executing the command:',command
+  print('Executing the command:',command)
   if command=='EnableTorque':  #Enable joint_names (joint_names is [], all joints are enabled).
     for d in dxl:
       d.EnableTorque()
@@ -67,11 +67,11 @@ if __name__=='__main__':
   gripper_type= ExpandGripperType(rospy.get_param('~gripper_type', 'DxlGripper'))
   finger_type= rospy.get_param('~finger_type', '')
   command= rospy.get_param('~command', 'Reboot')
-  print '''Parameters:
+  print('''Parameters:
     dxldev: {dxldev}
     gripper_type: {gripper_type}
     finger_type: {finger_type}
     command: {command}
-  '''.format(dxldev=dxldev, gripper_type=gripper_type, finger_type=finger_type, command=command)
+  '''.format(dxldev=dxldev, gripper_type=gripper_type, finger_type=finger_type, command=command))
 
   OperateDxlGripper(dxldev, gripper_type, finger_type, command)
