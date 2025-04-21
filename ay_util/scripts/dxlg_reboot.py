@@ -33,13 +33,23 @@ def OperateDxlGripper(dev='/dev/ttyUSB0', gripper_type='DxlGripper', finger_type
   elif gripper_type=='EZGripper':
     pass
   elif gripper_type=='DxlpO2Gripper':
-    pass
+    dxl= [TDynamixel1('PH54-200-S500')]
+    dxl[0].Id= 1
+    dxl[0].Baudrate= 2e6
+    dxl[0].Setup()
   elif gripper_type=='DxlpY1Gripper':
     dxl= [TDynamixel1('XD540-T270')]
     dxl[0].Id= 1
     dxl[0].Baudrate= 2e6
     dxl[0].Setup()
   elif gripper_type=='DxlO3Gripper':
+    dxl= [TDynamixel1('XH540-W270'), TDynamixel1('XH540-W270')]
+    dxl[0].Id= 1
+    dxl[0].Baudrate= 2e6
+    dxl[0].Setup()
+    dxl[1].Id= 2
+    dxl[1].Baudrate= 2e6
+    dxl[1].Setup()
     pass
   else:
     raise Exception('Invalid gripper type: {gripper_type}'.format(gripper_type=gripper_type))
