@@ -68,6 +68,19 @@ class TTopicMonitor(object):
   def IsActive(self, key):
     return self.GetTopicHz(key) is not None
 
+  #Wait for self.IsActive(key) becomes is_active.
+  #  is_active: True or False
+  def WaitForTopicStatus(self, key, is_active, timeout=180):
+    t_start= rospy.Time.now()
+    rate= rospy.Rate(20)
+    while self.IsActive(key) != is_active:
+      rate.sleep()
+      if (rospy.Time.now()-t_start).to_sec()>timeout:
+        print('WaitForTopicStatus timeout.')
+        return False
+    return True
+
+
 if __name__=='__main__':
   import sys
   def get_arg(opt_name, default):
