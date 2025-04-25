@@ -86,7 +86,7 @@ class TEthDevMonitorNode(TROSUtil):
       for name, cfg in self.devices_config.items()
       }
     for name, cfg in self.devices_config.items():
-      self.AddPub(name, f'~{name}', std_msgs.msg.Empty, queue_size=1)
+      self.AddPub(name, f'/eth_dev_monitor/{name}', std_msgs.msg.Empty, queue_size=1)
 
   def Start(self):
     for name, device in self.devices.items():
@@ -111,6 +111,9 @@ if __name__=='__main__':
   node_name= get_arg('-node_name=',get_arg('--node_name=','eth_dev_monitor'))
   config_yaml= get_arg('-config_yaml=',get_arg('--config_yaml=',None))
   config_yaml_section= get_arg('-config_section=',get_arg('--config_section=','ETH_DEV_MONITOR'))
+  #List(array) of devices consisting of list of [name(str), URI(str), activation_delay(float)].
+  #dev_list overwrites config_yaml.
+  dev_list= get_arg('-dev_list=',get_arg('--dev_list=',None))
   config= None
   if config_yaml is not None and config_yaml!='':
     try:
@@ -126,10 +129,21 @@ if __name__=='__main__':
     config= {
       'INTERVAL': 1.0,
       'DEVICES': {
-        'robot': {'URI': 'motoman', 'ACTIVATION_DELAY': 5.0},
-        'jetson': {'URI': 'jetson', 'ACTIVATION_DELAY': 3.0},
+        #'robot': {'URI': 'motoman', 'ACTIVATION_DELAY': 5.0},
+        #'jetson': {'URI': 'jetson', 'ACTIVATION_DELAY': 3.0},
         }
       }
+
+  if dev_list is not None:
+    devices= eval(dev_list)
+    for name, uri, activation_delay in devices:
+      config_dev= config['DEVICES']
+      if name not in config_dev:
+        config_dev[name]= {}
+      config_dev[name]['URI']= uri
+      config_dev[name]['ACTIVATION_DELAY']= activation_delay
+
+  print(f'eth_dev_monitor: config={config}')
 
   monitor= TEthDevMonitorNode(node_name=node_name, params=config)
   monitor.InitNode()
