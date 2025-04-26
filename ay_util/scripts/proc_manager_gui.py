@@ -51,13 +51,13 @@ class TProcessManagerGUIBase(QtCore.QObject, TSubProcManager, TScriptNodeClient,
 
     status= self.GetStatus()
 
-    #NOTE: Do not use yellow as it is used by other modules.
+    #NOTE: Do not use yellow, green as it is used by other modules.
     if status in (self.UNDEFINED, self.FAULT, self.EMERGENCY, self.ROBOT_EMERGENCY_STOP, self.PROTECTIVE_STOP):
       self.status_color= ['red']
-    elif status in (self.WAIT_REQUEST,):
-      self.status_color= ['green']
-    elif status in (self.PROGRAM_RUNNING,):
-      self.status_color= ['green']
+    #elif status in (self.WAIT_REQUEST,):
+      #self.status_color= ['green']
+    #elif status in (self.PROGRAM_RUNNING,):
+      #self.status_color= ['green']
     else:
       self.status_color= []
 
