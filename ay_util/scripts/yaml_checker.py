@@ -66,15 +66,18 @@ def IsMixedTypesInvalid(types):
 
 
 def CheckListUniformity(lst, path='root', line_num=None):
-  types= {type(x) for x in lst}
   line_info= f": L.{line_num}" if line_num else ""
 
-  if IsMixedTypesInvalid(types):
-    CPrint(4,f"WARNING{line_info}: List '{path}' has irregular mixed types: {types}")
+  #types= {type(x) for x in lst}
+  #if IsMixedTypesInvalid(types):
+    #CPrint(4,f"WARNING{line_info}: List '{path}' has irregular mixed types: {types}")
 
   for i, val in enumerate(lst):
-    if isinstance(val, str) and re.match(r'^-?\d+(\.\d+)?\s+-?\d+(\.\d+)?$', val):
-      CPrint(4,f"WARNING{line_info}: Possible missing comma in '{path}[{i}]': '{val}'")
+    if isinstance(val, str):
+      if re.match(r'^-?\d+(\.\d+)?\s+-?\d+(\.\d+)?$', val):
+        CPrint(4,f"WARNING{line_info}: Possible missing comma in '{path}[{i}]': '{val}'")
+      elif re.match(r'^[-+]?\d+(\.\d+)?', val):
+        CPrint(4,f"WARNING{line_info}: '{path}[{i}]' might be intended as a number but is recognized as a string: '{val}'")
 
 
 def CustomYAMLCheck(yaml_content, yamllint_config):
