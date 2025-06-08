@@ -166,7 +166,7 @@ class TURPhysicalUIServer(object):
     t_traj= [k*subt_traj[-1]+t for k in range(n_repeat) for t in subt_traj[:-1]]+[n_repeat*subt_traj[-1]]
     on_off_traj= list(on_off_traj)*n_repeat+[on_off_traj[-1]]
     assert(len(on_off_traj)==len(t_traj))
-    rate_adjuster= rospy.Rate(self.hz)
+    rate_adjuster= rospy.Rate(self.out_hz)
     while not rospy.is_shutdown() and th_info['running']:
       t_now= (rospy.Time.now()-t_start).to_sec()
       if t_now>=t_traj[-1]:
