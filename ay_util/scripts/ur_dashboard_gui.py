@@ -32,6 +32,7 @@ if __name__=='__main__':
   topics_to_monitor= None if topics_to_monitor=='' else {p.split(':')[0]:p.split(':')[-1] for p in topics_to_monitor.split(',')}
 
   #NOTE: Some constants are defined in ctrl_paramX.yaml
+  #NOTE: These parameters were restructured into a more comprehensive physical UI. See ur_pui_server.py
   #Parameters:
   config={
     'START_BTN': {

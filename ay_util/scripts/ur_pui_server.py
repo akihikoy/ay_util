@@ -14,7 +14,7 @@ import sys
 import threading
 import numpy as np
 import rospy
-#import std_msgs.msg
+import std_msgs.msg
 #import std_srvs.srv
 #import sensor_msgs.msg
 import ay_util_msgs.srv
@@ -30,27 +30,53 @@ except Exception as e:
 
 class TURPhysicalUIServer(object):
 
-  def __init__(self, node_name='ur_pui_server', config=None, hz=50, is_sim=False):
+  def __init__(self, node_name='ur_pui_server', config=None, is_sim=False):
     config_base= {
-        'STATE_LED_RED': 0,
-        'STATE_LED_YELLOW': 1,
-        'STATE_LED_GREEN': 2,
-        'STATE_BEEP': 3,
-        'START_BTN_LED': 4,
-        'STOP_BTN_LED': 5,
+      'OUTPUTS': {
+        'PINS': {
+          'STATE_LED_RED': 0,
+          'STATE_LED_YELLOW': 1,
+          'STATE_LED_GREEN': 2,
+          'STATE_BEEP': 3,
+          'START_BTN_LED': 4,
+          'STOP_BTN_LED': 5,
+        },
+        'SIGNAL_ON': True,
+        'OUT_HZ': 50,  #Output rate (Hz)
+        },
+      'INPUTS': {
+        'PINS': {
+          'E_STOP': 0,
+          'FENCE': 1,
+          'START_BTN': 4,
+          'STOP_BTN': 5,
+          'SRC_CNT_LS': 6,  #SRC_CONTAINER Limit Switch (when connected).
+        },
+        'SIGNAL_ON': True,
+        'DT_FILTER': 0.05,  #Filter for the input signal.
+        },
       }
     #if config is not None:  InsertDict(config_base, config)
+    # NOTE: We do not merge config by InsertDict as it does not provide a way of zero base config.
     if config is not None:  config_base= config
     self.config= config_base
+    self.in_pins= self.config['INPUTS']['PINS']
+    self.out_pins= self.config['OUTPUTS']['PINS']
+    self.dt_filter= self.config['INPUTS']['DT_FILTER']
 
     self.node_name= node_name
     self.is_sim= is_sim
 
+    self.pub_in= {}
     self.srvp_ur_set_io= None
+    self.sub_io_states= None
 
-    self.state= {name:False for name in self.config.keys()}
-    self.pattern_threads= {name:dict(thread=None,running=False) for name in self.config.keys()}
-    self.hz= hz
+    self.in_state= {name:False for name in self.in_pins.keys()}
+    self.in_state_change_time= None
+    self.prev_din= None
+    self.out_state= {name:False for name in self.out_pins.keys()}
+    self.out_pattern_threads= {name:dict(thread=None,running=False) for name in self.out_pins.keys()}
+    self.out_hz= self.config['OUTPUTS']['OUT_HZ']
 
     #self.thread_topics_hz= None
     #self.thread_topics_hz_running= False
@@ -61,14 +87,46 @@ class TURPhysicalUIServer(object):
 
   def Connect(self, timeout=6.0, with_thread=True):
     if self.is_sim:  return
+
+    for name in self.in_pins.keys():
+      self.pub_in[name]= rospy.Publisher(f'~inputs/{name}', std_msgs.msg.Bool, queue_size=10)
+
     self.srvp_ur_set_io= SetupServiceProxy('/ur_hardware_interface/set_io', ur_msgs.srv.SetIO, persistent=False, time_out=timeout)
     rospy.Service('~set_pui', ay_util_msgs.srv.SetPUI, self.SetPUI)
+    self.sub_io_states= rospy.Subscriber('/ur_hardware_interface/io_states', ur_msgs.msg.IOStates, self.IOStatesCallback)
 
   def Disconnect(self):
     if self.is_sim:  return
     self.StopAllPatternThreads()
     self.TurnOffAll()
     self.srvp_ur_set_io= None  #TODO: srvp_ur_set_io may be used from other thread, so the LED may be turned on before this.
+    if self.sub_io_states is not None:
+      self.sub_io_states.unregister()
+      self.sub_io_states= None
+    for pub in self.pub_in:
+      pub.unregister()
+    self.pub_in= []
+
+  def IOStatesCallback(self, msg):
+    din= {name: msg.digital_in_states[pin].state==self.config['INPUTS']['SIGNAL_ON']
+          for name,pin in self.in_pins.items()}
+
+    current_time= rospy.Time.now().to_sec()
+    if self.in_state_change_time is None or self.prev_din is None:
+      self.in_state_change_time= {name: current_time for name in self.in_pins.keys()}
+    else:
+      #Update the time stamp when din and prev_din are different.
+      self.in_state_change_time= {name: current_time if din[name]!=self.prev_din[name]
+                                    else ch_time
+                                  for name, ch_time in self.in_state_change_time.items()}
+    self.in_state= {name: din[name] if current_time-ch_time>self.dt_filter
+                      else self.in_state[name]
+                    for name, ch_time in self.in_state_change_time.items()}
+    self.prev_din= din
+
+    #print(self.in_state)
+    for name, state in self.in_state.items():
+      self.pub_in[name].publish(std_msgs.msg.Bool(state))
 
   #int8 fun, int8 pin, float32 state
   #fun: ur_msgs.srv.SetIORequest.{FUN_SET_DIGITAL_OUT,FUN_SET_FLAG,FUN_SET_ANALOG_OUT,FUN_SET_TOOL_VOLTAGE}
@@ -82,28 +140,28 @@ class TURPhysicalUIServer(object):
     return self.SetURIO(ur_msgs.srv.SetIORequest.FUN_SET_DIGITAL_OUT, pin, state)
 
   def SetByName(self, name, is_on, update_state=True):
-    pin= self.config[name]
+    pin= self.out_pins[name]
     res= self.SetByPin(pin, is_on)
-    if update_state:  self.state[name]= is_on
+    if update_state:  self.out_state[name]= is_on
     return res
 
   def TurnOffAll(self, update_state=True):
     self.StopAllPatternThreads()
-    for name in self.config.keys():
+    for name in self.out_pins.keys():
       self.SetByName(name, False, update_state=update_state)
 
   def StopPatternThread(self, name):
-    self.pattern_threads[name]['running']= False
-    if self.pattern_threads[name]['thread'] is not None:
-      self.pattern_threads[name]['thread'].join()
-      self.pattern_threads[name]['thread']= None
+    self.out_pattern_threads[name]['running']= False
+    if self.out_pattern_threads[name]['thread'] is not None:
+      self.out_pattern_threads[name]['thread'].join()
+      self.out_pattern_threads[name]['thread']= None
 
   def StopAllPatternThreads(self):
-    for name in self.config.keys():
+    for name in self.out_pins.keys():
       self.StopPatternThread(name)
 
   def PatternLoop(self, th_info, name, t_start, on_off_traj, dt_traj, n_repeat):
-    f_set_pin= lambda is_on: self.SetByPin(self.config[name],is_on)
+    f_set_pin= lambda is_on: self.SetByPin(self.out_pins[name],is_on)
     subt_traj= [0.0]+np.cumsum(dt_traj).tolist()
     t_traj= [k*subt_traj[-1]+t for k in range(n_repeat) for t in subt_traj[:-1]]+[n_repeat*subt_traj[-1]]
     on_off_traj= list(on_off_traj)*n_repeat+[on_off_traj[-1]]
@@ -121,7 +179,7 @@ class TURPhysicalUIServer(object):
         idx= len(t_traj)-1
       f_set_pin(on_off_traj[idx])
       rate_adjuster.sleep()
-    f_set_pin(self.state[name])
+    f_set_pin(self.out_state[name])
     th_info['thread']= None
 
   #req: ay_util_msgs.srv.SetPUIRequest
@@ -129,7 +187,7 @@ class TURPhysicalUIServer(object):
     print('set_pui: received req=',req)
     if req.action==req.OFF_ALL:  self.TurnOffAll()
     else:
-      if req.name not in self.config:
+      if req.name not in self.out_pins:
         print('set_pui: Warning: req.name {} not in config'.format(req.name))
         return ay_util_msgs.srv.SetPUIResponse(False)
       self.StopPatternThread(req.name)
@@ -137,7 +195,7 @@ class TURPhysicalUIServer(object):
       elif req.action==req.OFF:  self.SetByName(req.name, is_on=False)
       elif req.action==req.PATTERN:
         assert(len(req.on_off_traj)==len(req.dt_traj))
-        th_info= self.pattern_threads[req.name]
+        th_info= self.out_pattern_threads[req.name]
         thread= threading.Thread(name=req.name,
                                 target=lambda th_info=th_info,name=req.name,t_start=req.start,on_off_traj=req.on_off_traj,dt_traj=req.dt_traj,n_repeat=req.n_repeat:self.PatternLoop(th_info, name, t_start, on_off_traj, dt_traj, n_repeat))
         th_info['running']= True
@@ -157,7 +215,7 @@ if __name__=='__main__':
     else:  return default
   node_name= get_arg('-node_name=',get_arg('--node_name=','ur_pui_server'))
   config_yaml= get_arg('-config_yaml=',get_arg('--config_yaml=',None))
-  config_yaml_section= get_arg('-config_section=',get_arg('--config_section=','UR_STATUS_PINS'))
+  config_yaml_section= get_arg('-config_section=',get_arg('--config_section=','UR_PHYSICAL_UI'))
   config= None
   if config_yaml is not None and config_yaml!='':
     try:
@@ -167,9 +225,8 @@ if __name__=='__main__':
     except Exception:
       print('Failed to load config from YAML={}, section={}'.format(config_yaml,config_yaml_section))
       print('Default config is used.')
-  hz= get_arg('-hz=',get_arg('--hz=',50))
 
-  server= TURPhysicalUIServer(node_name=node_name, config=config, hz=hz, is_sim=is_sim)
+  server= TURPhysicalUIServer(node_name=node_name, config=config, is_sim=is_sim)
   server.InitNode()
   server.Connect()
   rospy.spin()
