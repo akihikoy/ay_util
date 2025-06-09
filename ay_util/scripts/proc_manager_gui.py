@@ -152,8 +152,8 @@ class TProcessManagerGUIBase(QtCore.QObject, TSubProcManager, TScriptNodeClient,
 
   #color: 'red','yellow','green'
   def SetLEDLight(self, color, is_on):
-    if self.is_sim:  return
-    if self.srvp_set_pui is None:  return
+    if self.is_sim:  return False
+    if self.srvp_set_pui is None:  return False
     config_name= {'red':'STATE_LED_RED',
                   'yellow':'STATE_LED_YELLOW',
                   'green':'STATE_LED_GREEN'}[color]
@@ -163,16 +163,31 @@ class TProcessManagerGUIBase(QtCore.QObject, TSubProcManager, TScriptNodeClient,
     return self.srvp_set_pui(req)
 
   def SetStartStopLEDs(self, is_start_on, is_stop_on):
-    if self.is_sim:  return
-    if self.srvp_set_pui is None:  return
+    if self.is_sim:  return False
+    if self.srvp_set_pui is None:  return False
     req= ay_util_msgs.srv.SetPUIRequest()
     req.name= 'START_BTN_LED'
     req.action= req.ON if is_start_on else req.OFF
-    self.srvp_set_pui(req)
+    res1= self.srvp_set_pui(req)
     req= ay_util_msgs.srv.SetPUIRequest()
     req.name= 'STOP_BTN_LED'
     req.action= req.ON if is_stop_on else req.OFF
-    self.srvp_set_pui(req)
+    res2= self.srvp_set_pui(req)
+    return res1 and res2
+
+  #Send POWER_OFF_REQ.
+  def SetPowerOffReq(self, interval=1.0):
+    if self.is_sim:  return False
+    if self.srvp_set_pui is None:  return False
+    req= ay_util_msgs.srv.SetPUIRequest()
+    req.name= 'POWER_OFF_REQ'
+    req.action= req.PATTERN
+    req.start= rospy.Time.now()
+    req.on_off_traj= [True,False]
+    req.dt_traj= [interval, interval]
+    req.n_repeat= 1
+    srvp_set_pui(req)
+    return self.srvp_set_pui(req)
 
   def Cleanup(self):
     if self.is_sim:  return
