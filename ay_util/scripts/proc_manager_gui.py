@@ -182,7 +182,6 @@ class TProcessManagerGUIBase(QtCore.QObject, TSubProcManager, TScriptNodeClient,
     req= ay_util_msgs.srv.SetPUIRequest()
     req.name= 'POWER_OFF_REQ'
     req.action= req.ON
-    srvp_set_pui(req)
     return self.srvp_set_pui(req)
 
   def Cleanup(self):
