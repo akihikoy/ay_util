@@ -176,16 +176,12 @@ class TProcessManagerGUIBase(QtCore.QObject, TSubProcManager, TScriptNodeClient,
     return res1 and res2
 
   #Send POWER_OFF_REQ.
-  def SetPowerOffReq(self, interval=1.0):
+  def SetPowerOffReq(self):
     if self.is_sim:  return False
     if self.srvp_set_pui is None:  return False
     req= ay_util_msgs.srv.SetPUIRequest()
     req.name= 'POWER_OFF_REQ'
-    req.action= req.PATTERN
-    req.start= rospy.Time.now()
-    req.on_off_traj= [True,False]
-    req.dt_traj= [interval, interval]
-    req.n_repeat= 1
+    req.action= req.ON
     srvp_set_pui(req)
     return self.srvp_set_pui(req)
 
