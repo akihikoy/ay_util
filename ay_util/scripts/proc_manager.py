@@ -38,6 +38,7 @@ class TSubProcManager(object):
   #A string command is split into a list according to the split_cmd mode (cf. SplitCommand).
   def RunFGProcess(self, command, shell=False, split_cmd='auto'):
     command= self.SplitCommand(command, split_cmd)
+    print(f'''Run(FG): {' '.join(command)}''')
     try:
       p= subprocess.Popen(command, shell=shell)
       p.wait()
@@ -49,6 +50,7 @@ class TSubProcManager(object):
   def RunBGProcess(self, name, command, shell=False, split_cmd='auto'):
     self.TerminateBGProcess(name)
     command= self.SplitCommand(command, split_cmd)
+    print(f'''Run(BG:{name}): {' '.join(command)}''')
     try:
       p= subprocess.Popen(command, shell=shell)
       self.procs[name]= p
@@ -60,6 +62,7 @@ class TSubProcManager(object):
     if name not in self.procs:
       print('No process named',name)
       return
+    print(f'''Terminate(BG:{name})''')
     self.procs[name].terminate()
     self.procs[name].wait()
     #TODO: wait(): It is safer to have timeout.  For ver<3.3, implement like:
