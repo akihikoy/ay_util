@@ -7,6 +7,8 @@
 import subprocess
 import re
 import os
+import signal
+import time
 
 class TSubProcManager(object):
   def __init__(self, debug=True):
@@ -40,7 +42,12 @@ class TSubProcManager(object):
     command= self.SplitCommand(command, split_cmd)
     print(f'''Run(FG): {' '.join(command)}''')
     try:
-      p= subprocess.Popen(command, shell=shell)
+      kwargs=dict(
+        shell=shell,
+        #stdout=subprocess.PIPE,
+        #stderr=subprocess.PIPE
+        )
+      p= subprocess.Popen(command, **kwargs)
       p.wait()
     except OSError as e:
       print('RunFGProcess failed: {}'.format(e))
@@ -52,7 +59,13 @@ class TSubProcManager(object):
     command= self.SplitCommand(command, split_cmd)
     print(f'''Run(BG:{name}): {' '.join(command)}''')
     try:
-      p= subprocess.Popen(command, shell=shell)
+      kwargs=dict(
+        shell=shell,
+        preexec_fn=os.setsid,
+        #stdout=subprocess.PIPE,
+        #stderr=subprocess.PIPEn
+        )
+      p= subprocess.Popen(command, **kwargs)
       self.procs[name]= p
       self.DumpPS()
     except OSError as e:
@@ -63,24 +76,14 @@ class TSubProcManager(object):
       print('No process named',name)
       return
     print(f'''Terminate(BG:{name})''')
-    self.procs[name].terminate()
-    self.procs[name].wait()
-    #TODO: wait(): It is safer to have timeout.  For ver<3.3, implement like:
-    #while p.poll() is None:
-      #print 'Process still running...'
-      #time.sleep(0.1)
+    self.TerminateProc(self.procs[name], name)
     del self.procs[name]
     self.DumpPS()
 
   def TerminateAllBGProcesses(self):
     for name,p in self.procs.items():
       print('Terminating',name)
-      p.terminate()
-      p.wait()
-      #TODO: wait(): It is safer to have timeout.  For ver<3.3, implement like:
-      #while p.poll() is None:
-        #print 'Process still running...'
-        #time.sleep(0.1)
+      self.TerminateProc(p, name)
     self.procs= {}
     self.DumpPS()
 
@@ -101,3 +104,36 @@ class TSubProcManager(object):
   def IsBGProcessRunning(self, name):
     return self.procs[name].poll() is None
 
+  def TerminateProc(self, p, name=''):
+    #p.terminate()
+    #p.wait()
+    try:
+      os.killpg(os.getpgid(p.pid), signal.SIGINT)
+
+      timeout= 5.0
+      start_time= time.time()
+      while time.time() - start_time < timeout:
+        if p.poll() is not None:
+          print(f'Process[{name}]: Terminated gracefully.')
+          return True
+        time.sleep(0.1)
+
+      print(f'Process[{name}]: SIGINT failed, sending SIGTERM...')
+      os.killpg(os.getpgid(p.pid), signal.SIGTERM)
+
+      start_time= time.time()
+      while time.time() - start_time < timeout:
+        if p.poll() is not None:
+          print(f'Process[{name}]: Terminated with SIGTERM.')
+          return True
+        time.sleep(0.1)
+
+      print(f'Process[{name}]: SIGTERM failed, sending SIGKILL...')
+      os.killpg(os.getpgid(p.pid), signal.SIGKILL)
+      p.wait()
+      print(f'Process[{name}]: Forcefully killed.')
+      return False
+
+    except Exception as e:
+      print(f'Process[{name}]: Exception during termination: {e}')
+      return False
