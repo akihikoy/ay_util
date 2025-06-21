@@ -38,6 +38,7 @@ class TSubProcManager(object):
 
   #command: command string or list of command and arguments.
   #A string command is split into a list according to the split_cmd mode (cf. SplitCommand).
+  #Return: exit_code (0: Normal exit, 1,2,..: Command error exit, -1: Python error exit).
   def RunFGProcess(self, command, shell=False, split_cmd='auto'):
     command= self.SplitCommand(command, split_cmd)
     print(f'''Run(FG): {' '.join(command)}''')
@@ -49,8 +50,11 @@ class TSubProcManager(object):
         )
       p= subprocess.Popen(command, **kwargs)
       p.wait()
+      exit_code= p.returncode
+      return exit_code
     except OSError as e:
       print('RunFGProcess failed: {}'.format(e))
+      return -1
 
   #command: command string or list of command and arguments.
   #A string command is split into a list according to the split_cmd mode (cf. SplitCommand).

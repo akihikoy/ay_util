@@ -48,10 +48,12 @@ class TScriptNodeClient(object):
   def ConnectToScriptNode(self, timeout=20):
     self.connected_to_script_node= False
     try:
+      rospy.wait_for_service('/ros_node/command', timeout=timeout)
       rospy.wait_for_service('/ros_node/wait_finish', timeout=timeout)
       rospy.wait_for_service('/ros_node/get_result_as_yaml', timeout=timeout)
       rospy.wait_for_service('/ros_node/get_attr_as_yaml', timeout=timeout)
       rospy.wait_for_service('/ros_node/set_attr_with_yaml', timeout=timeout)
+      self.srvp_cmd= rospy.ServiceProxy('/ros_node/command', ay_trick_msgs.srv.SetString, persistent=False)
       self.srvp_wait_finish= rospy.ServiceProxy('/ros_node/wait_finish', std_srvs.srv.Empty, persistent=False)
       self.srvp_get_result_as_yaml= rospy.ServiceProxy('/ros_node/get_result_as_yaml', ay_trick_msgs.srv.GetString, persistent=False)
       self.srvp_get_attr_as_yaml= rospy.ServiceProxy('/ros_node/get_attr_as_yaml', ay_trick_msgs.srv.GetAttrAsString, persistent=False)
@@ -63,7 +65,7 @@ class TScriptNodeClient(object):
       self.srvp_get_result_as_yaml= None
       self.srvp_get_attr_as_yaml= None
       self.srvp_set_attr_with_yaml= None
-    self.pub_cmd= rospy.Publisher('/ros_node/command', std_msgs.msg.String, queue_size=10)
+    #self.pub_cmd= rospy.Publisher('/ros_node/command', std_msgs.msg.String, queue_size=10)
     self.pub_key= rospy.Publisher('/ros_node/stdin', std_msgs.msg.String, queue_size=10)
     self.sub_stdout= rospy.Subscriber('/ros_node/stdout', std_msgs.msg.String, self.StdOutCallback)
     self.script_node_status= None
@@ -72,19 +74,31 @@ class TScriptNodeClient(object):
   def RunFGScript(self, cmd):
     if not self.connected_to_script_node:
       CPrint(4,'Not connected to the script node.')
-      return
+      return False
     self.srvp_wait_finish()  #Wait for previously executed scripts.
-    self.pub_cmd.publish(std_msgs.msg.String(cmd))
+    #self.pub_cmd.publish(std_msgs.msg.String(cmd))
+    if not self.srvp_cmd(cmd).result:
+      print('###ERROR/RunFGScript/FAILED###',cmd)
+      return False
     print('###INFO/RunFGScript###',cmd)
     self.srvp_wait_finish()
+    return True
 
   def RunBGScript(self, cmd):
     if not self.connected_to_script_node:
       CPrint(4,'Not connected to the script node.')
-      return
+      return False
+    #CPrint(4,f'DEBUG(script_node_client/{cmd}):{sys._getframe().f_lineno}')
+    #CPrint(4,f'DEBUG(script_node_client/{cmd}):status={self.script_node_status}')
     self.srvp_wait_finish()  #Wait for previously executed scripts.
-    self.pub_cmd.publish(std_msgs.msg.String(cmd))
+    #CPrint(4,f'DEBUG(script_node_client/{cmd}):{sys._getframe().f_lineno}')
+    #self.pub_cmd.publish(std_msgs.msg.String(cmd))
+    if not self.srvp_cmd(cmd).result:
+      print('###ERROR/RunBGScript/FAILED###',cmd)
+      return False
+    #CPrint(4,f'DEBUG(script_node_client/{cmd}):{sys._getframe().f_lineno}')
     print('###INFO/RunBGScript###',cmd)
+    return True
 
   def SendString(self, key):
     if not self.connected_to_script_node:
