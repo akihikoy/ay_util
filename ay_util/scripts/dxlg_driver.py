@@ -18,7 +18,7 @@ from ay_py.misc.dxl_util import DxlPortHandler
 #Table of gripper type aliases.
 GRIPPER_TYPE_ALIASES={
     'DxlG'   : 'DxlGripper',
-    'ThG'    : 'RHP12RNGripper',
+    'ThG'    : 'RHP12RNAGripper',
     'ThGA'   : 'RHP12RNAGripper',
     'DxlpO2' : 'DxlpO2Gripper',
     'DxlO3'  : 'DxlO3Gripper',
