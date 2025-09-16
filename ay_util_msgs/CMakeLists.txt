@@ -28,6 +28,7 @@ add_service_files(
   GetAllowedCollisionMatrix.srv
   GetStateValidity.srv
   GetTrajectoryValidity.srv
+  SetFlag.srv
   SetPlanningSceneDiff.srv
   SetPUI.srv
 )

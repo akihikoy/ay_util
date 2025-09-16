@@ -13,6 +13,7 @@ from ay_py.ros.base import SetupServiceProxy
 import sys
 import threading
 import numpy as np
+import copy
 import rospy
 import std_msgs.msg
 #import std_srvs.srv
@@ -78,6 +79,9 @@ class TURPhysicalUIServer(object):
     self.out_pattern_threads= {name:dict(thread=None,running=False) for name in self.out_pins.keys()}
     self.out_hz= self.config['OUTPUTS']['OUT_HZ']
 
+    self.io_states= None
+    self.pub_io_states= None
+
     #self.thread_topics_hz= None
     #self.thread_topics_hz_running= False
 
@@ -94,6 +98,9 @@ class TURPhysicalUIServer(object):
     self.srvp_ur_set_io= SetupServiceProxy('/ur_hardware_interface/set_io', ur_msgs.srv.SetIO, persistent=False, time_out=timeout)
     rospy.Service('~set_pui', ay_util_msgs.srv.SetPUI, self.SetPUI)
     self.sub_io_states= rospy.Subscriber('/ur_hardware_interface/io_states', ur_msgs.msg.IOStates, self.IOStatesCallback)
+    #Publisher of io_states for sending a fake digital input.
+    self.pub_io_states= rospy.Publisher('/ur_hardware_interface/io_states', ur_msgs.msg.IOStates, queue_size=10)
+    rospy.Service('~send_fake_din', ay_util_msgs.srv.SetFlag, self.SendFakeDigitalInSignal)
 
   def Disconnect(self):
     if self.is_sim:  return
@@ -107,8 +114,14 @@ class TURPhysicalUIServer(object):
       pub.unregister()
     self.pub_in= []
 
+    if self.pub_io_states is not None:
+      self.pub_io_states.unregister()
+    self.io_states= None
+    self.pub_io_states= None
+
   def IOStatesCallback(self, msg):
-    din= {name: msg.digital_in_states[pin].state==self.config['INPUTS']['SIGNAL_ON']
+    self.io_states= msg
+    din= {name: self.io_states.digital_in_states[pin].state==self.config['INPUTS']['SIGNAL_ON']
           for name,pin in self.in_pins.items()}
 
     current_time= rospy.Time.now().to_sec()
@@ -203,12 +216,32 @@ class TURPhysicalUIServer(object):
         th_info['thread'].start()
     return ay_util_msgs.srv.SetPUIResponse(True)
 
+  def SendFakeDigitalInSignal(self, req):
+    name, is_on= req.name, req.is_on
+    if name not in self.in_pins:  return ay_util_msgs.srv.SetFlagResponse(False)
+    signal_idx= self.in_pins[name]
+    signal_trg= self.config['INPUTS']['SIGNAL_ON']
+    if self.io_states is not None:
+      msg= copy.deepcopy(self.io_states)
+    else:
+      msg= ur_msgs.msg.IOStates()
+      msg.digital_in_states= [ur_msgs.msg.Digital(pin,False) for pin in range(18)]
+      msg.digital_out_states= [ur_msgs.msg.Digital(pin,False) for pin in range(18)]
+      msg.flag_states= [ur_msgs.msg.Digital(pin,False) for pin in range(2)]
+      msg.analog_in_states= [ur_msgs.msg.Analog(pin,0,0) for pin in range(2)]
+      msg.analog_out_states= [ur_msgs.msg.Analog(pin,0,0) for pin in range(2)]
+    msg.digital_in_states[signal_idx]= ur_msgs.msg.Digital(signal_idx,signal_trg)
+    self.pub_io_states.publish(msg)
+    return ay_util_msgs.srv.SetFlagResponse(True)
+
+
 if __name__=='__main__':
   try:
     is_sim_default= rospy.get_param('robot_code').endswith('_SIM')
   except KeyError:
     is_sim_default= False
-  is_sim= True if '-sim' in sys.argv or '--sim' in sys.argv else is_sim_default
+  is_sim= (True if '-sim' in sys.argv or '--sim' in sys.argv else
+           (False if '-real' in sys.argv or '--real' in sys.argv else is_sim_default))
   def get_arg(opt_name, default):
     exists= [a.startswith(opt_name) for a in sys.argv]
     if any(exists):  return sys.argv[exists.index(True)].replace(opt_name,'')
