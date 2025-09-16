@@ -3,9 +3,10 @@
   <!--<arg name="sim" default="" />-->
   <arg name="topics" default="" />
   <arg name="config_yaml" default="" />
+  <arg name="flags" default="" />
 
   <node pkg="ay_util" type="ur_pui_server.py" name="ur_pui_server" output="screen"
-        args="-config_yaml=$(arg config_yaml)" />
+        args="-config_yaml=$(arg config_yaml) $(arg flags)" />
   <node pkg="ay_util" type="ur_dashboard_gui.py" name="ur_dashboard_gui" output="screen"
-        args="-topics=$(arg topics)" />
+        args="-topics=$(arg topics) $(arg flags)" />
 </launch>

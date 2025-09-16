@@ -63,6 +63,7 @@ class TProcessManagerMotoman(TProcessManagerGUIBase):
 
   def ConnectToRobot(self, timeout=6.0):
     self.srvp_set_pui= SetupServiceProxy('/ur_pui_server/set_pui', ay_util_msgs.srv.SetPUI, persistent=False, time_out=timeout)
+    self.srvp_send_fake_din= SetupServiceProxy('/ur_pui_server/send_fake_din', ay_util_msgs.srv.SetFlag, persistent=False, time_out=timeout)
     if not self.is_sim:
       self.sub_robot_status= rospy.Subscriber('/robot_status', industrial_msgs.msg.RobotStatus, self.RobotStatusCallback)
       self.srvp_robot_enable= SetupServiceProxy('/robot_enable', std_srvs.srv.Trigger, persistent=False, time_out=timeout)
@@ -76,6 +77,7 @@ class TProcessManagerMotoman(TProcessManagerGUIBase):
     if self.is_sim:  return
     TProcessManagerGUIBase.Cleanup(self)
     self.srvp_set_pui= None
+    self.srvp_send_fake_din= None
     self.srvp_robot_enable= None
     self.srvp_robot_disable= None
 
@@ -99,22 +101,23 @@ class TProcessManagerMotoman(TProcessManagerGUIBase):
   def IOStatesCallback(self, msg):
     self.io_states= msg
 
-  def SendFakeDigitalInSignal(self, signal_idx, signal_trg):
-    if self.pub_io_states is None:  return
-    if self.io_states is not None:
-      msg= copy.deepcopy(self.io_states)
-      print('debug,1,',type(msg))
-      print('debug,1,',dir(msg))
-      print('debug,1,',msg)
-    else:
-      msg= ur_msgs.msg.IOStates()
-      msg.digital_in_states= [ur_msgs.msg.Digital(pin,False) for pin in range(18)]
-      msg.digital_out_states= [ur_msgs.msg.Digital(pin,False) for pin in range(18)]
-      msg.flag_states= [ur_msgs.msg.Digital(pin,False) for pin in range(2)]
-      msg.analog_in_states= [ur_msgs.msg.Analog(pin,0,0) for pin in range(2)]
-      msg.analog_out_states= [ur_msgs.msg.Analog(pin,0,0) for pin in range(2)]
-      print('debug,2,',type(msg))
-      print('debug,2,',dir(msg))
-    msg.digital_in_states[signal_idx]= ur_msgs.msg.Digital(signal_idx,signal_trg)
-    self.pub_io_states.publish(msg)
+  #NOTE: This is currently provided by TProcessManagerGUIBase.
+  #def SendFakeDigitalInSignal(self, signal_idx, signal_trg):
+    #if self.pub_io_states is None:  return
+    #if self.io_states is not None:
+      #msg= copy.deepcopy(self.io_states)
+      #print('debug,1,',type(msg))
+      #print('debug,1,',dir(msg))
+      #print('debug,1,',msg)
+    #else:
+      #msg= ur_msgs.msg.IOStates()
+      #msg.digital_in_states= [ur_msgs.msg.Digital(pin,False) for pin in range(18)]
+      #msg.digital_out_states= [ur_msgs.msg.Digital(pin,False) for pin in range(18)]
+      #msg.flag_states= [ur_msgs.msg.Digital(pin,False) for pin in range(2)]
+      #msg.analog_in_states= [ur_msgs.msg.Analog(pin,0,0) for pin in range(2)]
+      #msg.analog_out_states= [ur_msgs.msg.Analog(pin,0,0) for pin in range(2)]
+      #print('debug,2,',type(msg))
+      #print('debug,2,',dir(msg))
+    #msg.digital_in_states[signal_idx]= ur_msgs.msg.Digital(signal_idx,signal_trg)
+    #self.pub_io_states.publish(msg)
 

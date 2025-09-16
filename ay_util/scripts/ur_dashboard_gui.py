@@ -23,7 +23,8 @@ if __name__=='__main__':
     is_sim_default= rospy.get_param('robot_code').endswith('_SIM')
   except KeyError:
     is_sim_default= False
-  is_sim= True if '-sim' in sys.argv or '--sim' in sys.argv else is_sim_default
+  is_sim= (True if '-sim' in sys.argv or '--sim' in sys.argv else
+           (False if '-real' in sys.argv or '--real' in sys.argv else is_sim_default))
   def get_arg(opt_name, default):
     exists= [a.startswith(opt_name) for a in sys.argv]
     if any(exists):  return sys.argv[exists.index(True)].replace(opt_name,'')
@@ -33,17 +34,17 @@ if __name__=='__main__':
 
   #NOTE: Some constants are defined in ctrl_paramX.yaml
   #NOTE: These parameters were restructured into a more comprehensive physical UI. See ur_pui_server.py
-  #Parameters:
-  config={
-    'START_BTN': {
-      'SIGNAL_IDX': 4,
-      'SIGNAL_ON': True,
-      },
-    'STOP_BTN': {
-      'SIGNAL_IDX': 5,
-      'SIGNAL_ON': True,
-      },
-    }
+  ##Parameters:
+  #config={
+    #'START_BTN': {
+      #'SIGNAL_IDX': 4,
+      #'SIGNAL_ON': True,
+      #},
+    #'STOP_BTN': {
+      #'SIGNAL_IDX': 5,
+      #'SIGNAL_ON': True,
+      #},
+    #}
 
   pm= TProcessManagerUR(is_sim=is_sim, topics_to_monitor=topics_to_monitor)
 
@@ -203,12 +204,12 @@ MainProgram: {script_status}'''.format(
       'button',{
         'text': 'START',
         #'onstatuschanged':lambda w,obj,status:(obj.setEnabled(status in (pm.PROGRAM_RUNNING,)) ),
-        'onclick': lambda w,obj: pm.SendFakeDigitalInSignal(config['START_BTN']['SIGNAL_IDX'], config['START_BTN']['SIGNAL_ON']), }),
+        'onclick': lambda w,obj: pm.SendFakeStartBtn(), }),
     'btn_stop': (
       'button',{
         'text': 'STOP',
         #'onstatuschanged':lambda w,obj,status:(obj.setEnabled(status in (pm.PROGRAM_RUNNING,)) ),
-        'onclick': lambda w,obj: pm.SendFakeDigitalInSignal(config['STOP_BTN']['SIGNAL_IDX'], config['STOP_BTN']['SIGNAL_ON']), }),
+        'onclick': lambda w,obj: pm.SendFakeStopBtn(), }),
     }
 
   widgets_recovery= {

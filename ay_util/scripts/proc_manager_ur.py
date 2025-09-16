@@ -65,12 +65,15 @@ class TURManager(object):
         #threads['srvp_ur_set_io'].start()
         threads['srvp_ur_set_pui']= threading.Thread(name='srvp_ur_set_pui', target=lambda:(setattr(self,'srvp_ur_set_pui',SetupServiceProxy('/ur_pui_server/set_pui', ay_util_msgs.srv.SetPUI, persistent=False, time_out=timeout))))
         threads['srvp_ur_set_pui'].start()
+        threads['srvp_send_fake_din']= threading.Thread(name='srvp_send_fake_din', target=lambda:(setattr(self,'srvp_send_fake_din',SetupServiceProxy('/ur_pui_server/send_fake_din', ay_util_msgs.srv.SetFlag, persistent=False, time_out=timeout))))
+        threads['srvp_send_fake_din'].start()
         for name,th in threads.items():  th.join()
       else:
         for service in services:
           self.srvp_ur_dashboard[service]= SetupServiceProxy('/ur_hardware_interface/dashboard/{0}'.format(service), std_srvs.srv.Trigger, persistent=False, time_out=timeout)
         #self.srvp_ur_set_io= SetupServiceProxy('/ur_hardware_interface/set_io', ur_msgs.srv.SetIO, persistent=False, time_out=timeout)
         self.srvp_ur_set_pui= SetupServiceProxy('/ur_pui_server/set_pui', ay_util_msgs.srv.SetPUI, persistent=False, time_out=timeout)
+        self.srvp_send_fake_din= SetupServiceProxy('/ur_pui_server/send_fake_din', ay_util_msgs.srv.SetFlag, persistent=False, time_out=timeout)
 
     #Connect to io_states to publish a fake io_states.
     self.pub_io_states= rospy.Publisher('/ur_hardware_interface/io_states', ur_msgs.msg.IOStates, queue_size=10)
@@ -86,6 +89,7 @@ class TURManager(object):
     if self.is_sim:  return
     #self.srvp_ur_set_io= None
     self.srvp_ur_set_pui= None  #TODO: srvp_ur_set_pui may be used from other thread, so the LED may be turned on before this.
+    self.srvp_send_fake_din= None
     self.srvp_ur_dashboard= {}
 
     if not self.is_sim:
@@ -171,18 +175,19 @@ class TURManager(object):
         return False
     return True
 
-  def SendFakeDigitalInSignal(self, signal_idx, signal_trg):
-    if self.ur_robot_mode is not None and self.io_states is not None:
-      msg= copy.deepcopy(self.io_states)
-    else:
-      msg= ur_msgs.msg.IOStates()
-      msg.digital_in_states= [ur_msgs.msg.Digital(pin,False) for pin in range(18)]
-      msg.digital_out_states= [ur_msgs.msg.Digital(pin,False) for pin in range(18)]
-      msg.flag_states= [ur_msgs.msg.Digital(pin,False) for pin in range(2)]
-      msg.analog_in_states= [ur_msgs.msg.Analog(pin,0,0) for pin in range(2)]
-      msg.analog_out_states= [ur_msgs.msg.Analog(pin,0,0) for pin in range(2)]
-    msg.digital_in_states[signal_idx]= ur_msgs.msg.Digital(signal_idx,signal_trg)
-    self.pub_io_states.publish(msg)
+  #NOTE: This is currently provided by TProcessManagerGUIBase.
+  #def SendFakeDigitalInSignal(self, signal_idx, signal_trg):
+    #if self.ur_robot_mode is not None and self.io_states is not None:
+      #msg= copy.deepcopy(self.io_states)
+    #else:
+      #msg= ur_msgs.msg.IOStates()
+      #msg.digital_in_states= [ur_msgs.msg.Digital(pin,False) for pin in range(18)]
+      #msg.digital_out_states= [ur_msgs.msg.Digital(pin,False) for pin in range(18)]
+      #msg.flag_states= [ur_msgs.msg.Digital(pin,False) for pin in range(2)]
+      #msg.analog_in_states= [ur_msgs.msg.Analog(pin,0,0) for pin in range(2)]
+      #msg.analog_out_states= [ur_msgs.msg.Analog(pin,0,0) for pin in range(2)]
+    #msg.digital_in_states[signal_idx]= ur_msgs.msg.Digital(signal_idx,signal_trg)
+    #self.pub_io_states.publish(msg)
 
 
 class TProcessManagerUR(TProcessManagerGUIBase, TURManager):

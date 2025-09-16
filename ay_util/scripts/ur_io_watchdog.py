@@ -159,7 +159,8 @@ if __name__=='__main__':
     is_sim_default= rospy.get_param('robot_code').endswith('_SIM')
   except KeyError:
     is_sim_default= False
-  is_sim= True if '-sim' in sys.argv or '--sim' in sys.argv else is_sim_default
+  is_sim= (True if '-sim' in sys.argv or '--sim' in sys.argv else
+           (False if '-real' in sys.argv or '--real' in sys.argv else is_sim_default))
   def get_arg(opt_name, default):
     exists= [a.startswith(opt_name) for a in sys.argv]
     if any(exists):  return sys.argv[exists.index(True)].replace(opt_name,'')

@@ -138,6 +138,7 @@ class TProcessManagerGUIBase(QtCore.QObject, TSubProcManager, TScriptNodeClient,
     self.thread_status_update_running= False
 
     self.srvp_set_pui= None  #TODO: Connect to a PUI server set_pui service (ay_util_msgs.srv.SetPUI) in a robot subclass.
+    self.srvp_send_fake_din= None  #TODO: Connect to a PUI server send_fake_din service (ay_util_msgs.srv.SetFlag) in a robot subclass.
 
   def InitNode(self):
     rospy.init_node(self.node_name)
@@ -201,4 +202,20 @@ class TProcessManagerGUIBase(QtCore.QObject, TSubProcManager, TScriptNodeClient,
         return False
     return True
 
+  #Send a fake digital in signal.
+  def SendFakeDigitalInSignal(self, name, is_on):
+    if self.is_sim:  return False
+    if self.srvp_send_fake_din is None:  return False
+    req= ay_util_msgs.srv.SetFlagRequest()
+    req.name= name
+    req.is_on= is_on
+    return self.srvp_send_fake_din(req)
+
+  #Send a fake digital in signal of START_BTN.
+  def SendFakeStartBtn(self):
+    return self.SendFakeDigitalInSignal('START_BTN', True)
+
+  #Send a fake digital in signal of STOP_BTN.
+  def SendFakeStopBtn(self):
+    return self.SendFakeDigitalInSignal('STOP_BTN', True)
 
