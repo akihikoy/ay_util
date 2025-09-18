@@ -22,20 +22,37 @@ import ay_util_msgs.srv
 from ay_py.misc.dxl_util import DxlPortHandler
 
 class TMikataDriver(object):
-  def __init__(self, dev='/dev/ttyUSB0', robot_type='Mikata'):
+  def __init__(self, node_name='mikata_driver',
+               dev='/dev/ttyUSB0', robot_type='Mikata',
+               robot_module=None, class_name=None):
+    self.node_name= node_name
     self.dev= dev
     self.robot_type= robot_type
-    if self.robot_type=='Mikata':
-      mod= importlib.import_module('ay_py.misc.dxl_mikata')
-      self.mikata= mod.TMikata(dev=self.dev)
-    elif self.robot_type=='CraneX7':
-      mod= importlib.import_module('ay_py.misc.dxl_cranex7')
-      self.mikata= mod.TCraneX7(dev=self.dev)
-    elif self.robot_type=='Mikata6':
-      mod= importlib.import_module('ay_py.misc.dxl_mikata6')
-      self.mikata= mod.TMikata6(dev=self.dev)
-    else:
-      raise Exception('Invalid robot type: {robot_type}'.format(robot_type=robot_type))
+
+    rospy.init_node(self.node_name)
+
+    # If module/class are not specified, fall back to robot_type-based mapping:
+    if robot_module is None or class_name is None:
+      if self.robot_type == 'Mikata':
+        robot_module = 'ay_py.misc.dxl_mikata'
+        class_name   = 'TMikata'
+      elif self.robot_type == 'CraneX7':
+        robot_module = 'ay_py.misc.dxl_cranex7'
+        class_name   = 'TCraneX7'
+      elif self.robot_type == 'Mikata6':
+        robot_module = 'ay_py.misc.dxl_mikata6'
+        class_name   = 'TMikata6'
+      else:
+        raise Exception(f'Invalid robot type: {self.robot_type}')
+
+    # Dynamically import the module and class
+    self.robot_module= robot_module
+    self.class_name= class_name
+    mod = importlib.import_module(self.robot_module)
+    cls = getattr(mod, self.class_name)
+
+    # Instantiate the robot object
+    self.mikata = cls(dev=self.dev)
 
     #Set callback to exit when Ctrl+C is pressed.
     DxlPortHandler.ReopenCallback= lambda: not rospy.is_shutdown()
@@ -156,9 +173,19 @@ class TMikataDriver(object):
     return res
 
 if __name__=='__main__':
-  rospy.init_node('mikata_driver')
-  dev= sys.argv[1] if len(sys.argv)>1 else '/dev/ttyUSB0'
-  robot_type= sys.argv[2] if len(sys.argv)>2 else 'Mikata'
-  print('args=',sys.argv)
-  robot= TMikataDriver(dev,robot_type)
+  def get_arg(opt_name, default):
+    exists= [a.startswith(opt_name) for a in sys.argv]
+    if any(exists):  return sys.argv[exists.index(True)].replace(opt_name,'')
+    else:  return default
+  kwargs= dict(
+    node_name= get_arg('-node_name=',get_arg('--node_name=','mikata_driver')),
+    dev= get_arg('-dev=',get_arg('--dev=','/dev/ttyUSB0')),
+    robot_type= get_arg('-robot_type=',get_arg('--robot_type=','Mikata')),
+    robot_module= get_arg('-robot_module=',get_arg('--robot_module=',None)),
+    class_name= get_arg('-class_name=',get_arg('--class_name=',None)),
+    )
+
+  for k, v in kwargs.items():
+    print(f'{k} = {v}')
+  robot= TMikataDriver(**kwargs)
   rospy.spin()

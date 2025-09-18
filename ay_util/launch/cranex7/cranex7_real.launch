@@ -13,7 +13,7 @@ Using mikata_driver.py = controller as ROS node.
   <arg name="dev" default="/dev/ttyUSB0" />
   <node pkg="ay_util" type="mikata_driver.py"
         name="cranex7_driver" output="screen"
-        args="$(arg dev) CraneX7" />
+        args="$--dev=(arg dev) --robot_type=CraneX7" />
 
   <!--<node pkg="rviz" type="rviz" name="rviz"/>-->
 
