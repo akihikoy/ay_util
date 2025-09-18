@@ -24,7 +24,7 @@ from ay_py.misc.dxl_util import DxlPortHandler
 class TMikataDriver(object):
   def __init__(self, node_name='mikata_driver',
                dev='/dev/ttyUSB0', robot_type='Mikata',
-               robot_module=None, class_name=None):
+               robot_module=None, class_name=None, interpolation='spline'):
     self.node_name= node_name
     self.dev= dev
     self.robot_type= robot_type
@@ -52,7 +52,7 @@ class TMikataDriver(object):
     cls = getattr(mod, self.class_name)
 
     # Instantiate the robot object
-    self.mikata = cls(dev=self.dev)
+    self.mikata = cls(dev=self.dev, interpolation=interpolation)
 
     #Set callback to exit when Ctrl+C is pressed.
     DxlPortHandler.ReopenCallback= lambda: not rospy.is_shutdown()
@@ -183,6 +183,7 @@ if __name__=='__main__':
     robot_type= get_arg('-robot_type=',get_arg('--robot_type=','Mikata')),
     robot_module= get_arg('-robot_module=',get_arg('--robot_module=',None)),
     class_name= get_arg('-class_name=',get_arg('--class_name=',None)),
+    interpolation= get_arg('-interpolation=',get_arg('--interpolation=','spline')),
     )
 
   for k, v in kwargs.items():
