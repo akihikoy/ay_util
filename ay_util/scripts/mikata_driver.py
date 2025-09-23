@@ -24,10 +24,12 @@ from ay_py.misc.dxl_util import DxlPortHandler
 class TMikataDriver(object):
   def __init__(self, node_name='mikata_driver',
                dev='/dev/ttyUSB0', robot_type='Mikata',
-               robot_module=None, class_name=None, interpolation='spline'):
+               robot_module=None, class_name=None, interpolation='spline',
+               disable_at_exit=False):
     self.node_name= node_name
     self.dev= dev
     self.robot_type= robot_type
+    self.disable_at_exit= disable_at_exit
 
     rospy.init_node(self.node_name)
 
@@ -83,8 +85,9 @@ class TMikataDriver(object):
     self.Cleanup()
 
   def Cleanup(self):
-    print('Cleanup')
+    print(f'{self.robot_type}: Cleanup')
     self.mikata.StopStateObs()
+    if self.disable_at_exit:  self.mikata.DisableTorque()
     self.mikata.Quit()
 
   def JointStatesCallback(self, state):
@@ -184,9 +187,15 @@ if __name__=='__main__':
     robot_module= get_arg('-robot_module=',get_arg('--robot_module=',None)),
     class_name= get_arg('-class_name=',get_arg('--class_name=',None)),
     interpolation= get_arg('-interpolation=',get_arg('--interpolation=','spline')),
+    disable_at_exit= (True if '-disable_at_exit' in sys.argv or '--disable_at_exit' in sys.argv else
+                      False if '-no_disable_at_exit' in sys.argv or '--no_disable_at_exit' in sys.argv else False),
     )
 
   for k, v in kwargs.items():
     print(f'{k} = {v}')
-  robot= TMikataDriver(**kwargs)
-  rospy.spin()
+  try:
+    robot= TMikataDriver(**kwargs)
+    #rospy.on_shutdown(lambda rt=kwargs['robot_type']: (print(f'{rt}: Shutdown sleep...'), rospy.sleep(2.0)))
+    rospy.spin()
+  finally:
+    robot.Cleanup()
