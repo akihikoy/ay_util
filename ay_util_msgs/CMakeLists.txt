@@ -17,6 +17,7 @@ add_message_files(
   FILES
   Float64Stamped.msg
   Int32Stamped.msg
+  SimpleRobotState.msg
   StringStamped.msg
 )
 
