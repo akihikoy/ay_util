@@ -12,6 +12,7 @@ import rospy
 import sensor_msgs.msg
 import sys
 import importlib
+import ay_util_msgs.msg
 import ay_util_msgs.srv
 from ay_py.misc.dxl_util import DxlPortHandler
 
@@ -73,8 +74,10 @@ class TDxlGripperDriver(object):
       DxlPortHandler.ReopenCallback= lambda: not rospy.is_shutdown()
 
     self.pub_js= rospy.Publisher('~joint_states', sensor_msgs.msg.JointState, queue_size=1)
+    self.pub_state= rospy.Publisher('~state', ay_util_msgs.msg.SimpleRobotState, queue_size=1)
 
     self.js= None
+    self.state_msg= None
 
     #In the simulation mode, the driver object is switched:
     if self.is_sim:
@@ -108,6 +111,15 @@ class TDxlGripperDriver(object):
   def JointStatesCallback(self, state):
     if rospy.is_shutdown():
       return False
+
+    if self.state_msg is None:
+      self.state_msg= ay_util_msgs.msg.SimpleRobotState()
+    self.state_msg.header.stamp= rospy.Time(state['stamp'])
+    self.state_msg.is_normal= self.gripper.IsNormal()
+    self.state_msg.is_error= self.gripper.IsError()
+    self.state_msg.torque_enabled= self.gripper.TorqueEnabled()
+    self.pub_state.publish(self.state_msg)
+
     if self.js is None:
       self.js= sensor_msgs.msg.JointState()
       self.js.name= self.joint_names
@@ -117,7 +129,7 @@ class TDxlGripperDriver(object):
     self.js.velocity= selector(state['velocity'])
     self.js.effort=   selector(state['effort'])
     if None in self.js.position+self.js.velocity+self.js.effort:
-      return  #We do not publish the state if a part of it is not observed.
+      return True  #We do not publish the state if a part of it is not observed, but keep the driver running.
     self.pub_js.publish(self.js)
     return True
 

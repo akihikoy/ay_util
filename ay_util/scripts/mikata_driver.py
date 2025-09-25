@@ -18,6 +18,7 @@ import actionlib
 import control_msgs.msg
 import sys
 import importlib
+import ay_util_msgs.msg
 import ay_util_msgs.srv
 from ay_py.misc.dxl_util import DxlPortHandler
 
@@ -60,8 +61,10 @@ class TMikataDriver(object):
     DxlPortHandler.ReopenCallback= lambda: not rospy.is_shutdown()
 
     self.pub_js= rospy.Publisher('/joint_states', sensor_msgs.msg.JointState, queue_size=1)
+    self.pub_state= rospy.Publisher('~state', ay_util_msgs.msg.SimpleRobotState, queue_size=1)
 
     self.js= None
+    self.state_msg= None
     self.joint_names= self.mikata.JointNames()
 
     print('Initializing and activating {robot_type} arm...'.format(robot_type=self.robot_type))
@@ -92,7 +95,18 @@ class TMikataDriver(object):
 
   def JointStatesCallback(self, state):
     if rospy.is_shutdown():
-      return False
+      return False  #Stops the state observer loop.
+
+    if self.state_msg is None:
+      self.state_msg= ay_util_msgs.msg.SimpleRobotState()
+    self.state_msg.header.stamp= rospy.Time(state['stamp'])
+    self.state_msg.is_normal= self.mikata.IsNormal()
+    self.state_msg.is_error= self.mikata.IsError()
+    self.state_msg.torque_enabled= self.mikata.TorqueEnabled()
+    self.pub_state.publish(self.state_msg)
+
+    if None in state['position'] or None in state['velocity'] or None in state['effort']:
+      return True  #Do not publish the state, but keep the state observer running.
     if self.js is None:
       self.js= sensor_msgs.msg.JointState()
       self.js.name= state['name']
