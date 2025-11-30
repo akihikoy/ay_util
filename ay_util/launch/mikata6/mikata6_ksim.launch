@@ -11,7 +11,7 @@ Setup kinematics simulation of Crane-X7 Arm.
 
   <node pkg="ay_util" type="dummy_robot.py"
         name="mikata6_dummy" output="screen"
-        args="100" />
+        args="--rate=100" />
 
   <node pkg="rviz" type="rviz" name="rviz"/>
 

@@ -29,7 +29,7 @@ Setup kinematics simulation of Universal Robots UR5e.
 
   <node pkg="ay_util" type="dummy_robot.py"
         name="ur_dummy" output="screen"
-        args="500">
+        args="--rate=500">
     <remap from="/joint_speed_command" to="/ur_driver/joint_speed" />
   </node>
 

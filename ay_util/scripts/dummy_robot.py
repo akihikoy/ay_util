@@ -25,23 +25,34 @@ import actionlib
 import control_msgs.msg
 import threading, copy, sys
 from ay_py.core import TCubicHermiteSpline
+import ay_util_msgs.msg
+import ay_util_msgs.srv
 
 class TDummyRobot(object):
-  def __init__(self, rate=100):
+  def __init__(self, rate=100, joint_names=None):
     self.rate= rate  #/joint_states is published at rate Hz
 
-    self.pub_js= rospy.Publisher('joint_states', sensor_msgs.msg.JointState, queue_size=1)
-    self.sub_jpc= rospy.Subscriber('joint_path_command', trajectory_msgs.msg.JointTrajectory, self.PathCmdCallback)
-    self.sub_jsc= rospy.Subscriber('joint_speed_command', trajectory_msgs.msg.JointTrajectory, self.SpeedCmdCallback, queue_size=1)
+    self.pub_js= rospy.Publisher('/joint_states', sensor_msgs.msg.JointState, queue_size=1)
+    self.sub_jpc= rospy.Subscriber('/joint_path_command', trajectory_msgs.msg.JointTrajectory, self.PathCmdCallback)
+    self.sub_jsc= rospy.Subscriber('/joint_speed_command', trajectory_msgs.msg.JointTrajectory, self.SpeedCmdCallback, queue_size=1)
+    self.pub_state= rospy.Publisher('~state', ay_util_msgs.msg.SimpleRobotState, queue_size=1)
+
+    #Just provide a fake service for the convenience (i.e. the actual behavior is not implemented).
+    self.srv_io= rospy.Service('~robot_io', ay_util_msgs.srv.DxlIO, self.DxlIOHandler)
 
     self.js= sensor_msgs.msg.JointState()
-    self.js.name= rospy.get_param('controller_joint_names')
+    self.js.name= joint_names if joint_names is not None else rospy.get_param('controller_joint_names')
     self.dof= len(self.js.name)
     self.js.header.seq= 0
     self.js.header.frame_id= ''
     self.js.position= [0.0]*self.dof
     self.js.velocity= [0.0]*self.dof
     self.js.effort= [0.0]*self.dof
+
+    self.state_msg= ay_util_msgs.msg.SimpleRobotState()
+    self.state_msg.is_normal= True
+    self.state_msg.is_error= False
+    self.state_msg.torque_enabled= True
 
     self.follow_traj_active= False
 
@@ -53,7 +64,7 @@ class TDummyRobot(object):
 
     self.ftaction_feedback= control_msgs.msg.FollowJointTrajectoryFeedback()
     self.ftaction_result= control_msgs.msg.FollowJointTrajectoryResult()
-    self.ftaction_name= 'follow_joint_trajectory'
+    self.ftaction_name= '/follow_joint_trajectory'
     self.ftaction_actsrv= actionlib.SimpleActionServer(self.ftaction_name, control_msgs.msg.FollowJointTrajectoryAction, execute_cb=self.FollowTrajActionCallback, auto_start=False)
     self.ftaction_actsrv.start()
 
@@ -65,6 +76,8 @@ class TDummyRobot(object):
         self.js.header.stamp= rospy.Time.now()
         #print self.js.position
         self.pub_js.publish(self.js)
+        self.state_msg.header.stamp= self.js.header.stamp
+        self.pub_state.publish(self.state_msg)
       rate.sleep()
 
   def PathCmdCallback(self, msg):
@@ -168,9 +181,37 @@ class TDummyRobot(object):
       self.ftaction_actsrv.set_succeeded(self.ftaction_result)
     self.follow_traj_active= False
 
+  # Handler of robot_io service (ay_util_msgs/DxlIO).
+  def DxlIOHandler(self, req):
+    return ay_util_msgs.srv.DxlIOResponse()
+
 
 if __name__=='__main__':
+  def get_arg(opt_name, default):
+    exists= [a.startswith(opt_name) for a in sys.argv]
+    if any(exists):  return sys.argv[exists.index(True)].replace(opt_name,'')
+    else:  return default
   rospy.init_node('dummy_robot')
-  rate= float(sys.argv[1]) if len(sys.argv)>1 else 100.0
-  robot= TDummyRobot(rate)
+  #rate= float(sys.argv[1]) if len(sys.argv)>1 else 100.0  # WARNING: Argument changed 2025-11-30.
+  rate= float(get_arg('-rate=',get_arg('--rate=',100.0)))
+  joint_names= get_arg('-joint_names=',get_arg('--joint_names=',None))
+  joint_num= get_arg('-joint_num=',get_arg('--joint_num=',None))
+
+  if joint_names is not None and joint_num is not None:
+    raise Exception('dummy_robot: ERROR: joint_names and joint_num cannot be specified simultaneously.')
+  if joint_num is not None:
+    try:
+      joint_names= [f'joint_{j}' for j in range(int(joint_num))]
+    except Exception as e:
+      raise Exception(f'dummy_robot: ERROR: Invalid joint_num: {joint_num}; With error: {e}')
+  if joint_names is not None:
+    try:
+      # Convert string list literal to actual Python list
+      def parse_joint_names(s):
+        return [x.strip().strip("'").strip('"') for x in s.strip().strip('[]').split(',') if x.strip()]
+      joint_names= parse_joint_names(joint_names)
+    except Exception as e:
+      raise Exception(f'dummy_robot: ERROR: Invalid joint_names: {joint_names}; With error: {e}')
+
+  robot= TDummyRobot(rate, joint_names=joint_names)
   rospy.spin()

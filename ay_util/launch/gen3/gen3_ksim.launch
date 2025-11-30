@@ -21,8 +21,8 @@ Setup kinematics simulation of Kinova Gen3.
 
     <node pkg="ay_util" type="dummy_robot.py"
           name="gen3_dummy" output="screen"
-          args="125">
-      <remap from="follow_joint_trajectory" to="gen3_joint_trajectory_controller/follow_joint_trajectory" />
+          args="--rate=125">
+      <remap from="/follow_joint_trajectory" to="/gen3_joint_trajectory_controller/follow_joint_trajectory" />
     </node>
   </group>
 
