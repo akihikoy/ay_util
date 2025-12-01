@@ -23,6 +23,7 @@ import sensor_msgs.msg
 import trajectory_msgs.msg
 import actionlib
 import control_msgs.msg
+import std_srvs.srv
 import threading, copy, sys
 from ay_py.core import TCubicHermiteSpline
 import ay_util_msgs.msg
@@ -39,6 +40,10 @@ class TDummyRobot(object):
 
     #Just provide a fake service for the convenience (i.e. the actual behavior is not implemented).
     self.srv_io= rospy.Service('~robot_io', ay_util_msgs.srv.DxlIO, self.DxlIOHandler)
+
+    #Service to perform an emergency stop and recovery.
+    self.srv_emstop= rospy.Service('/emergency_stop', std_srvs.srv.Trigger, self.EmergencyStopHandler)
+    self.srv_recover= rospy.Service('/state_recover', std_srvs.srv.Trigger, self.RecoverHandler)
 
     self.js= sensor_msgs.msg.JointState()
     self.js.name= joint_names if joint_names is not None else rospy.get_param('controller_joint_names')
@@ -148,6 +153,9 @@ class TDummyRobot(object):
   def FollowTrajActionCallback(self, goal):
     if self.follow_traj_active:
       return
+    if not self.state_msg.is_normal:
+      print('Robot is not normal and cannot follow the input trajectory')
+      return
     self.follow_traj_active= True
 
     dof,indexes= len(goal.trajectory.joint_names), self.GetJointIndexes(goal.trajectory.joint_names)
@@ -159,6 +167,13 @@ class TDummyRobot(object):
       if self.ftaction_actsrv.is_preempt_requested():
         print('%s: Preempted' % self.ftaction_name)
         self.ftaction_actsrv.set_preempted()
+        success= False
+        break
+      if not self.state_msg.is_normal:
+        print('Robot is not normal: Stop to follow the trajectory')
+        if self.ftaction_actsrv.is_active():
+          self.ftaction_result.error_code= self.ftaction_result.PATH_TOLERANCE_VIOLATED
+          self.ftaction_actsrv.set_aborted(self.ftaction_result, 'Robot is not normal')
         success= False
         break
 
@@ -184,6 +199,37 @@ class TDummyRobot(object):
   # Handler of robot_io service (ay_util_msgs/DxlIO).
   def DxlIOHandler(self, req):
     return ay_util_msgs.srv.DxlIOResponse()
+
+  # Service handler to perform the emergency stop.
+  def EmergencyStopHandler(self, req):
+    # Abort follow_joint_trajectory if it is running.
+    if self.follow_traj_active:
+      self.follow_traj_active= False
+      if self.th_follow_traj is not None:
+        self.th_follow_traj.join()
+      # Abort current action goal if active.
+      if self.ftaction_actsrv.is_active():
+        self.ftaction_result.error_code= self.ftaction_result.PATH_TOLERANCE_VIOLATED
+        self.ftaction_actsrv.set_aborted(self.ftaction_result, 'Emergency stop')
+
+    # Change robot state to error.
+    self.state_msg.is_normal= False
+    self.state_msg.is_error= True
+    self.state_msg.torque_enabled= False
+
+    msg= 'Emergency stop executed'
+    print(msg)
+    return std_srvs.srv.TriggerResponse(success=True, message=msg)
+
+  # Service handler to restore the robot state.
+  def RecoverHandler(self, req):
+    self.state_msg.is_normal= True
+    self.state_msg.is_error= False
+    self.state_msg.torque_enabled= True
+
+    msg= 'Robot state recovered'
+    print(msg)
+    return std_srvs.srv.TriggerResponse(success=True, message=msg)
 
 
 if __name__=='__main__':
